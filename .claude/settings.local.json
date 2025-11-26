@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(test:*)",
+      "Bash(npm install:*)",
+      "WebSearch",
+      "WebFetch(domain:archive.org)",
+      "WebFetch(domain:www.midiworld.com)",
+      "WebFetch(domain:www.kunstderfuge.com)",
+      "WebFetch(domain:midifind.com)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
