@@ -24,6 +24,7 @@ import { ProgressTracker } from './components/ProgressTracker';
 import { FallingNotesCanvas } from './components/FallingNotesCanvas';
 import { VisualKeyboard } from './components/VisualKeyboard';
 import { PracticeControls } from './components/PracticeControls';
+import { TheTighteningLogo } from './components/TheTighteningLogo';
 
 // Data
 import { loadSong } from './data/loadSongs';
@@ -366,7 +367,9 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace', backgroundColor: '#1a1a1a', color: '#eee', minHeight: '100vh' }}>
-      <h1 style={{ marginBottom: '10px' }}>🎹 Music Learning App - Adaptive Key Mapping</h1>
+      <div style={{ marginBottom: '20px' }}>
+        <TheTighteningLogo width={300} />
+      </div>
       <p style={{ color: '#888', marginBottom: '20px' }}>
         Song: {songData.name} | MIDI: {midiStatus} | Audio: {audioStatus}
       </p>

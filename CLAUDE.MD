@@ -1,23 +1,64 @@
-# Music Learning App
+# The Tightening - Adaptive Piano Learning App
 
 ## Project Overview
 
-This is an **Electron-based desktop application** designed to help users learn music through real-time MIDI input and interactive feedback. The project is currently in **Phase 0 (Technical Validation)** - proving that the core technical requirements can be met before building the full feature set.
+**"The Tightening"** is an innovative Electron-based desktop application that teaches piano through a revolutionary adaptive key mapping approach. Unlike traditional learning tools, this app lets you play ANY key initially and gradually guides you to the correct keys through audio feedback and probabilistic distribution tightening.
 
-## Current Phase: Phase 0 - Validation
+## Current Phase: Phase 1 - Core Implementation (IN PROGRESS)
 
-### Goals
-Validate that the application can achieve the performance characteristics required for a responsive music learning experience:
+**Status**: UI rendering successfully, audio system needs debugging
 
-1. **MIDI Latency**: < 20ms (input lag from MIDI device to application)
-2. **Audio Latency**: < 50ms (time from trigger to sound output)
-3. **Rendering Performance**: 60fps (smooth visual feedback)
+### Completed ✅
+- Central configuration system with all tunable parameters
+- Adaptive key mapping algorithm (Gaussian distribution)
+- Audio engine with three feedback mechanisms (detuning, timbre, volume)
+- Reference melody player with auto-fade
+- Progress tracker with auto/manual modes
+- Guitar Hero falling notes visualization
+- Visual piano keyboard with distribution glow
+- Practice controls UI
+- MIDI file parser and song loader
+- Downloaded Canon in D (public domain)
 
-### Success Criteria
-All three metrics must be consistently achieved on target hardware:
-- ✅ MIDI latency < 20ms
-- ✅ Audio latency < 50ms
-- ✅ Rendering at 60fps
+### In Progress 🔨
+- Fixing Tone.js timing errors (Transport/Part issues)
+- Testing end-to-end with MIDI keyboard
+- Fine-tuning audio feedback parameters
+
+### Next Steps 📋
+- Debug reference melody playback
+- Test adaptive key mapping with real MIDI input
+- Tune distribution tightening parameters
+- Add more songs to library
+
+## The Innovation: Adaptive Key Mapping
+
+### Core Concept
+**You can ALWAYS play the melody** - the app never says "wrong note". Instead:
+
+1. **Phase 1 (Beginning)**: Press ANY key → plays correct melody note
+   - Distribution width: 44 semitones (all 88 keys work)
+   - Perfect audio quality regardless of which key you press
+   - Immediate success from minute one
+
+2. **Phase 2 (Progressive)**: Distribution gradually tightens
+   - Gaussian probability centered on correct keys
+   - Wrong keys still play melody BUT:
+     - Sound becomes slightly detuned (±50 cents max)
+     - Timbre shifts (triangle → sawtooth → square)
+     - Volume reduces (up to 50%)
+   - Happens over 2-3 hours of practice
+
+3. **Phase 3 (Mastery)**: Only correct keys sound good
+   - Distribution width: 0.5 semitones (essentially exact keys)
+   - Wrong keys sound noticeably degraded
+   - User naturally gravitates to correct keys
+
+### Why This Works
+- **No frustration**: Never lose the melody
+- **Gentle guidance**: Audio quality nudges toward improvement
+- **Natural learning**: Brain associates good sound with correct keys
+- **Automatic progression**: System adapts to user skill level
 
 ## Tech Stack
 
@@ -27,171 +68,355 @@ All three metrics must be consistently achieved on target hardware:
 - **Vite** - Build tool and dev server
 
 ### Desktop
-- **Electron** - Cross-platform desktop app wrapper
-- Dev server runs on `localhost:5173`
+- **Electron** - Cross-platform desktop app
+- Dev server: `localhost:5173`
 - Window size: 1200x800px
 
 ### Audio & MIDI
-- **Tone.js** - Web Audio API wrapper for synthesis and timing
-  - Configured with `latencyHint: 'interactive'`
-  - Look-ahead set to 50ms for balance between latency and stability
-- **WebMidi** - MIDI device communication
-  - Primary target: Akai Mini keyboard controller
+- **Tone.js v15.1.22** - Web Audio API wrapper
+  - Piano synthesis with configurable feedback
+  - Reference melody playback with Tone.Part
+  - Transport for timing/tempo control
+- **WebMidi v3** - MIDI device communication
+  - Target: Akai MPK Mini 3
   - Captures note on/off events with velocity
+- **@tonejs/midi** - MIDI file parsing
+  - Extracts melody, tempo, time signature
+  - Converts to internal JSON format
 
 ### Rendering
-- **HTML5 Canvas** - Visual feedback system
-  - Configured with `desynchronized: true` for lower latency
-  - `alpha: false` for better performance
+- **HTML5 Canvas** - Falling notes (Guitar Hero style)
+  - `desynchronized: true` for low latency
+  - `alpha: false` for performance
+- **SVG** - Piano keyboard visualization
+  - Distribution glow showing acceptable range
+  - Black/white key rendering
 
 ## Project Structure
 
 ```
 music-learning-app/
 ├── src/
-│   ├── App.tsx              # Main validation UI and logic
-│   ├── App.css              # Application styles
-│   ├── main.tsx             # React entry point
-│   ├── index.css            # Global styles
-│   ├── main/
-│   │   └── index.ts         # Electron main process
-│   ├── renderer/            # Future renderer process code
-│   └── assets/              # Static assets
-├── dist-electron/
-│   └── index.js             # Compiled Electron main
-├── public/                  # Static public files
-├── index.html               # HTML entry point
-└── tsconfig.*.json          # TypeScript configurations
+│   ├── App.tsx                      # Main application integration
+│   ├── config/
+│   │   └── AppConfig.ts            # Central configuration system
+│   ├── components/
+│   │   ├── AdaptiveKeyMapper.ts    # Core distribution algorithm
+│   │   ├── AudioEngine.ts          # Piano synthesis + feedback
+│   │   ├── ReferenceMelody.ts      # Background melody player
+│   │   ├── ProgressTracker.ts      # Performance tracking
+│   │   ├── FallingNotesCanvas.tsx  # Guitar Hero visualization
+│   │   ├── VisualKeyboard.tsx      # Piano keyboard display
+│   │   └── PracticeControls.tsx    # UI controls
+│   ├── utils/
+│   │   └── midiParser.ts           # MIDI file parsing
+│   ├── data/
+│   │   └── loadSongs.ts            # Song library loader
+│   └── main/
+│       ├── index.ts                # Electron main process
+│       └── preload.ts              # Electron preload script
+├── public/
+│   └── songs/
+│       └── canon-in-d.mid          # Canon in D (Pachelbel)
+├── dist-electron/                   # Compiled Electron files
+├── package.json
+├── vite.config.ts
+└── tsconfig.*.json
 ```
 
-## Key Files
+## Configuration System
 
-### `src/App.tsx`
-The main validation interface containing:
-- MIDI device initialization and event handling
-- Audio context setup with Tone.js
-- Canvas animation loop for FPS testing
-- Real-time metrics display and logging
-- Success criteria dashboard
+**Location**: `src/config/AppConfig.ts`
 
-### `dist-electron/index.js` / `src/main/index.ts`
-Electron main process:
-- Creates 1200x800 BrowserWindow
-- Loads Vite dev server (localhost:5173)
-- DevTools enabled by default
-- Context isolation enabled for security
+All app behavior is controlled by a single configuration object:
 
-## Current Features
+### Distribution Settings
+- `initialWidth`: 44 semitones (all keys)
+- `finalWidth`: 0.5 semitones (exact keys)
+- `autoTighteningRate`: 0.01 (very gradual)
+- `manualWidthOverride`: null (or 0-44 for manual control)
 
-### 1. MIDI Testing
-- Auto-detects and connects to first available MIDI device
-- Displays device name and connection status
-- Logs last 10 MIDI events (note on/off)
-- Shows note name, octave, MIDI number, and velocity
-- Calculates and displays per-event latency
-- Computes average MIDI latency across all events
+### Audio Feedback Parameters
+**Detuning** (pitch shift):
+- `enabled`: true
+- `maxCents`: 50 (half semitone)
+- `weight`: 0.4
 
-### 2. Audio Testing
-- Manual initialization (click "Initialize Audio & Play Test Note")
-- Plays synthesized notes when MIDI keys are pressed
-- Measures and displays audio context latency
-- Plays test note (C4) on initialization
-- Real-time synthesis responds to MIDI input
+**Timbre** (harmonic changes):
+- `enabled`: true
+- `filterReduction`: 2000 Hz
+- `harmonicsReduction`: 0.5
+- `weight`: 0.3
 
-### 3. Rendering Testing
-- Animated falling rectangle on canvas
-- Real-time FPS counter
-- Updates every second
-- Visual confirmation of 60fps capability
+**Volume** (loudness reduction):
+- `enabled`: true
+- `maxReduction`: 0.5 (50% quieter)
+- `weight`: 0.3
 
-## Performance Targets Explained
+**Degradation Curve**: 'exponential' or 'linear'
 
-### Why < 20ms MIDI Latency?
-Human perception of timing in music is extremely sensitive. Latencies above 20ms become noticeable and can disrupt the playing experience, especially for rhythm-based learning.
+### Reference Melody
+- `enabled`: true
+- `initialVolume`: 0.4
+- `fadeRate`: 0.01 (very gradual)
+- `minVolume`: 0.05
+- `instrument`: 'music-box' | 'soft-piano' | 'synth-pad'
+- `manualVolumeOverride`: null (or 0-1)
 
-### Why < 50ms Audio Latency?
-Combined with MIDI latency, this keeps total input-to-output delay under 70ms, which is the threshold where most musicians start to perceive lag as problematic.
+### Progression
+- `autoMode`: true
+- `accuracyThreshold`: 0.7 (70% to trigger tightening)
+- `consistencyWindow`: 20 notes
+- `persistProgress`: true (localStorage)
 
-### Why 60fps?
-Smooth visual feedback is critical for timing-based exercises. Lower frame rates create jitter that can confuse learners trying to match visual cues to audio.
+### Visual
+- `distributionMode`: 'C' (both falling notes and keyboard)
+- `colors`: configurable palette
+- `fallingNoteSpeed`: 2 pixels/frame
+- `rangePadding`: 3 semitones beyond song range
+
+### Gameplay
+- `currentSong`: 'canon-in-d'
+- `tempoMultiplier`: 1.0
+- `allowTempoChange`: true
+
+## Key Components
+
+### AdaptiveKeyMapper (`src/components/AdaptiveKeyMapper.ts`)
+**Purpose**: Maps any pressed key to the correct melody note
+
+**Algorithm**:
+- Gaussian distribution: `accuracy = e^(-distance² / (2σ²))`
+- Returns `{melodyNote, pressedKey, distance, accuracy}`
+- Automatically tightens distribution based on performance
+
+**Methods**:
+- `mapKeyToMelody(pressed, correct)`: Main mapping function
+- `tightenDistribution(amount)`: Progressive narrowing
+- `getProgress()`: 0-1 mastery percentage
+- `getAcceptableKeyRange(note)`: For visual feedback
+
+### AudioEngine (`src/components/AudioEngine.ts`)
+**Purpose**: Piano synthesis with degradable audio quality
+
+**Features**:
+- PolySynth with triangle wave oscillator
+- Three tunable feedback mechanisms
+- Combines detuning + timbre + volume based on accuracy
+- Real-time parameter updates
+
+**Methods**:
+- `initialize()`: Start audio context
+- `playNote({note, accuracy, duration, velocity})`: Main playback
+- `stopAll()`: Release all notes
+- `getLatency()`: Debug info
+
+### ReferenceMelodyPlayer (`src/components/ReferenceMelody.ts`)
+**Purpose**: Background melody that fades as user learns
+
+**Features**:
+- Tone.Part for precise MIDI playback
+- Three instrument timbres (different from user's piano)
+- Auto-fade based on accuracy
+- Manual volume override
+
+**Methods**:
+- `loadSong(songData)`: Parse and prepare MIDI
+- `start/stop/pause/resume()`: Playback control
+- `setTempo(bpm)`: Tempo adjustment
+- `fadeBasedOnAccuracy(accuracy)`: Auto-volume
+
+### ProgressTracker (`src/components/ProgressTracker.ts`)
+**Purpose**: Monitor performance and control progression
+
+**Tracks**:
+- Total notes played
+- Average accuracy (all time)
+- Recent accuracy (last N notes)
+- Current/best streak
+- Practice time
+- Progress percentage
+
+**Features**:
+- Auto-progression (tightens when accuracy > threshold)
+- Manual progression controls
+- Save/load from localStorage
+- Reference melody fade coordination
+
+### UI Components
+
+**FallingNotesCanvas** - Guitar Hero visualization
+- Notes fall from top to bottom
+- Glow width shows distribution acceptance range
+- 60fps canvas animation
+- Look-ahead: 3 seconds
+
+**VisualKeyboard** - Piano display
+- SVG rendering (faster than canvas for static elements)
+- Limited range (song ± padding, not all 88 keys)
+- Distribution glow (Gaussian gradient)
+- Black/white key distinction
+- Shows pressed keys and correct note
+
+**PracticeControls** - Control panel
+- Play/Pause/Stop/Reset
+- Tempo slider (40-200 BPM)
+- Distribution width slider (manual mode)
+- Reference volume slider
+- Auto-progression toggle
+- Performance stats dashboard
+
+## Song Library
+
+**Current Songs**:
+- Canon in D (Pachelbel) - 3.2KB MIDI file
+
+**Source**: MidiFindcom (public domain)
+
+**Format**: Standard MIDI files parsed to:
+```typescript
+{
+  name: string
+  tempo: number (BPM)
+  timeSignature: {numerator, denominator}
+  duration: number (seconds)
+  notes: [{midi, time, duration, velocity, name}]
+  range: {min, max} (MIDI note numbers)
+}
+```
+
+**TODO**: Add more songs
+- Für Elise (Beethoven)
+- Ode to Joy (Beethoven)
+- Twinkle Twinkle Little Star
+- Amazing Grace
+- Greensleeves
 
 ## Development Setup
 
 ### Prerequisites
-- Node.js (version unknown - check package.json when it exists)
-- MIDI device (Akai Mini or compatible)
-- Modern browser with Web MIDI API support
+- Node.js (latest LTS)
+- MIDI keyboard (Akai MPK Mini 3 or compatible)
+- Git
+
+### Installation
+```bash
+npm install
+```
 
 ### Running the App
 ```bash
-# Install dependencies
-npm install
-
-# Start dev server
 npm run dev
+```
+This starts both Vite (frontend) and Electron (desktop wrapper) automatically.
 
-# Start Electron app (in another terminal)
-npm run electron:dev
+### Common npm Scripts
+- `npm run dev` - Start development server + Electron
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+
+## Known Issues & Fixes
+
+### Issue 1: TypeScript Import Errors (FIXED)
+**Problem**: Runtime errors - `module does not provide export named 'AppConfig'`
+
+**Cause**: Importing TypeScript interfaces as values
+
+**Fix**: Use `import type` for interfaces:
+```typescript
+// ❌ Wrong
+import { AppConfig } from './config/AppConfig';
+
+// ✅ Correct
+import type { AppConfig } from './config/AppConfig';
+import { loadConfig, saveConfig } from './config/AppConfig';
 ```
 
-## Known Technical Decisions
+### Issue 2: Tone.js Transport Errors (IN PROGRESS)
+**Problem**: Console errors about Transport timing
 
-1. **No package.json in root** - This appears to be missing or the project structure needs investigation
-2. **DevTools always open** - Configured for development phase
-3. **Single MIDI device** - Currently uses first detected device only
-4. **Monospace font** - Used throughout for technical/debugging aesthetic
+**Status**: App renders but reference melody playback may be affected
 
-## Next Steps (Post Phase 0)
+**Next Step**: Debug Tone.Part initialization and Transport.start()
 
-Once validation is complete, likely next phases:
-1. **Phase 1**: Core learning features
-   - Note recognition exercises
-   - Timing/rhythm training
-   - Visual note display (staff or piano roll)
+## Testing Notes (Nov 25, 2024)
 
-2. **Phase 2**: Progress tracking
-   - Session history
-   - Performance metrics
-   - Difficulty progression
+### What's Working ✅
+- App loads in Electron window
+- Title and UI render correctly
+- Falling notes visualization displays
+- Piano keyboard renders with correct range
+- MIDI device connects (MPK Mini 3)
+- Song loads (Canon in D)
+- Configuration system functional
 
-3. **Phase 3**: Advanced features
-   - Multiple exercise types
-   - Custom song import
-   - Recording and playback
+### What Needs Testing ⚠️
+- Reference melody playback (Tone.js errors)
+- Adaptive key mapping with real MIDI input
+- Audio feedback quality (detuning, timbre, volume)
+- Distribution tightening over time
+- Progress tracking and persistence
+- Manual controls (tempo, distribution, volume)
 
-## Common Issues & Solutions
+## Design Philosophy
 
-### MIDI Device Not Detected
-- Ensure device is connected before opening app
-- Refresh the page after connecting device
-- Check browser MIDI permissions
+### Iterative Development
+All parameters are tunable because we expect to iterate:
+- Audio feedback weights may need adjustment
+- Distribution tightening rate needs real-world testing
+- Reference melody fade curve is a guess
+- Visual feedback intensity is subjective
 
-### High Latency
-- Close other audio applications
-- Check audio driver settings (ASIO on Windows recommended)
-- Reduce browser extensions
+### No Over-Engineering
+- Simple piano synthesis (not sampled)
+- Basic waveforms (triangle, sawtooth, square)
+- Gaussian distribution (not complex ML)
+- localStorage (not database)
 
-### Low FPS
-- Check GPU acceleration is enabled
-- Close other GPU-intensive applications
-- Monitor CPU usage
+Keep it simple, make it work, iterate based on real use.
 
-## Development Notes
+## Future Ideas (Post-MVP)
 
-- The app requires user interaction to start audio (browser security requirement)
-- MIDI events are logged with timestamps for debugging
-- Canvas uses `desynchronized` rendering for lower latency
-- Electron enables Web MIDI API by default
+### Song Features
+- Multi-track songs (melody + accompaniment)
+- Chord support (not just single notes)
+- Custom song import
+- Difficulty ratings
 
-## File Naming Conventions
+### Learning Features
+- Hand separation (left/right)
+- Sight-reading mode (no audio hints)
+- Speed training (increasing tempo)
+- Accuracy challenges
 
-- React components: PascalCase (.tsx)
-- Styles: Same name as component (.css)
-- Config files: lowercase with dots (tsconfig.json)
+### Analytics
+- Session history graphs
+- Heatmap of problem keys
+- Learning rate calculation
+- Optimal practice time recommendations
 
-## Questions for Development
+### Social
+- Share progress
+- Leaderboards
+- Custom playlists
 
-1. Should we support multiple MIDI devices simultaneously?
-2. What's the target minimum system requirements?
-3. Should there be an option to test without MIDI device (keyboard input)?
-4. What platforms are we targeting? (Windows/Mac/Linux)
+## Project Name: "The Tightening"
+
+**Tagline**: "From any key to the right key"
+
+The name reflects the core mechanic - the gradual tightening of the probability distribution that guides learners from complete freedom to precise accuracy.
+
+## Repository
+
+**GitHub**: https://github.com/kenEldridge/the-tightening
+
+## License
+
+TBD
+
+## Credits
+
+- Developed by Ken Eldridge
+- Powered by Claude (Anthropic)
+- Canon in D by Johann Pachelbel (public domain)
+- MIDI file from MidiFind.com

@@ -1,7 +1,7 @@
 {
-  "name": "music-learning-app",
+  "name": "the-tightening",
   "version": "0.1.0",
-  "description": "Electron-based music learning app - Phase 0 validation",
+  "description": "The Tightening - Revolutionary adaptive piano learning through probabilistic key mapping",
   "main": "dist-electron/index.js",
   "type": "module",
   "scripts": {

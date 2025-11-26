@@ -4,7 +4,8 @@
  * Loads and caches song data from MIDI files
  */
 
-import { SongData, loadMidiFromUrl } from '../utils/midiParser';
+import type { SongData } from '../utils/midiParser';
+import { loadMidiFromUrl } from '../utils/midiParser';
 
 // Cache for loaded songs
 const songCache = new Map<string, SongData>();
