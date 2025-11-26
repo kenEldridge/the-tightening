@@ -1,73 +1,267 @@
-# React + TypeScript + Vite
+# 🎹 The Tightening
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **From any key to the right key**
 
-Currently, two official plugins are available:
+A revolutionary piano learning app that lets you play the melody from day one. No frustration. No wrong notes. Just gradual, natural improvement through adaptive key mapping and audio feedback.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![The Tightening Logo](https://img.shields.io/badge/status-alpha-orange) ![MIT License](https://img.shields.io/badge/license-TBD-blue) ![Electron](https://img.shields.io/badge/electron-latest-47848F?logo=electron) ![React](https://img.shields.io/badge/react-18-61DAFB?logo=react)
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🎯 The Big Idea
 
-## Expanding the ESLint configuration
+Traditional piano learning: **"You pressed the wrong key. Try again."**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+The Tightening: **"Great! You played the melody. Now let's make it sound even better."**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### How It Works
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+1. **Phase 1 - Complete Freedom** (Day 1)
+   - Press **ANY key** on your MIDI keyboard
+   - It plays the correct melody note
+   - You're playing Canon in D from minute one!
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+2. **Phase 2 - Gentle Guidance** (Weeks 1-4)
+   - Wrong keys still play the melody
+   - But they sound slightly off (detuned, different timbre, quieter)
+   - Correct keys sound perfect
+   - Your brain naturally gravitates toward better-sounding keys
+
+3. **Phase 3 - Mastery** (Month 2+)
+   - Distribution has tightened to correct keys only
+   - You're playing the actual song correctly
+   - You learned without frustration
+
+## 🧠 The Science
+
+**Adaptive Key Mapping** using Gaussian probability distributions:
+
+```
+accuracy = e^(-distance² / (2σ²))
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- **Initially**: σ = 44 semitones → all 88 keys work equally
+- **Progressively**: σ gradually decreases based on your performance
+- **Finally**: σ = 0.5 semitones → only correct keys sound good
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+**Audio Feedback** with three tunable mechanisms:
+- **Detuning**: ±50 cents pitch shift for wrong keys
+- **Timbre**: Triangle → Sawtooth → Square wave degradation
+- **Volume**: Up to 50% quieter for wrong keys
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+All parameters are **fully configurable** - we expect to iterate based on real use.
+
+---
+
+## ✨ Features
+
+### Core
+- 🎹 **Adaptive Key Mapping** - ANY key plays melody initially
+- 🎵 **Reference Melody** - Background track fades as you improve
+- 📊 **Progress Tracking** - Auto-tightening based on accuracy
+- 🎮 **Guitar Hero Visualization** - Falling notes with distribution glow
+- 🎛️ **Full Manual Control** - Override all auto-progression
+
+### Technical
+- ⚡ **Low Latency** - <20ms MIDI, <50ms audio
+- 🎨 **60fps Rendering** - Canvas + SVG visualizations
+- 💾 **Progress Persistence** - LocalStorage save/load
+- 🎚️ **Fully Tunable** - Single config file controls all behavior
+
+### Current Songs
+- Canon in D (Pachelbel) - *More coming soon!*
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Node.js** (latest LTS)
+- **MIDI Keyboard** (tested with Akai MPK Mini 3)
+- **Git**
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/kenEldridge/the-tightening.git
+cd the-tightening
+
+# Install dependencies
+npm install
+
+# Run the app
+npm run dev
 ```
+
+The app will open in Electron. Click **Play** to start!
+
+---
+
+## 🎮 Usage
+
+### First Time Setup
+1. Connect your MIDI keyboard before opening the app
+2. Click the **Play** button to initialize audio
+3. Start playing any keys - you're playing Canon in D!
+
+### Practice Controls
+- **Play/Pause** - Control playback
+- **Tempo Slider** - Adjust speed (40-200 BPM)
+- **Distribution Width** - Manual difficulty control
+- **Reference Volume** - Adjust background melody
+- **Auto Progression** - Toggle automatic tightening
+
+### Understanding the UI
+- **Falling Notes** - Guitar Hero visualization showing upcoming notes
+- **Distribution Glow** - Shows acceptable key range (tighter = harder)
+- **Piano Keyboard** - Visual feedback with distribution gradient
+- **Stats Dashboard** - Progress, accuracy, streaks, practice time
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|-----------|
+| **Desktop** | Electron |
+| **Frontend** | React 18 + TypeScript + Vite |
+| **Audio** | Tone.js (Web Audio API) |
+| **MIDI** | WebMidi v3 |
+| **Visualization** | HTML5 Canvas + SVG |
+| **Build** | Vite + TypeScript |
+
+---
+
+## 📁 Project Structure
+
+```
+the-tightening/
+├── src/
+│   ├── App.tsx                    # Main application
+│   ├── config/
+│   │   └── AppConfig.ts          # Central configuration
+│   ├── components/
+│   │   ├── AdaptiveKeyMapper.ts  # Core algorithm
+│   │   ├── AudioEngine.ts        # Piano synthesis
+│   │   ├── ReferenceMelody.ts    # Background melody
+│   │   ├── ProgressTracker.ts    # Performance tracking
+│   │   ├── FallingNotesCanvas.tsx # Guitar Hero viz
+│   │   ├── VisualKeyboard.tsx     # Piano display
+│   │   ├── PracticeControls.tsx   # UI controls
+│   │   └── TheTighteningLogo.tsx  # Branding
+│   ├── utils/
+│   │   └── midiParser.ts         # MIDI file parsing
+│   └── data/
+│       └── loadSongs.ts          # Song library
+├── public/
+│   └── songs/                    # MIDI files
+├── CLAUDE.MD                     # Detailed docs
+└── README.md                     # You are here!
+```
+
+---
+
+## ⚙️ Configuration
+
+All behavior is controlled by `src/config/AppConfig.ts`:
+
+```typescript
+{
+  distribution: {
+    initialWidth: 44,      // All keys work
+    finalWidth: 0.5,       // Only correct keys
+    autoTighteningRate: 0.01
+  },
+  audioFeedback: {
+    detuning: { enabled: true, maxCents: 50, weight: 0.4 },
+    timbre: { enabled: true, weight: 0.3 },
+    volume: { enabled: true, maxReduction: 0.5, weight: 0.3 }
+  },
+  progression: {
+    autoMode: true,
+    accuracyThreshold: 0.7  // 70% to trigger tightening
+  }
+}
+```
+
+See [CLAUDE.MD](./CLAUDE.MD) for complete configuration reference.
+
+---
+
+## 🐛 Known Issues
+
+### Currently In Progress
+- **Tone.js Transport Errors** - Reference melody playback has timing issues
+- **Audio Feedback Tuning** - Parameters need real-world testing
+
+### Roadmap
+- [ ] Fix Tone.js timing errors
+- [ ] Test adaptive key mapping with real users
+- [ ] Add more songs to library
+- [ ] Implement hand separation (left/right)
+- [ ] Add session history graphs
+- [ ] Custom song import
+
+See [Issues](https://github.com/kenEldridge/the-tightening/issues) for full list.
+
+---
+
+## 🤝 Contributing
+
+This project is in **early alpha**. Contributions, ideas, and feedback are welcome!
+
+### Ways to Contribute
+- 🎵 **Add songs** - Find/create public domain MIDI files
+- 🐛 **Report bugs** - Open an issue
+- 💡 **Suggest features** - What would help you learn?
+- 🎹 **Test with real keyboards** - Share your experience
+- 📖 **Improve docs** - Clarity is key
+
+### Development Setup
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run lint     # Run ESLint
+```
+
+---
+
+## 📚 Learn More
+
+- **Detailed Documentation**: [CLAUDE.MD](./CLAUDE.MD)
+- **Algorithm Deep Dive**: See `src/components/AdaptiveKeyMapper.ts`
+- **Configuration Guide**: See `src/config/AppConfig.ts`
+
+---
+
+## 🎼 The Name
+
+**"The Tightening"** refers to the core mechanic: the gradual tightening of the probability distribution that guides learners from complete freedom to precise accuracy.
+
+Chaos → Order. Any key → The right key.
+
+---
+
+## 📜 License
+
+TBD
+
+---
+
+## 🙏 Credits
+
+- **Created by**: Ken Eldridge
+- **AI Pair Programming**: Claude (Anthropic)
+- **Music**: Canon in D by Johann Pachelbel (public domain)
+- **MIDI Source**: [MidiFind.com](https://midifind.com)
+
+---
+
+## 🌟 Star History
+
+If this project helps you learn piano, consider giving it a star! ⭐
+
+---
+
+**Built with ❤️ and a lot of Gaussian distributions**
