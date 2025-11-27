@@ -25,7 +25,8 @@ export interface PlayNoteOptions {
 }
 
 export class AudioEngine {
-  private synth: Tone.PolySynth | null = null;
+  private sampler: Tone.Sampler | null = null;
+  private filter: Tone.Filter | null = null;
   private config: AppConfig;
   private initialized = false;
 
@@ -42,18 +43,56 @@ export class AudioEngine {
 
     await Tone.start();
 
-    // Create polyphonic piano synthesizer
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'triangle',
-      },
-      envelope: {
-        attack: 0.005,
-        decay: 0.1,
-        sustain: 0.3,
-        release: 1,
-      },
+    // Create low-pass filter for timbre degradation
+    this.filter = new Tone.Filter({
+      type: 'lowpass',
+      frequency: 10000, // Start bright (no filtering)
+      rolloff: -24, // Steep rolloff for pronounced effect
     }).toDestination();
+
+    // Create sampler with Salamander Grand Piano samples
+    this.sampler = new Tone.Sampler({
+      urls: {
+        A0: "A0.mp3",
+        C1: "C1.mp3",
+        "D#1": "Ds1.mp3",
+        "F#1": "Fs1.mp3",
+        A1: "A1.mp3",
+        C2: "C2.mp3",
+        "D#2": "Ds2.mp3",
+        "F#2": "Fs2.mp3",
+        A2: "A2.mp3",
+        C3: "C3.mp3",
+        "D#3": "Ds3.mp3",
+        "F#3": "Fs3.mp3",
+        A3: "A3.mp3",
+        C4: "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        A4: "A4.mp3",
+        C5: "C5.mp3",
+        "D#5": "Ds5.mp3",
+        "F#5": "Fs5.mp3",
+        A5: "A5.mp3",
+        C6: "C6.mp3",
+        "D#6": "Ds6.mp3",
+        "F#6": "Fs6.mp3",
+        A6: "A6.mp3",
+        C7: "C7.mp3",
+        "D#7": "Ds7.mp3",
+        "F#7": "Fs7.mp3",
+        A7: "A7.mp3",
+        C8: "C8.mp3"
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      release: 1, // Match original envelope release
+      onload: () => {
+        console.log("✅ User piano samples loaded successfully");
+      },
+      onerror: (err) => {
+        console.error("❌ Failed to load user piano samples:", err);
+      }
+    }).connect(this.filter);
 
     this.initialized = true;
   }
@@ -64,7 +103,7 @@ export class AudioEngine {
    * @param options - Note playback options
    */
   playNote(options: PlayNoteOptions): void {
-    if (!this.synth || !this.initialized) {
+    if (!this.sampler || !this.initialized) {
       console.warn('AudioEngine not initialized');
       return;
     }
@@ -76,41 +115,39 @@ export class AudioEngine {
       velocity = 0.8,
     } = options;
 
-    // Convert MIDI note to frequency
-    const baseFrequency = Tone.Frequency(note, 'midi').toFrequency();
+    // Convert MIDI note to note name (Sampler needs names, not frequencies)
+    const noteName = Tone.Frequency(note, 'midi').toNote();
 
     // Apply audio feedback based on accuracy
-    const frequency = this.applyDetuning(baseFrequency, accuracy);
-    const volume = this.applyVolumeReduction(velocity, accuracy);
-
-    // Apply timbre changes
+    this.applyDetuning(accuracy);
     this.applyTimbreShift(accuracy);
+    const adjustedVelocity = this.applyVolumeReduction(velocity, accuracy);
 
     // Play the note
     const now = Tone.now();
-    this.synth.triggerAttackRelease(
-      frequency,
+    this.sampler.triggerAttackRelease(
+      noteName,
       duration,
       now,
-      volume
+      adjustedVelocity
     );
   }
 
   /**
    * Apply detuning based on accuracy
    *
-   * @param baseFrequency - Base frequency in Hz
    * @param accuracy - Accuracy score (0-1)
-   * @returns Detuned frequency in Hz
    */
-  private applyDetuning(baseFrequency: number, accuracy: number): number {
-    if (!this.config.audioFeedback.detuning.enabled) {
-      return baseFrequency;
+  private applyDetuning(accuracy: number): void {
+    if (!this.sampler || !this.config.audioFeedback.detuning.enabled) {
+      if (this.sampler) this.sampler.detune.value = 0;
+      return;
     }
 
     // Perfect accuracy = no detuning
     if (accuracy >= 0.999) {
-      return baseFrequency;
+      this.sampler.detune.value = 0;
+      return;
     }
 
     const { maxCents, weight } = this.config.audioFeedback.detuning;
@@ -125,31 +162,25 @@ export class AudioEngine {
     const direction = Math.random() > 0.5 ? 1 : -1;
     const actualCents = cents * direction;
 
-    // Convert cents to frequency multiplier
-    // 100 cents = 1 semitone = frequency * 2^(1/12)
-    const semitones = actualCents / 100;
-    const frequencyMultiplier = Math.pow(2, semitones / 12);
-
-    return baseFrequency * frequencyMultiplier;
+    // Apply detuning directly in cents (much simpler than frequency math!)
+    this.sampler.detune.value = actualCents;
   }
 
   /**
    * Apply timbre shift based on accuracy
-   * Modifies the synthesizer's filter and harmonics
+   * Uses low-pass filter to make wrong keys sound muffled
    *
    * @param accuracy - Accuracy score (0-1)
    */
   private applyTimbreShift(accuracy: number): void {
-    if (!this.synth || !this.config.audioFeedback.timbre.enabled) {
+    if (!this.filter || !this.config.audioFeedback.timbre.enabled) {
+      if (this.filter) this.filter.frequency.value = 10000;
       return;
     }
 
-    // Perfect accuracy = no timbre change
+    // Perfect accuracy = no filtering (bright, full piano sound)
     if (accuracy >= 0.999) {
-      // Reset to default
-      this.synth.set({
-        oscillator: { type: 'triangle' },
-      });
+      this.filter.frequency.value = 10000; // 10kHz - wide open
       return;
     }
 
@@ -158,16 +189,14 @@ export class AudioEngine {
     // Calculate timbre degradation
     const degradation = this.calculateDegradation(accuracy, weight);
 
-    // Adjust oscillator type based on degradation
-    // Perfect = triangle (warm piano-like)
-    // Wrong = more square/sawtooth (harsh, buzzy)
-    if (degradation > 0.7) {
-      this.synth.set({ oscillator: { type: 'square' } });
-    } else if (degradation > 0.4) {
-      this.synth.set({ oscillator: { type: 'sawtooth' } });
-    } else {
-      this.synth.set({ oscillator: { type: 'triangle' } });
-    }
+    // Map degradation to filter cutoff frequency
+    // Perfect (0) → 10000 Hz (bright, full harmonics)
+    // Wrong (1) → 500 Hz (muffled, dark, telephone-like)
+    const minFreq = 500;
+    const maxFreq = 10000;
+    const filterFreq = maxFreq - (degradation * (maxFreq - minFreq));
+
+    this.filter.frequency.value = filterFreq;
   }
 
   /**
@@ -235,8 +264,8 @@ export class AudioEngine {
    * Stop all currently playing notes
    */
   stopAll(): void {
-    if (this.synth) {
-      this.synth.releaseAll();
+    if (this.sampler) {
+      this.sampler.releaseAll();
     }
   }
 
@@ -244,9 +273,13 @@ export class AudioEngine {
    * Clean up resources
    */
   dispose(): void {
-    if (this.synth) {
-      this.synth.dispose();
-      this.synth = null;
+    if (this.sampler) {
+      this.sampler.dispose();
+      this.sampler = null;
+    }
+    if (this.filter) {
+      this.filter.dispose();
+      this.filter = null;
     }
     this.initialized = false;
   }

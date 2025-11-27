@@ -4,6 +4,14 @@
  * Plays the reference melody in the background
  * Fades out as user learns (based on accuracy)
  * Uses different timbre from user's piano
+ *
+ * FUTURE OPTIMIZATION - Time Synchronization:
+ * Currently App.tsx polls getCurrentTime() via setInterval (16ms lag).
+ * For better audio-visual sync, consider adding callback support:
+ * - Option 1: Add onTimeUpdate callback parameter to start()
+ * - Option 2: Add registerTimeCallback() method
+ * - Option 3: Use Transport.scheduleRepeat internally
+ * See implementation plan for details.
  */
 
 import * as Tone from 'tone';
@@ -11,7 +19,7 @@ import type { AppConfig } from '../config/AppConfig';
 import type { SongData, MelodyNote } from '../utils/midiParser';
 
 export class ReferenceMelodyPlayer {
-  private synth: Tone.Synth | null = null;
+  private sampler: Tone.Sampler | null = null;
   private part: Tone.Part | null = null;
   private config: AppConfig;
   private currentVolume: number;
@@ -23,79 +31,66 @@ export class ReferenceMelodyPlayer {
   }
 
   /**
-   * Initialize the reference melody synthesizer
+   * Initialize the reference melody sampler
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     await Tone.start();
 
-    // Create synthesizer with different timbre than user's piano
-    this.synth = this.createInstrument(this.config.referenceMelody.instrument);
-    this.initialized = true;
-  }
-
-  /**
-   * Create the appropriate instrument based on config
-   */
-  private createInstrument(instrument: string): Tone.Synth {
-    const baseOptions = {
+    // Create sampler with same Salamander Grand Piano samples as user
+    this.sampler = new Tone.Sampler({
+      urls: {
+        A0: "A0.mp3",
+        C1: "C1.mp3",
+        "D#1": "Ds1.mp3",
+        "F#1": "Fs1.mp3",
+        A1: "A1.mp3",
+        C2: "C2.mp3",
+        "D#2": "Ds2.mp3",
+        "F#2": "Fs2.mp3",
+        A2: "A2.mp3",
+        C3: "C3.mp3",
+        "D#3": "Ds3.mp3",
+        "F#3": "Fs3.mp3",
+        A3: "A3.mp3",
+        C4: "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        A4: "A4.mp3",
+        C5: "C5.mp3",
+        "D#5": "Ds5.mp3",
+        "F#5": "Fs5.mp3",
+        A5: "A5.mp3",
+        C6: "C6.mp3",
+        "D#6": "Ds6.mp3",
+        "F#6": "Fs6.mp3",
+        A6: "A6.mp3",
+        C7: "C7.mp3",
+        "D#7": "Ds7.mp3",
+        "F#7": "Fs7.mp3",
+        A7: "A7.mp3",
+        C8: "C8.mp3"
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      release: 1,
       volume: Tone.gainToDb(this.currentVolume),
-    };
+      onload: () => {
+        console.log("✅ Reference piano samples loaded successfully");
+      },
+      onerror: (err) => {
+        console.error("❌ Failed to load reference piano samples:", err);
+      }
+    }).toDestination();
 
-    switch (instrument) {
-      case 'music-box':
-        return new Tone.Synth({
-          ...baseOptions,
-          oscillator: {
-            type: 'sine',
-          },
-          envelope: {
-            attack: 0.001,
-            decay: 0.2,
-            sustain: 0,
-            release: 0.3,
-          },
-        }).toDestination();
-
-      case 'soft-piano':
-        return new Tone.Synth({
-          ...baseOptions,
-          oscillator: {
-            type: 'triangle',
-          },
-          envelope: {
-            attack: 0.01,
-            decay: 0.3,
-            sustain: 0.2,
-            release: 1.5,
-          },
-        }).toDestination();
-
-      case 'synth-pad':
-        return new Tone.Synth({
-          ...baseOptions,
-          oscillator: {
-            type: 'sawtooth',
-          },
-          envelope: {
-            attack: 0.3,
-            decay: 0.5,
-            sustain: 0.7,
-            release: 2,
-          },
-        }).toDestination();
-
-      default:
-        return new Tone.Synth(baseOptions).toDestination();
-    }
+    this.initialized = true;
   }
 
   /**
    * Load a song and prepare it for playback
    */
   loadSong(songData: SongData): void {
-    if (!this.initialized || !this.synth) {
+    if (!this.initialized || !this.sampler) {
       console.warn('ReferenceMelodyPlayer not initialized');
       return;
     }
@@ -111,15 +106,22 @@ export class ReferenceMelodyPlayer {
       time: note.time,
       note: Tone.Frequency(note.midi, 'midi').toNote(),
       duration: note.duration,
+      velocity: note.velocity || 0.8,
     }));
 
     this.part = new Tone.Part((time, event) => {
-      if (this.synth && this.config.referenceMelody.enabled) {
-        this.synth.triggerAttackRelease(event.note, event.duration, time);
+      if (this.sampler && this.config.referenceMelody.enabled) {
+        this.sampler.triggerAttackRelease(
+          event.note,
+          event.duration,
+          time,
+          event.velocity
+        );
       }
     }, events);
 
     this.part.loop = true;
+    this.part.loopStart = 0;
     this.part.loopEnd = songData.duration;
   }
 
@@ -127,9 +129,20 @@ export class ReferenceMelodyPlayer {
    * Start playback
    */
   start(): void {
-    if (this.part) {
+    if (!this.part) {
+      console.warn('Cannot start: no song loaded');
+      return;
+    }
+
+    // Reset Transport to beginning
+    Tone.Transport.seconds = 0;
+
+    // Start Part at beginning of its timeline (BEFORE starting Transport)
+    this.part.start(0);
+
+    // Start Transport if not already started
+    if (Tone.Transport.state !== 'started') {
       Tone.Transport.start();
-      this.part.start(0);
     }
   }
 
@@ -137,24 +150,37 @@ export class ReferenceMelodyPlayer {
    * Stop playback
    */
   stop(): void {
+    // Stop Part scheduling
     if (this.part) {
       this.part.stop();
     }
-    Tone.Transport.stop();
+
+    // Stop and reset Transport
+    if (Tone.Transport.state !== 'stopped') {
+      Tone.Transport.stop();
+    }
+
+    // Reset time to beginning
+    Tone.Transport.seconds = 0;
   }
 
   /**
    * Pause playback
    */
   pause(): void {
-    Tone.Transport.pause();
+    if (Tone.Transport.state === 'started') {
+      Tone.Transport.pause();
+    }
   }
 
   /**
    * Resume playback
    */
   resume(): void {
-    Tone.Transport.start();
+    // Transport.start() resumes from paused position automatically
+    if (Tone.Transport.state === 'paused') {
+      Tone.Transport.start();
+    }
   }
 
   /**
@@ -188,9 +214,9 @@ export class ReferenceMelodyPlayer {
       this.currentVolume = this.config.referenceMelody.manualVolumeOverride;
     }
 
-    // Update synth volume
-    if (this.synth) {
-      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
+    // Update sampler volume
+    if (this.sampler) {
+      this.sampler.volume.value = Tone.gainToDb(this.currentVolume);
     }
   }
 
@@ -199,8 +225,8 @@ export class ReferenceMelodyPlayer {
    */
   setVolume(volume: number): void {
     this.currentVolume = Math.max(0, Math.min(1, volume));
-    if (this.synth) {
-      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
+    if (this.sampler) {
+      this.sampler.volume.value = Tone.gainToDb(this.currentVolume);
     }
   }
 
@@ -230,13 +256,9 @@ export class ReferenceMelodyPlayer {
    */
   updateConfig(config: AppConfig): void {
     this.config = config;
-
-    // If instrument changed, recreate synth
-    if (this.synth && this.initialized) {
-      const currentVolume = this.currentVolume;
-      this.synth.dispose();
-      this.synth = this.createInstrument(config.referenceMelody.instrument);
-      this.setVolume(currentVolume);
+    // Sampler doesn't need recreation - just update volume if needed
+    if (this.sampler && this.currentVolume !== config.referenceMelody.initialVolume) {
+      this.setVolume(this.currentVolume);
     }
   }
 
@@ -251,9 +273,9 @@ export class ReferenceMelodyPlayer {
       this.part = null;
     }
 
-    if (this.synth) {
-      this.synth.dispose();
-      this.synth = null;
+    if (this.sampler) {
+      this.sampler.dispose();
+      this.sampler = null;
     }
 
     this.initialized = false;

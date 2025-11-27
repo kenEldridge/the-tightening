@@ -19,7 +19,11 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nInitial implementation of The Tightening - Adaptive Piano Learning App\n\nCompleted Features:\n- Central configuration system with all tunable parameters\n- Adaptive key mapping algorithm (Gaussian distribution)\n- Audio engine with three feedback mechanisms (detuning, timbre, volume)\n- Reference melody player with auto-fade\n- Progress tracker with auto/manual modes\n- Guitar Hero falling notes visualization\n- Visual piano keyboard with distribution glow\n- Practice controls UI\n- MIDI file parser and song loader\n- Canon in D (Pachelbel) - public domain MIDI\n- The Tightening logo and branding\n\nCore Innovation:\nRevolutionary approach to piano learning where ANY key plays the melody initially,\nwith a probability distribution that gradually tightens around correct keys over\n2-3 hours of practice. Audio quality (detuning, timbre, volume) degrades for wrong\nkeys, providing gentle guidance without frustration.\n\nTech Stack:\n- Electron + React 18 + TypeScript + Vite\n- Tone.js for audio synthesis\n- WebMidi v3 for MIDI input\n- Canvas + SVG for visualizations\n\nStatus:\nUI rendering successfully. Audio system has Tone.js timing errors that need debugging.\nReady for end-to-end testing with MIDI keyboard.\n\n🤖 Generated with Claude Code\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(ping:*)",
+      "Bash(dir:*)",
+      "Bash(npm view:*)"
     ],
     "deny": [],
     "ask": []

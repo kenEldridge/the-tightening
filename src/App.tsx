@@ -39,6 +39,7 @@ function App() {
   const [audioStatus, setAudioStatus] = useState<string>('Not initialized');
   const [songData, setSongData] = useState<SongData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [samplesLoaded, setSamplesLoaded] = useState<boolean>(false);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -87,7 +88,7 @@ function App() {
         setSongData(song);
 
         // Initialize audio systems (requires user interaction, will do on play)
-        setAudioStatus('Ready (click Play to start audio)');
+        setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
 
         // Try to load saved progress
         if (progressTrackerRef.current.loadProgress()) {
@@ -208,6 +209,8 @@ function App() {
   }, [getCurrentNote]);
 
   // Playback time update loop
+  // NOTE: Using setInterval polling (16ms lag) for simplicity
+  // FUTURE: Consider migrating to Transport.scheduleRepeat for tighter sync
   useEffect(() => {
     if (!isPlaying || !referenceMelodyRef.current) return;
 
@@ -242,13 +245,22 @@ function App() {
 
     try {
       if (!isPlaying) {
-        // Initialize audio if not already done
+        // Show loading state if samples not loaded yet
+        if (!samplesLoaded) {
+          setAudioStatus('Loading piano samples...');
+        }
+
+        // Initialize audio (loads samples)
         await audioEngineRef.current.initialize();
         await referenceMelodyRef.current.initialize();
 
-        // Load song into reference melody player
-        referenceMelodyRef.current.loadSong(songData);
+        setSamplesLoaded(true);
+
+        // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
         referenceMelodyRef.current.setTempo(songData.tempo * config.gameplay.tempoMultiplier);
+
+        // Load song into reference melody player (uses current Transport.bpm)
+        referenceMelodyRef.current.loadSong(songData);
 
         // Start playback
         referenceMelodyRef.current.start();
@@ -263,6 +275,7 @@ function App() {
     } catch (err) {
       console.error('Playback error:', err);
       setAudioStatus(`Error: ${err}`);
+      setSamplesLoaded(false); // Reset on error
     }
   };
 
