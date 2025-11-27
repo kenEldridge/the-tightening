@@ -9,7 +9,8 @@ import { WebMidi, Input } from 'webmidi';
 import './App.css';
 
 // Logging
-import { initializeLogger, loggers } from './utils/logger';
+// TEMPORARILY DISABLED - Testing if this blocks rendering
+// import { initializeLogger, loggers } from './utils/logger';
 
 // Configuration
 import type { AppConfig } from './config/AppConfig';
@@ -79,15 +80,15 @@ function App() {
 
   // Initialize logger first
   useEffect(() => {
-    initializeLogger();
-    loggers.app.info('Initializing application...');
+    // initializeLogger(); // TEMP DISABLED
+    console.log('[App] Initializing application...');
   }, []);
 
   // Initialize core components
   useEffect(() => {
     const init = async () => {
       try {
-        loggers.app.info('Creating core components...');
+        console.info('Creating core components...');
         // Create core components
         keyMapperRef.current = new AdaptiveKeyMapper(config);
         audioEngineRef.current = new AudioEngine(config);
@@ -99,10 +100,10 @@ function App() {
         );
 
         // Load song
-        loggers.app.info('Loading initial song', { songId: config.gameplay.currentSong });
+        console.info('Loading initial song', { songId: config.gameplay.currentSong });
         const song = await loadSong(config.gameplay.currentSong);
         setSongData(song);
-        loggers.app.info('Song loaded successfully', {
+        console.info('Song loaded successfully', {
           name: song.name,
           noteCount: song.notes.length,
           duration: song.duration
@@ -113,14 +114,14 @@ function App() {
 
         // Try to load saved progress
         if (progressTrackerRef.current.loadProgress()) {
-          loggers.app.info('Loaded saved progress');
+          console.info('Loaded saved progress');
         }
 
         setLoading(false);
-        loggers.app.info('Application initialization complete');
+        console.info('Application initialization complete');
       } catch (err) {
         const error = err as Error;
-        loggers.app.error('Initialization error', {
+        console.error('Initialization error', {
           error: error.message,
           stack: error.stack
         });
@@ -142,18 +143,18 @@ function App() {
   useEffect(() => {
     const initMidi = async () => {
       try {
-        loggers.midi.info('Initializing WebMIDI...');
+        console.info('Initializing WebMIDI...');
         await WebMidi.enable();
 
         if (WebMidi.inputs.length === 0) {
-          loggers.midi.warn('No MIDI devices found');
+          console.warn('No MIDI devices found');
           setMidiStatus('No MIDI devices found. Connect keyboard and refresh.');
           return;
         }
 
         const input = WebMidi.inputs[0];
         midiInputRef.current = input;
-        loggers.midi.info('MIDI device connected', {
+        console.info('MIDI device connected', {
           name: input.name,
           manufacturer: input.manufacturer,
           id: input.id,
@@ -164,10 +165,10 @@ function App() {
         // Listen for note events
         input.addListener('noteon', handleNoteOn);
         input.addListener('noteoff', handleNoteOff);
-        loggers.midi.debug('MIDI event listeners registered');
+        console.debug('MIDI event listeners registered');
       } catch (err) {
         const error = err as Error;
-        loggers.midi.error('MIDI initialization failed', {
+        console.error('MIDI initialization failed', {
           error: error.message,
           stack: error.stack
         });
@@ -189,7 +190,7 @@ function App() {
   const handleNoteOn = useCallback((e: any) => {
     const pressedMidiKey = e.note.number;
 
-    loggers.midi.debug('Note ON', {
+    console.debug('Note ON', {
       midi: pressedMidiKey,
       noteName: e.note.name,
       velocity: e.note.attack
@@ -210,7 +211,7 @@ function App() {
       currentNote.midi
     );
 
-    loggers.app.debug('Key mapped', {
+    console.debug('Key mapped', {
       pressed: mapping.pressedKey,
       correct: currentNote.midi,
       distance: mapping.distance,
@@ -234,7 +235,7 @@ function App() {
 
   // Handle MIDI note off
   const handleNoteOff = useCallback((e: any) => {
-    loggers.midi.debug('Note OFF', { midi: e.note.number });
+    console.debug('Note OFF', { midi: e.note.number });
     setPressedKeys((prev) => {
       const next = new Set(prev);
       next.delete(e.note.number);
@@ -299,12 +300,12 @@ function App() {
 
     try {
       if (!isPlaying) {
-        loggers.app.info('Starting playback...');
+        console.info('Starting playback...');
 
         // Show loading state if samples not loaded yet
         if (!samplesLoaded) {
           setAudioStatus('Loading piano samples...');
-          loggers.app.info('Loading piano samples for first time...');
+          console.info('Loading piano samples for first time...');
         }
 
         const startTime = Date.now();
@@ -314,14 +315,14 @@ function App() {
         await referenceMelodyRef.current.initialize();
 
         const loadTime = Date.now() - startTime;
-        loggers.app.info('Piano samples loaded', { loadTimeMs: loadTime });
+        console.info('Piano samples loaded', { loadTimeMs: loadTime });
 
         setSamplesLoaded(true);
 
         // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
         const tempo = songData.tempo * config.gameplay.tempoMultiplier;
         referenceMelodyRef.current.setTempo(tempo);
-        loggers.app.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
+        console.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
 
         // Load song into reference melody player (uses current Transport.bpm)
         referenceMelodyRef.current.loadSong(songData);
@@ -330,17 +331,17 @@ function App() {
         referenceMelodyRef.current.start();
         setIsPlaying(true);
         setAudioStatus('Playing');
-        loggers.app.info('Playback started');
+        console.info('Playback started');
       } else {
         // Pause
-        loggers.app.info('Pausing playback');
+        console.info('Pausing playback');
         referenceMelodyRef.current.pause();
         setIsPlaying(false);
         setAudioStatus('Paused');
       }
     } catch (err) {
       const error = err as Error;
-      loggers.app.error('Playback error', {
+      console.error('Playback error', {
         error: error.message,
         stack: error.stack
       });
@@ -420,7 +421,7 @@ function App() {
 
   // Song change handler
   const handleSongChange = async (songId: string) => {
-    loggers.app.info('Changing song', { newSongId: songId });
+    console.info('Changing song', { newSongId: songId });
 
     // Stop current playback
     handleStop();
@@ -436,7 +437,7 @@ function App() {
     try {
       const song = await loadSong(songId);
       setSongData(song);
-      loggers.app.info('New song loaded', {
+      console.info('New song loaded', {
         name: song.name,
         noteCount: song.notes.length,
         duration: song.duration,
@@ -451,7 +452,7 @@ function App() {
       if (progressTrackerRef.current) {
         progressTrackerRef.current.reset();
         setStats(progressTrackerRef.current.getStats());
-        loggers.app.info('Progress reset for new song');
+        console.info('Progress reset for new song');
       }
 
       setCurrentSongId(songId);
@@ -459,7 +460,7 @@ function App() {
       setLoading(false);
     } catch (err) {
       const error = err as Error;
-      loggers.app.error('Failed to load song', {
+      console.error('Failed to load song', {
         songId,
         error: error.message,
         stack: error.stack
