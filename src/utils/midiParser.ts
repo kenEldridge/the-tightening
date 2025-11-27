@@ -20,6 +20,23 @@ export interface MelodyNote {
   name: string;
 }
 
+export interface SongSegment {
+  // Unique identifier
+  id: string;
+  // User-friendly name
+  name: string;
+  // Start time in seconds
+  startTime: number;
+  // End time in seconds
+  endTime: number;
+  // Index of first note in segment
+  startNoteIndex: number;
+  // Index of last note in segment
+  endNoteIndex: number;
+  // Number of notes in segment
+  noteCount: number;
+}
+
 export interface SongData {
   // Song metadata
   name: string;
@@ -39,6 +56,86 @@ export interface SongData {
     min: number;
     max: number;
   };
+  // Detected song segments
+  segments: SongSegment[];
+}
+
+/**
+ * Detect song segments based on gaps between notes
+ *
+ * @param notes - Array of melody notes
+ * @param config - Detection configuration
+ * @returns Array of detected segments
+ */
+function detectSegments(
+  notes: MelodyNote[],
+  config: {
+    minGapSize?: number;
+    minSegmentLength?: number;
+  } = {}
+): SongSegment[] {
+  const minGapSize = config.minGapSize ?? 0.5; // seconds
+  const minSegmentLength = config.minSegmentLength ?? 2.0; // seconds
+
+  const segments: SongSegment[] = [];
+  let segmentStartIdx = 0;
+
+  for (let i = 1; i < notes.length; i++) {
+    // Calculate gap between previous note end and current note start
+    const gap = notes[i].time - (notes[i - 1].time + notes[i - 1].duration);
+
+    // If gap is large enough, end current segment
+    if (gap >= minGapSize) {
+      const startTime = notes[segmentStartIdx].time;
+      const endTime = notes[i - 1].time + notes[i - 1].duration;
+      const duration = endTime - startTime;
+
+      // Only create segment if it's long enough
+      if (duration >= minSegmentLength) {
+        segments.push({
+          id: `segment-${segments.length}`,
+          name: `Phrase ${segments.length + 1}`,
+          startTime,
+          endTime,
+          startNoteIndex: segmentStartIdx,
+          endNoteIndex: i - 1,
+          noteCount: i - segmentStartIdx,
+        });
+      }
+
+      segmentStartIdx = i;
+    }
+  }
+
+  // Add final segment
+  if (segmentStartIdx < notes.length) {
+    const startTime = notes[segmentStartIdx].time;
+    const endTime = notes[notes.length - 1].time + notes[notes.length - 1].duration;
+    segments.push({
+      id: `segment-${segments.length}`,
+      name: `Phrase ${segments.length + 1}`,
+      startTime,
+      endTime,
+      startNoteIndex: segmentStartIdx,
+      endNoteIndex: notes.length - 1,
+      noteCount: notes.length - segmentStartIdx,
+    });
+  }
+
+  // Fallback: if no segments detected, treat entire song as one segment
+  if (segments.length === 0 && notes.length > 0) {
+    segments.push({
+      id: 'segment-0',
+      name: 'Full Song',
+      startTime: 0,
+      endTime: notes[notes.length - 1].time + notes[notes.length - 1].duration,
+      startNoteIndex: 0,
+      endNoteIndex: notes.length - 1,
+      noteCount: notes.length,
+    });
+  }
+
+  return segments;
 }
 
 /**
@@ -96,6 +193,9 @@ export function parseMidiFile(
       }
     : { numerator: 4, denominator: 4 };
 
+  // Detect segments
+  const segments = detectSegments(notes);
+
   return {
     name: midi.name || 'Unknown',
     tempo,
@@ -106,6 +206,7 @@ export function parseMidiFile(
       min: minMidi,
       max: maxMidi,
     },
+    segments,
   };
 }
 

@@ -12,6 +12,13 @@
 
 import React from 'react';
 import type { PerformanceStats } from './ProgressTracker';
+import type { SongSegment } from '../utils/midiParser';
+
+// Song name mappings
+const SONG_NAMES: Record<string, string> = {
+  'canon-in-d': 'Canon in D (Pachelbel)',
+  'hey-jude': 'Hey Jude (The Beatles)',
+};
 
 export interface PracticeControlsProps {
   // Playback state
@@ -39,6 +46,18 @@ export interface PracticeControlsProps {
 
   // Performance stats
   stats: PerformanceStats;
+
+  // Song selection
+  availableSongs: string[];
+  currentSong: string;
+  onSongChange: (songId: string) => void;
+
+  // Segment selection
+  segments: SongSegment[];
+  currentSegment: SongSegment | null;
+  onSegmentChange: (segment: SongSegment | null) => void;
+  isSegmentLoopEnabled: boolean;
+  onSegmentLoopToggle: () => void;
 }
 
 export const PracticeControls: React.FC<PracticeControlsProps> = ({
@@ -56,6 +75,14 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
   autoProgression,
   onAutoProgressionToggle,
   stats,
+  availableSongs,
+  currentSong,
+  onSongChange,
+  segments,
+  currentSegment,
+  onSegmentChange,
+  isSegmentLoopEnabled,
+  onSegmentLoopToggle,
 }) => {
   return (
     <div
@@ -81,6 +108,94 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
             🔄 Reset Progress
           </button>
         </div>
+      </div>
+
+      {/* Song Selection */}
+      <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #444' }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>Song</h3>
+        <select
+          value={currentSong}
+          onChange={(e) => onSongChange(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: '#2a2a2a',
+            color: '#eee',
+            border: '1px solid #555',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+          }}
+        >
+          {availableSongs.map((songId) => (
+            <option key={songId} value={songId}>
+              {SONG_NAMES[songId] || songId}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Segment Selection */}
+      <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #444' }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>Practice Section</h3>
+
+        <select
+          value={currentSegment?.id || 'full'}
+          onChange={(e) => {
+            const segmentId = e.target.value;
+            const segment = segments.find(s => s.id === segmentId) || null;
+            onSegmentChange(segment);
+          }}
+          style={{
+            width: '100%',
+            padding: '8px',
+            backgroundColor: '#2a2a2a',
+            color: '#eee',
+            border: '1px solid #555',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            marginBottom: '10px',
+          }}
+        >
+          <option value="full">Full Song</option>
+          {segments.map((segment) => {
+            const startMin = Math.floor(segment.startTime / 60);
+            const startSec = Math.floor(segment.startTime % 60);
+            const endMin = Math.floor(segment.endTime / 60);
+            const endSec = Math.floor(segment.endTime % 60);
+            return (
+              <option key={segment.id} value={segment.id}>
+                {segment.name} ({startMin}:{startSec.toString().padStart(2, '0')} - {endMin}:{endSec.toString().padStart(2, '0')})
+              </option>
+            );
+          })}
+        </select>
+
+        {currentSegment && (
+          <div style={{ fontSize: '12px', color: '#aaa', marginBottom: '10px' }}>
+            {currentSegment.noteCount} notes • {Math.round(currentSegment.endTime - currentSegment.startTime)}s duration
+          </div>
+        )}
+
+        <button
+          onClick={onSegmentLoopToggle}
+          disabled={!currentSegment}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: isSegmentLoopEnabled ? '#4a7c59' : '#3a3a3a',
+            color: isSegmentLoopEnabled ? '#fff' : '#aaa',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: currentSegment ? 'pointer' : 'not-allowed',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            fontFamily: 'monospace',
+          }}
+        >
+          {isSegmentLoopEnabled ? '🔁 Looping Section' : '🔁 Loop This Section'}
+        </button>
       </div>
 
       {/* Performance Stats */}

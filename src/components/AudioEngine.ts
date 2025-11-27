@@ -12,6 +12,7 @@
 
 import * as Tone from 'tone';
 import type { AppConfig } from '../config/AppConfig';
+import { loggers } from '../utils/logger';
 
 export interface PlayNoteOptions {
   // MIDI note number to play
@@ -41,7 +42,15 @@ export class AudioEngine {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
+    const startTime = Date.now();
+    loggers.audio.info('Initializing AudioEngine...');
+
     await Tone.start();
+    loggers.audio.debug('Tone.js audio context started', {
+      state: Tone.context.state,
+      sampleRate: Tone.context.sampleRate,
+      latency: Tone.context.latencyHint
+    });
 
     // Create low-pass filter for timbre degradation
     this.filter = new Tone.Filter({
@@ -49,52 +58,68 @@ export class AudioEngine {
       frequency: 10000, // Start bright (no filtering)
       rolloff: -24, // Steep rolloff for pronounced effect
     }).toDestination();
+    loggers.audio.debug('Low-pass filter created');
 
     // Create sampler with Salamander Grand Piano samples
-    this.sampler = new Tone.Sampler({
-      urls: {
-        A0: "A0.mp3",
-        C1: "C1.mp3",
-        "D#1": "Ds1.mp3",
-        "F#1": "Fs1.mp3",
-        A1: "A1.mp3",
-        C2: "C2.mp3",
-        "D#2": "Ds2.mp3",
-        "F#2": "Fs2.mp3",
-        A2: "A2.mp3",
-        C3: "C3.mp3",
-        "D#3": "Ds3.mp3",
-        "F#3": "Fs3.mp3",
-        A3: "A3.mp3",
-        C4: "C4.mp3",
-        "D#4": "Ds4.mp3",
-        "F#4": "Fs4.mp3",
-        A4: "A4.mp3",
-        C5: "C5.mp3",
-        "D#5": "Ds5.mp3",
-        "F#5": "Fs5.mp3",
-        A5: "A5.mp3",
-        C6: "C6.mp3",
-        "D#6": "Ds6.mp3",
-        "F#6": "Fs6.mp3",
-        A6: "A6.mp3",
-        C7: "C7.mp3",
-        "D#7": "Ds7.mp3",
-        "F#7": "Fs7.mp3",
-        A7: "A7.mp3",
-        C8: "C8.mp3"
-      },
-      baseUrl: "https://tonejs.github.io/audio/salamander/",
-      release: 1, // Match original envelope release
-      onload: () => {
-        console.log("✅ User piano samples loaded successfully");
-      },
-      onerror: (err) => {
-        console.error("❌ Failed to load user piano samples:", err);
-      }
-    }).connect(this.filter);
+    // Wrap in Promise to wait for samples to load
+    loggers.audio.debug('Loading Salamander Grand Piano samples from CDN...');
+    await new Promise<void>((resolve, reject) => {
+      this.sampler = new Tone.Sampler({
+        urls: {
+          A0: "A0.mp3",
+          C1: "C1.mp3",
+          "D#1": "Ds1.mp3",
+          "F#1": "Fs1.mp3",
+          A1: "A1.mp3",
+          C2: "C2.mp3",
+          "D#2": "Ds2.mp3",
+          "F#2": "Fs2.mp3",
+          A2: "A2.mp3",
+          C3: "C3.mp3",
+          "D#3": "Ds3.mp3",
+          "F#3": "Fs3.mp3",
+          A3: "A3.mp3",
+          C4: "C4.mp3",
+          "D#4": "Ds4.mp3",
+          "F#4": "Fs4.mp3",
+          A4: "A4.mp3",
+          C5: "C5.mp3",
+          "D#5": "Ds5.mp3",
+          "F#5": "Fs5.mp3",
+          A5: "A5.mp3",
+          C6: "C6.mp3",
+          "D#6": "Ds6.mp3",
+          "F#6": "Fs6.mp3",
+          A6: "A6.mp3",
+          C7: "C7.mp3",
+          "D#7": "Ds7.mp3",
+          "F#7": "Fs7.mp3",
+          A7: "A7.mp3",
+          C8: "C8.mp3"
+        },
+        baseUrl: "https://tonejs.github.io/audio/salamander/",
+        release: 1, // Match original envelope release
+        onload: () => {
+          const loadTime = Date.now() - startTime;
+          loggers.audio.info('User piano samples loaded successfully', {
+            sampleCount: 31,
+            loadTimeMs: loadTime,
+            baseUrl: "https://tonejs.github.io/audio/salamander/"
+          });
+          resolve();
+        },
+        onerror: (err) => {
+          loggers.audio.error('Failed to load user piano samples', {
+            error: err instanceof Error ? err.message : String(err),
+            baseUrl: "https://tonejs.github.io/audio/salamander/"
+          });
+          reject(err);
+        }
+      }).connect(this.filter);
+    });
 
     this.initialized = true;
+    loggers.audio.info('AudioEngine initialization complete');
   }
 
   /**
@@ -104,7 +129,7 @@ export class AudioEngine {
    */
   playNote(options: PlayNoteOptions): void {
     if (!this.sampler || !this.initialized) {
-      console.warn('AudioEngine not initialized');
+      loggers.audio.warn('AudioEngine not initialized - cannot play note');
       return;
     }
 
@@ -131,6 +156,16 @@ export class AudioEngine {
       now,
       adjustedVelocity
     );
+
+    // Log note playback details (only in debug mode)
+    loggers.audio.debug('Note played', {
+      note: noteName,
+      accuracy: accuracy.toFixed(2),
+      detuningCents: this.sampler.detune.value.toFixed(1),
+      filterFreq: this.filter ? this.filter.frequency.value.toFixed(0) : 'N/A',
+      velocity: adjustedVelocity.toFixed(2),
+      duration: duration.toFixed(2)
+    });
   }
 
   /**

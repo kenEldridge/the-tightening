@@ -23,7 +23,12 @@
       "Bash(timeout /t 5 /nobreak)",
       "Bash(ping:*)",
       "Bash(dir:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash(tasklist:*)",
+      "WebFetch(domain:bitmidi.com)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(where:*)"
     ],
     "deny": [],
     "ask": []

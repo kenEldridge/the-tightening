@@ -27,6 +27,11 @@ export const SONG_LIBRARY: SongLibrary = {
     url: '/songs/canon-in-d.mid',
     trackIndex: 0,
   },
+  'hey-jude': {
+    name: 'Hey Jude',
+    url: '/songs/hey-jude.mid',
+    trackIndex: 0,
+  },
   // TODO: Add more songs as we download them
   // 'fur-elise': {
   //   name: 'Für Elise',

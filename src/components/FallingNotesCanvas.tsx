@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import type { MelodyNote } from '../utils/midiParser';
+import type { MelodyNote, SongSegment } from '../utils/midiParser';
 import type { AppConfig } from '../config/AppConfig';
 
 export interface FallingNote {
@@ -32,6 +32,10 @@ export interface FallingNotesCanvasProps {
   height: number;
   // Look-ahead time (how many seconds ahead to show notes)
   lookAhead?: number;
+  // Song segments (for visual markers)
+  segments?: SongSegment[];
+  // Currently selected segment
+  currentSegment?: SongSegment | null;
 }
 
 export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
@@ -43,6 +47,8 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
   width,
   height,
   lookAhead = 3, // Show 3 seconds ahead by default
+  segments = [],
+  currentSegment = null,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -75,6 +81,51 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
       ctx.lineTo(width, hitZoneY);
       ctx.stroke();
 
+      // Draw segment boundaries and highlight current segment
+      if (segments.length > 0) {
+        segments.forEach((segment) => {
+          // Calculate Y positions for segment start and end
+          const startTimeDiff = segment.startTime - currentTime;
+          const endTimeDiff = segment.endTime - currentTime;
+
+          // Only draw if segment is in visible range
+          if (endTimeDiff >= 0 && startTimeDiff <= lookAhead) {
+            // Highlight current segment with green tint
+            if (currentSegment && segment.id === currentSegment.id) {
+              const segmentStartY = Math.max(50, hitZoneY - (startTimeDiff / lookAhead) * (hitZoneY - 50));
+              const segmentEndY = Math.min(hitZoneY, hitZoneY - (endTimeDiff / lookAhead) * (hitZoneY - 50));
+
+              ctx.fillStyle = 'rgba(74, 124, 89, 0.15)'; // Green tint
+              ctx.fillRect(0, segmentEndY, width, segmentStartY - segmentEndY);
+            }
+
+            // Draw segment boundary line at end of segment
+            const boundaryY = hitZoneY - (endTimeDiff / lookAhead) * (hitZoneY - 50);
+
+            if (boundaryY >= 50 && boundaryY <= hitZoneY) {
+              ctx.setLineDash([5, 5]); // Dashed line
+              ctx.strokeStyle = currentSegment && segment.id === currentSegment.id
+                ? '#4a7c59' // Green for current segment
+                : '#666'; // Gray for other segments
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(0, boundaryY);
+              ctx.lineTo(width, boundaryY);
+              ctx.stroke();
+              ctx.setLineDash([]); // Reset to solid line
+
+              // Draw segment label
+              ctx.fillStyle = currentSegment && segment.id === currentSegment.id
+                ? '#4a7c59'
+                : '#888';
+              ctx.font = '12px monospace';
+              ctx.textAlign = 'left';
+              ctx.fillText(segment.name, 10, boundaryY - 5);
+            }
+          }
+        });
+      }
+
       // Filter notes that should be visible
       const visibleNotes = notes.filter((note) => {
         const timeDiff = note.time - currentTime;
@@ -104,7 +155,7 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [notes, currentTime, distributionWidth, noteRange, config, width, height, lookAhead]);
+  }, [notes, currentTime, distributionWidth, noteRange, config, width, height, lookAhead, segments, currentSegment]);
 
   return (
     <canvas

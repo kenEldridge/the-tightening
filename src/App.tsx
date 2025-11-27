@@ -8,6 +8,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { WebMidi, Input } from 'webmidi';
 import './App.css';
 
+// Logging
+import { initializeLogger, loggers } from './utils/logger';
+
 // Configuration
 import type { AppConfig } from './config/AppConfig';
 import { loadConfig, saveConfig } from './config/AppConfig';
@@ -27,8 +30,8 @@ import { PracticeControls } from './components/PracticeControls';
 import { TheTighteningLogo } from './components/TheTighteningLogo';
 
 // Data
-import { loadSong } from './data/loadSongs';
-import type { SongData } from './utils/midiParser';
+import { loadSong, SONG_LIBRARY } from './data/loadSongs';
+import type { SongData, SongSegment } from './utils/midiParser';
 
 function App() {
   // Configuration
@@ -61,6 +64,11 @@ function App() {
   const [pressedKeys, setPressedKeys] = useState<Set<number>>(new Set());
   const [currentCorrectNote, setCurrentCorrectNote] = useState<number | null>(null);
 
+  // Song and segment state
+  const [currentSongId, setCurrentSongId] = useState<string>(config.gameplay.currentSong);
+  const [currentSegment, setCurrentSegment] = useState<SongSegment | null>(null);
+  const [isSegmentLoopEnabled, setIsSegmentLoopEnabled] = useState<boolean>(false);
+
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
   const audioEngineRef = useRef<AudioEngine | null>(null);
@@ -69,10 +77,17 @@ function App() {
   const midiInputRef = useRef<Input | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
 
+  // Initialize logger first
+  useEffect(() => {
+    initializeLogger();
+    loggers.app.info('Initializing application...');
+  }, []);
+
   // Initialize core components
   useEffect(() => {
     const init = async () => {
       try {
+        loggers.app.info('Creating core components...');
         // Create core components
         keyMapperRef.current = new AdaptiveKeyMapper(config);
         audioEngineRef.current = new AudioEngine(config);
@@ -84,20 +99,31 @@ function App() {
         );
 
         // Load song
+        loggers.app.info('Loading initial song', { songId: config.gameplay.currentSong });
         const song = await loadSong(config.gameplay.currentSong);
         setSongData(song);
+        loggers.app.info('Song loaded successfully', {
+          name: song.name,
+          noteCount: song.notes.length,
+          duration: song.duration
+        });
 
         // Initialize audio systems (requires user interaction, will do on play)
         setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
 
         // Try to load saved progress
         if (progressTrackerRef.current.loadProgress()) {
-          console.log('Loaded saved progress');
+          loggers.app.info('Loaded saved progress');
         }
 
         setLoading(false);
+        loggers.app.info('Application initialization complete');
       } catch (err) {
-        console.error('Initialization error:', err);
+        const error = err as Error;
+        loggers.app.error('Initialization error', {
+          error: error.message,
+          stack: error.stack
+        });
         setAudioStatus(`Error: ${err}`);
         setLoading(false);
       }
@@ -116,22 +142,35 @@ function App() {
   useEffect(() => {
     const initMidi = async () => {
       try {
+        loggers.midi.info('Initializing WebMIDI...');
         await WebMidi.enable();
 
         if (WebMidi.inputs.length === 0) {
+          loggers.midi.warn('No MIDI devices found');
           setMidiStatus('No MIDI devices found. Connect keyboard and refresh.');
           return;
         }
 
         const input = WebMidi.inputs[0];
         midiInputRef.current = input;
+        loggers.midi.info('MIDI device connected', {
+          name: input.name,
+          manufacturer: input.manufacturer,
+          id: input.id,
+          state: input.state
+        });
         setMidiStatus(`Connected: ${input.name}`);
 
         // Listen for note events
         input.addListener('noteon', handleNoteOn);
         input.addListener('noteoff', handleNoteOff);
+        loggers.midi.debug('MIDI event listeners registered');
       } catch (err) {
         const error = err as Error;
+        loggers.midi.error('MIDI initialization failed', {
+          error: error.message,
+          stack: error.stack
+        });
         setMidiStatus(`MIDI Error: ${error.message}`);
       }
     };
@@ -140,7 +179,8 @@ function App() {
 
     return () => {
       if (midiInputRef.current) {
-        midiInputRef.current.removeListener();
+        midiInputRef.current.removeListener('noteon');
+        midiInputRef.current.removeListener('noteoff');
       }
     };
   }, []);
@@ -148,6 +188,12 @@ function App() {
   // Handle MIDI note on
   const handleNoteOn = useCallback((e: any) => {
     const pressedMidiKey = e.note.number;
+
+    loggers.midi.debug('Note ON', {
+      midi: pressedMidiKey,
+      noteName: e.note.name,
+      velocity: e.note.attack
+    });
 
     // Add to pressed keys
     setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
@@ -163,6 +209,13 @@ function App() {
       pressedMidiKey,
       currentNote.midi
     );
+
+    loggers.app.debug('Key mapped', {
+      pressed: mapping.pressedKey,
+      correct: currentNote.midi,
+      distance: mapping.distance,
+      accuracy: mapping.accuracy.toFixed(2)
+    });
 
     // Play audio with feedback
     audioEngineRef.current.playNote({
@@ -181,6 +234,7 @@ function App() {
 
   // Handle MIDI note off
   const handleNoteOff = useCallback((e: any) => {
+    loggers.midi.debug('Note OFF', { midi: e.note.number });
     setPressedKeys((prev) => {
       const next = new Set(prev);
       next.delete(e.note.number);
@@ -245,19 +299,29 @@ function App() {
 
     try {
       if (!isPlaying) {
+        loggers.app.info('Starting playback...');
+
         // Show loading state if samples not loaded yet
         if (!samplesLoaded) {
           setAudioStatus('Loading piano samples...');
+          loggers.app.info('Loading piano samples for first time...');
         }
 
-        // Initialize audio (loads samples)
+        const startTime = Date.now();
+
+        // Initialize audio (loads samples) - now properly waits for completion
         await audioEngineRef.current.initialize();
         await referenceMelodyRef.current.initialize();
+
+        const loadTime = Date.now() - startTime;
+        loggers.app.info('Piano samples loaded', { loadTimeMs: loadTime });
 
         setSamplesLoaded(true);
 
         // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
-        referenceMelodyRef.current.setTempo(songData.tempo * config.gameplay.tempoMultiplier);
+        const tempo = songData.tempo * config.gameplay.tempoMultiplier;
+        referenceMelodyRef.current.setTempo(tempo);
+        loggers.app.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
 
         // Load song into reference melody player (uses current Transport.bpm)
         referenceMelodyRef.current.loadSong(songData);
@@ -266,15 +330,21 @@ function App() {
         referenceMelodyRef.current.start();
         setIsPlaying(true);
         setAudioStatus('Playing');
+        loggers.app.info('Playback started');
       } else {
         // Pause
+        loggers.app.info('Pausing playback');
         referenceMelodyRef.current.pause();
         setIsPlaying(false);
         setAudioStatus('Paused');
       }
     } catch (err) {
-      console.error('Playback error:', err);
-      setAudioStatus(`Error: ${err}`);
+      const error = err as Error;
+      loggers.app.error('Playback error', {
+        error: error.message,
+        stack: error.stack
+      });
+      setAudioStatus(`Error loading samples: ${err}`);
       setSamplesLoaded(false); // Reset on error
     }
   };
@@ -348,6 +418,87 @@ function App() {
     }));
   };
 
+  // Song change handler
+  const handleSongChange = async (songId: string) => {
+    loggers.app.info('Changing song', { newSongId: songId });
+
+    // Stop current playback
+    handleStop();
+
+    // Update config
+    setConfig((prev) => ({
+      ...prev,
+      gameplay: { ...prev.gameplay, currentSong: songId },
+    }));
+
+    // Load new song
+    setLoading(true);
+    try {
+      const song = await loadSong(songId);
+      setSongData(song);
+      loggers.app.info('New song loaded', {
+        name: song.name,
+        noteCount: song.notes.length,
+        duration: song.duration,
+        segmentCount: song.segments.length
+      });
+
+      // Reset segment selection
+      setCurrentSegment(null);
+      setIsSegmentLoopEnabled(false);
+
+      // Reset progress
+      if (progressTrackerRef.current) {
+        progressTrackerRef.current.reset();
+        setStats(progressTrackerRef.current.getStats());
+        loggers.app.info('Progress reset for new song');
+      }
+
+      setCurrentSongId(songId);
+      setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
+      setLoading(false);
+    } catch (err) {
+      const error = err as Error;
+      loggers.app.error('Failed to load song', {
+        songId,
+        error: error.message,
+        stack: error.stack
+      });
+      setAudioStatus(`Error loading song: ${err}`);
+      setLoading(false);
+    }
+  };
+
+  // Segment change handler
+  const handleSegmentChange = (segment: SongSegment | null) => {
+    setCurrentSegment(segment);
+
+    if (referenceMelodyRef.current) {
+      referenceMelodyRef.current.setLoopSegment(segment);
+    }
+
+    // If segment selected, enable loop by default
+    if (segment) {
+      setIsSegmentLoopEnabled(true);
+    } else {
+      setIsSegmentLoopEnabled(false);
+    }
+  };
+
+  // Segment loop toggle handler
+  const handleSegmentLoopToggle = () => {
+    const newState = !isSegmentLoopEnabled;
+    setIsSegmentLoopEnabled(newState);
+
+    if (referenceMelodyRef.current) {
+      if (newState && currentSegment) {
+        referenceMelodyRef.current.setLoopSegment(currentSegment);
+      } else {
+        referenceMelodyRef.current.setLoopSegment(null);
+      }
+    }
+  };
+
   // Save config when it changes
   useEffect(() => {
     saveConfig(config);
@@ -402,6 +553,8 @@ function App() {
               width={800}
               height={400}
               lookAhead={3}
+              segments={songData.segments}
+              currentSegment={currentSegment}
             />
           </div>
 
@@ -437,6 +590,14 @@ function App() {
             autoProgression={config.progression.autoMode}
             onAutoProgressionToggle={handleAutoProgressionToggle}
             stats={stats}
+            availableSongs={Object.keys(SONG_LIBRARY)}
+            currentSong={currentSongId}
+            onSongChange={handleSongChange}
+            segments={songData?.segments || []}
+            currentSegment={currentSegment}
+            onSegmentChange={handleSegmentChange}
+            isSegmentLoopEnabled={isSegmentLoopEnabled}
+            onSegmentLoopToggle={handleSegmentLoopToggle}
           />
         </div>
       </div>

@@ -9,6 +9,7 @@ import type { AppConfig } from '../config/AppConfig';
 import { saveConfig } from '../config/AppConfig';
 import { AdaptiveKeyMapper } from './AdaptiveKeyMapper';
 import { ReferenceMelodyPlayer } from './ReferenceMelody';
+import { loggers } from '../utils/logger';
 
 export interface PerformanceStats {
   // Total notes played
@@ -63,6 +64,11 @@ export class ProgressTracker {
   recordNote(accuracy: number): void {
     const now = Date.now();
 
+    // Accumulate practice time (only when notes are played)
+    const timeDelta = now - this.lastUpdateTime;
+    this.totalPracticeTime += timeDelta / 1000;
+    this.lastUpdateTime = now;
+
     // Add to history
     this.noteHistory.push({
       accuracy,
@@ -101,7 +107,18 @@ export class ProgressTracker {
       recentAccuracy > this.config.progression.accuracyThreshold &&
       this.noteHistory.length >= this.config.progression.consistencyWindow
     ) {
+      const oldProgress = this.keyMapper.getProgress();
       this.keyMapper.tightenDistribution();
+      const newProgress = this.keyMapper.getProgress();
+
+      loggers.progress.info('Auto-progression triggered', {
+        recentAccuracy: recentAccuracy.toFixed(3),
+        threshold: this.config.progression.accuracyThreshold,
+        consistencyWindow: this.config.progression.consistencyWindow,
+        totalNotes: this.noteHistory.length,
+        oldProgress: (oldProgress * 100).toFixed(1) + '%',
+        newProgress: (newProgress * 100).toFixed(1) + '%'
+      });
     }
   }
 
@@ -131,11 +148,7 @@ export class ProgressTracker {
    * Get current performance statistics
    */
   getStats(): PerformanceStats {
-    const now = Date.now();
-    const sessionTime = (now - this.lastUpdateTime) / 1000;
-    this.totalPracticeTime += sessionTime;
-    this.lastUpdateTime = now;
-
+    // No time accumulation here - just return current stats
     return {
       totalNotes: this.noteHistory.length,
       averageAccuracy: this.getAverageAccuracy(),
@@ -151,6 +164,8 @@ export class ProgressTracker {
    * Reset all progress
    */
   reset(): void {
+    const oldStats = this.getStats();
+
     this.noteHistory = [];
     this.currentStreak = 0;
     this.bestStreak = 0;
@@ -158,13 +173,24 @@ export class ProgressTracker {
     this.totalPracticeTime = 0;
     this.lastUpdateTime = Date.now();
     this.keyMapper.reset();
+
+    loggers.progress.info('Progress reset', {
+      previousTotalNotes: oldStats.totalNotes,
+      previousAverageAccuracy: oldStats.averageAccuracy.toFixed(3),
+      previousBestStreak: oldStats.bestStreak,
+      previousPracticeTime: oldStats.practiceTime.toFixed(1) + 's',
+      previousProgress: oldStats.progress.toFixed(1) + '%'
+    });
   }
 
   /**
    * Save progress to localStorage
    */
   saveProgress(): void {
-    if (!this.config.progression.persistProgress) return;
+    if (!this.config.progression.persistProgress) {
+      loggers.progress.debug('Progress save skipped (persistProgress disabled)');
+      return;
+    }
 
     const progressData = {
       noteHistory: this.noteHistory,
@@ -177,17 +203,31 @@ export class ProgressTracker {
 
     localStorage.setItem('musicLearningAppProgress', JSON.stringify(progressData));
     saveConfig(this.config);
+
+    const stats = this.getStats();
+    loggers.progress.info('Progress saved to localStorage', {
+      totalNotes: stats.totalNotes,
+      averageAccuracy: stats.averageAccuracy.toFixed(3),
+      progress: stats.progress.toFixed(1) + '%',
+      practiceTime: stats.practiceTime.toFixed(1) + 's'
+    });
   }
 
   /**
    * Load progress from localStorage
    */
   loadProgress(): boolean {
-    if (!this.config.progression.persistProgress) return false;
+    if (!this.config.progression.persistProgress) {
+      loggers.progress.debug('Progress load skipped (persistProgress disabled)');
+      return false;
+    }
 
     try {
       const saved = localStorage.getItem('musicLearningAppProgress');
-      if (!saved) return false;
+      if (!saved) {
+        loggers.progress.info('No saved progress found in localStorage');
+        return false;
+      }
 
       const progressData = JSON.parse(saved);
 
@@ -201,9 +241,20 @@ export class ProgressTracker {
         this.keyMapper.deserialize(progressData.keyMapperState);
       }
 
+      const stats = this.getStats();
+      loggers.progress.info('Progress loaded from localStorage', {
+        totalNotes: stats.totalNotes,
+        averageAccuracy: stats.averageAccuracy.toFixed(3),
+        progress: stats.progress.toFixed(1) + '%',
+        practiceTime: stats.practiceTime.toFixed(1) + 's',
+        lastSaved: new Date(progressData.lastSaved).toISOString()
+      });
+
       return true;
     } catch (err) {
-      console.error('Failed to load progress:', err);
+      loggers.progress.error('Failed to load progress from localStorage', {
+        error: err instanceof Error ? err.message : String(err)
+      });
       return false;
     }
   }
@@ -235,6 +286,15 @@ export class ProgressTracker {
    * @param amount - Amount to tighten (optional)
    */
   manualProgressionStep(amount?: number): void {
+    const oldProgress = this.keyMapper.getProgress();
     this.keyMapper.tightenDistribution(amount);
+    const newProgress = this.keyMapper.getProgress();
+
+    loggers.progress.info('Manual progression step', {
+      amount: amount ? amount.toFixed(3) : 'default',
+      oldProgress: (oldProgress * 100).toFixed(1) + '%',
+      newProgress: (newProgress * 100).toFixed(1) + '%',
+      recentAccuracy: this.getRecentAccuracy().toFixed(3)
+    });
   }
 }

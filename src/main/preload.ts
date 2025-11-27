@@ -1,9 +1,16 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import log from 'electron-log';
 
-// Phase 0: No IPC needed, but preload must exist for security
-// Future: Expose safe APIs here for renderer process communication
-
+// Expose safe APIs for renderer process communication
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Placeholder for future APIs
-  platform: process.platform
+  platform: process.platform,
+
+  // Log file access
+  getLogPath: () => {
+    return log.transports.file.getFile().path;
+  },
+
+  openLogFolder: () => {
+    ipcRenderer.send('open-log-folder');
+  }
 });
