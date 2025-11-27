@@ -12,7 +12,7 @@
 
 import * as Tone from 'tone';
 import type { AppConfig } from '../config/AppConfig';
-import { loggers } from '../utils/logger';
+// import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export interface PlayNoteOptions {
   // MIDI note number to play
@@ -43,10 +43,10 @@ export class AudioEngine {
     if (this.initialized) return;
 
     const startTime = Date.now();
-    loggers.audio.info('Initializing AudioEngine...');
+    console.info('[AudioEngine] Initializing AudioEngine...');
 
     await Tone.start();
-    loggers.audio.debug('Tone.js audio context started', {
+    console.log('[AudioEngine] Tone.js audio context started', {
       state: Tone.context.state,
       sampleRate: Tone.context.sampleRate,
       latency: Tone.context.latencyHint
@@ -58,11 +58,11 @@ export class AudioEngine {
       frequency: 10000, // Start bright (no filtering)
       rolloff: -24, // Steep rolloff for pronounced effect
     }).toDestination();
-    loggers.audio.debug('Low-pass filter created');
+    console.log('[AudioEngine] Low-pass filter created');
 
     // Create sampler with Salamander Grand Piano samples
     // Wrap in Promise to wait for samples to load
-    loggers.audio.debug('Loading Salamander Grand Piano samples from CDN...');
+    console.log('[AudioEngine] Loading Salamander Grand Piano samples from CDN...');
     await new Promise<void>((resolve, reject) => {
       this.sampler = new Tone.Sampler({
         urls: {
@@ -101,7 +101,7 @@ export class AudioEngine {
         release: 1, // Match original envelope release
         onload: () => {
           const loadTime = Date.now() - startTime;
-          loggers.audio.info('User piano samples loaded successfully', {
+          console.info('[AudioEngine] User piano samples loaded successfully', {
             sampleCount: 31,
             loadTimeMs: loadTime,
             baseUrl: "https://tonejs.github.io/audio/salamander/"
@@ -109,7 +109,7 @@ export class AudioEngine {
           resolve();
         },
         onerror: (err) => {
-          loggers.audio.error('Failed to load user piano samples', {
+          console.error('[AudioEngine] Failed to load user piano samples', {
             error: err instanceof Error ? err.message : String(err),
             baseUrl: "https://tonejs.github.io/audio/salamander/"
           });
@@ -119,7 +119,7 @@ export class AudioEngine {
     });
 
     this.initialized = true;
-    loggers.audio.info('AudioEngine initialization complete');
+    console.info('[AudioEngine] AudioEngine initialization complete');
   }
 
   /**
@@ -129,7 +129,7 @@ export class AudioEngine {
    */
   playNote(options: PlayNoteOptions): void {
     if (!this.sampler || !this.initialized) {
-      loggers.audio.warn('AudioEngine not initialized - cannot play note');
+      console.warn('[AudioEngine] AudioEngine not initialized - cannot play note');
       return;
     }
 
@@ -158,7 +158,7 @@ export class AudioEngine {
     );
 
     // Log note playback details (only in debug mode)
-    loggers.audio.debug('Note played', {
+    console.log('[AudioEngine] Note played', {
       note: noteName,
       accuracy: accuracy.toFixed(2),
       detuningCents: this.sampler.detune.value.toFixed(1),

@@ -9,7 +9,7 @@ import type { AppConfig } from '../config/AppConfig';
 import { saveConfig } from '../config/AppConfig';
 import { AdaptiveKeyMapper } from './AdaptiveKeyMapper';
 import { ReferenceMelodyPlayer } from './ReferenceMelody';
-import { loggers } from '../utils/logger';
+// import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export interface PerformanceStats {
   // Total notes played
@@ -111,7 +111,7 @@ export class ProgressTracker {
       this.keyMapper.tightenDistribution();
       const newProgress = this.keyMapper.getProgress();
 
-      loggers.progress.info('Auto-progression triggered', {
+      console.info('[ProgressTracker] Auto-progression triggered', {
         recentAccuracy: recentAccuracy.toFixed(3),
         threshold: this.config.progression.accuracyThreshold,
         consistencyWindow: this.config.progression.consistencyWindow,
@@ -174,7 +174,7 @@ export class ProgressTracker {
     this.lastUpdateTime = Date.now();
     this.keyMapper.reset();
 
-    loggers.progress.info('Progress reset', {
+    console.info('[ProgressTracker] Progress reset', {
       previousTotalNotes: oldStats.totalNotes,
       previousAverageAccuracy: oldStats.averageAccuracy.toFixed(3),
       previousBestStreak: oldStats.bestStreak,
@@ -188,7 +188,7 @@ export class ProgressTracker {
    */
   saveProgress(): void {
     if (!this.config.progression.persistProgress) {
-      loggers.progress.debug('Progress save skipped (persistProgress disabled)');
+      console.log('[ProgressTracker] Progress save skipped (persistProgress disabled)');
       return;
     }
 
@@ -205,7 +205,7 @@ export class ProgressTracker {
     saveConfig(this.config);
 
     const stats = this.getStats();
-    loggers.progress.info('Progress saved to localStorage', {
+    console.info('[ProgressTracker] Progress saved to localStorage', {
       totalNotes: stats.totalNotes,
       averageAccuracy: stats.averageAccuracy.toFixed(3),
       progress: stats.progress.toFixed(1) + '%',
@@ -218,14 +218,14 @@ export class ProgressTracker {
    */
   loadProgress(): boolean {
     if (!this.config.progression.persistProgress) {
-      loggers.progress.debug('Progress load skipped (persistProgress disabled)');
+      console.log('[ProgressTracker] Progress load skipped (persistProgress disabled)');
       return false;
     }
 
     try {
       const saved = localStorage.getItem('musicLearningAppProgress');
       if (!saved) {
-        loggers.progress.info('No saved progress found in localStorage');
+        console.info('[ProgressTracker] No saved progress found in localStorage');
         return false;
       }
 
@@ -242,7 +242,7 @@ export class ProgressTracker {
       }
 
       const stats = this.getStats();
-      loggers.progress.info('Progress loaded from localStorage', {
+      console.info('[ProgressTracker] Progress loaded from localStorage', {
         totalNotes: stats.totalNotes,
         averageAccuracy: stats.averageAccuracy.toFixed(3),
         progress: stats.progress.toFixed(1) + '%',
@@ -252,7 +252,7 @@ export class ProgressTracker {
 
       return true;
     } catch (err) {
-      loggers.progress.error('Failed to load progress from localStorage', {
+      console.error('[ProgressTracker] Failed to load progress from localStorage', {
         error: err instanceof Error ? err.message : String(err)
       });
       return false;
@@ -290,7 +290,7 @@ export class ProgressTracker {
     this.keyMapper.tightenDistribution(amount);
     const newProgress = this.keyMapper.getProgress();
 
-    loggers.progress.info('Manual progression step', {
+    console.info('[ProgressTracker] Manual progression step', {
       amount: amount ? amount.toFixed(3) : 'default',
       oldProgress: (oldProgress * 100).toFixed(1) + '%',
       newProgress: (newProgress * 100).toFixed(1) + '%',

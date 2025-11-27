@@ -28,7 +28,11 @@
       "WebFetch(domain:bitmidi.com)",
       "Bash(node --version:*)",
       "Bash(npm --version:*)",
-      "Bash(where:*)"
+      "Bash(where:*)",
+      "Bash(npm run build:*)",
+      "Bash(git commit:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

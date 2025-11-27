@@ -17,7 +17,7 @@
 import * as Tone from 'tone';
 import type { AppConfig } from '../config/AppConfig';
 import type { SongData, MelodyNote, SongSegment } from '../utils/midiParser';
-import { loggers } from '../utils/logger';
+// import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export class ReferenceMelodyPlayer {
   private sampler: Tone.Sampler | null = null;
@@ -41,13 +41,13 @@ export class ReferenceMelodyPlayer {
     if (this.initialized) return;
 
     const startTime = Date.now();
-    loggers.reference.info('Initializing ReferenceMelodyPlayer...');
+    console.info('[ReferenceMelody] Initializing ReferenceMelodyPlayer...');
 
     await Tone.start();
 
     // Create sampler with same Salamander Grand Piano samples as user
     // Wrap in Promise to wait for samples to load
-    loggers.reference.debug('Loading reference piano samples from CDN...');
+    console.log('[ReferenceMelody] Loading reference piano samples from CDN...');
     await new Promise<void>((resolve, reject) => {
       this.sampler = new Tone.Sampler({
         urls: {
@@ -87,7 +87,7 @@ export class ReferenceMelodyPlayer {
         volume: Tone.gainToDb(this.currentVolume),
         onload: () => {
           const loadTime = Date.now() - startTime;
-          loggers.reference.info('Reference piano samples loaded successfully', {
+          console.info('[ReferenceMelody] Reference piano samples loaded successfully', {
             sampleCount: 31,
             loadTimeMs: loadTime,
             initialVolume: this.currentVolume,
@@ -96,7 +96,7 @@ export class ReferenceMelodyPlayer {
           resolve();
         },
         onerror: (err) => {
-          loggers.reference.error('Failed to load reference piano samples', {
+          console.error('[ReferenceMelody] Failed to load reference piano samples', {
             error: err instanceof Error ? err.message : String(err),
             baseUrl: "https://tonejs.github.io/audio/salamander/"
           });
@@ -106,7 +106,7 @@ export class ReferenceMelodyPlayer {
     });
 
     this.initialized = true;
-    loggers.reference.info('ReferenceMelodyPlayer initialization complete');
+    console.info('[ReferenceMelody] ReferenceMelodyPlayer initialization complete');
   }
 
   /**
@@ -114,11 +114,11 @@ export class ReferenceMelodyPlayer {
    */
   loadSong(songData: SongData): void {
     if (!this.initialized || !this.sampler) {
-      loggers.reference.warn('Cannot load song: ReferenceMelodyPlayer not initialized');
+      console.warn('[ReferenceMelody] Cannot load song: ReferenceMelodyPlayer not initialized');
       return;
     }
 
-    loggers.reference.info('Loading song', {
+    console.info('[ReferenceMelody] Loading song', {
       name: songData.name,
       tempo: songData.tempo,
       duration: songData.duration.toFixed(2),
@@ -161,7 +161,7 @@ export class ReferenceMelodyPlayer {
     this.currentSegment = null;
     this.isSegmentLoopEnabled = false;
 
-    loggers.reference.debug('Tone.Part created', {
+    console.log('[ReferenceMelody] Tone.Part created', {
       eventCount: events.length,
       loopStart: this.part.loopStart,
       loopEnd: this.part.loopEnd,
@@ -174,12 +174,12 @@ export class ReferenceMelodyPlayer {
    */
   start(): void {
     if (!this.part) {
-      loggers.reference.warn('Cannot start: no song loaded');
+      console.warn('[ReferenceMelody] Cannot start: no song loaded');
       return;
     }
 
     // Log Transport state BEFORE starting (critical for debugging timing issues)
-    loggers.reference.info('Starting reference melody', {
+    console.info('[ReferenceMelody] Starting reference melody', {
       transportStateBefore: Tone.Transport.state,
       transportSeconds: Tone.Transport.seconds,
       tempo: Tone.Transport.bpm.value,
@@ -204,7 +204,7 @@ export class ReferenceMelodyPlayer {
     }
 
     // Log Transport state AFTER starting
-    loggers.reference.debug('Reference melody started', {
+    console.log('[ReferenceMelody] Reference melody started', {
       transportStateAfter: Tone.Transport.state,
       transportSeconds: Tone.Transport.seconds
     });
@@ -214,7 +214,7 @@ export class ReferenceMelodyPlayer {
    * Stop playback
    */
   stop(): void {
-    loggers.reference.info('Stopping reference melody', {
+    console.info('[ReferenceMelody] Stopping reference melody', {
       transportState: Tone.Transport.state,
       transportSeconds: Tone.Transport.seconds
     });
@@ -232,7 +232,7 @@ export class ReferenceMelodyPlayer {
     // Reset time to beginning
     Tone.Transport.seconds = 0;
 
-    loggers.reference.debug('Reference melody stopped', {
+    console.log('[ReferenceMelody] Reference melody stopped', {
       transportState: Tone.Transport.state
     });
   }
@@ -242,7 +242,7 @@ export class ReferenceMelodyPlayer {
    */
   pause(): void {
     if (Tone.Transport.state === 'started') {
-      loggers.reference.info('Pausing reference melody', {
+      console.info('[ReferenceMelody] Pausing reference melody', {
         transportSeconds: Tone.Transport.seconds
       });
       Tone.Transport.pause();
@@ -255,7 +255,7 @@ export class ReferenceMelodyPlayer {
   resume(): void {
     // Transport.start() resumes from paused position automatically
     if (Tone.Transport.state === 'paused') {
-      loggers.reference.info('Resuming reference melody', {
+      console.info('[ReferenceMelody] Resuming reference melody', {
         transportSeconds: Tone.Transport.seconds
       });
       Tone.Transport.start();
@@ -266,7 +266,7 @@ export class ReferenceMelodyPlayer {
    * Seek to a specific time
    */
   seek(timeInSeconds: number): void {
-    loggers.reference.debug('Seeking to time', {
+    console.log('[ReferenceMelody] Seeking to time', {
       fromSeconds: Tone.Transport.seconds,
       toSeconds: timeInSeconds
     });
@@ -287,7 +287,7 @@ export class ReferenceMelodyPlayer {
       this.part.loopEnd = segment.endTime;
       this.isSegmentLoopEnabled = true;
 
-      loggers.reference.info('Enabling segment loop', {
+      console.info('[ReferenceMelody] Enabling segment loop', {
         segmentName: segment.name,
         startTime: segment.startTime.toFixed(2),
         endTime: segment.endTime.toFixed(2),
@@ -298,7 +298,7 @@ export class ReferenceMelodyPlayer {
       // If playing, seek to segment start
       if (Tone.Transport.state === 'started') {
         Tone.Transport.seconds = segment.startTime;
-        loggers.reference.debug('Seeked to segment start');
+        console.log('[ReferenceMelody] Seeked to segment start');
       }
     } else {
       // Loop entire song
@@ -306,7 +306,7 @@ export class ReferenceMelodyPlayer {
       this.part.loopEnd = this.songDuration;
       this.isSegmentLoopEnabled = false;
 
-      loggers.reference.info('Disabling segment loop (looping entire song)', {
+      console.info('[ReferenceMelody] Disabling segment loop (looping entire song)', {
         songDuration: this.songDuration.toFixed(2)
       });
     }
@@ -359,7 +359,7 @@ export class ReferenceMelodyPlayer {
 
     // Log volume fade (only if volume changed significantly)
     if (Math.abs(this.currentVolume - oldVolume) > 0.01) {
-      loggers.reference.debug('Reference melody volume faded', {
+      console.log('[ReferenceMelody] Reference melody volume faded', {
         accuracy: accuracy.toFixed(3),
         oldVolume: oldVolume.toFixed(3),
         newVolume: this.currentVolume.toFixed(3),
@@ -380,7 +380,7 @@ export class ReferenceMelodyPlayer {
       this.sampler.volume.value = Tone.gainToDb(this.currentVolume);
     }
 
-    loggers.reference.info('Reference melody volume set manually', {
+    console.info('[ReferenceMelody] Reference melody volume set manually', {
       oldVolume: oldVolume.toFixed(3),
       newVolume: this.currentVolume.toFixed(3)
     });
@@ -400,7 +400,7 @@ export class ReferenceMelodyPlayer {
     const oldBpm = Tone.Transport.bpm.value;
     Tone.Transport.bpm.value = bpm;
 
-    loggers.reference.info('Reference melody tempo changed', {
+    console.info('[ReferenceMelody] Reference melody tempo changed', {
       oldBpm: oldBpm.toFixed(1),
       newBpm: bpm.toFixed(1)
     });

@@ -5,7 +5,7 @@
  * Adjust these values to control behavior, audio feedback, visual effects, and progression.
  */
 
-import { loggers } from '../utils/logger';
+// import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export interface AppConfig {
   // ============================================
@@ -224,7 +224,7 @@ export const defaultConfig: AppConfig = {
  */
 export function loadConfig(): AppConfig {
   if (typeof window === 'undefined') {
-    loggers.config.debug('Config load skipped (no window object)');
+    console.log('[AppConfig] Config load skipped (no window object)');
     return defaultConfig;
   }
 
@@ -232,16 +232,16 @@ export function loadConfig(): AppConfig {
     const saved = localStorage.getItem('musicLearningAppConfig');
     if (saved) {
       const config = { ...defaultConfig, ...JSON.parse(saved) };
-      loggers.config.info('Config loaded from localStorage', {
+      console.info('[AppConfig] Config loaded from localStorage', {
         distributionWidth: config.distribution.initialWidth,
         autoMode: config.progression.autoMode,
         currentSong: config.gameplay.currentSong
       });
       return config;
     }
-    loggers.config.info('No saved config found, using defaults');
+    console.info('[AppConfig] No saved config found, using defaults');
   } catch (err) {
-    loggers.config.warn('Failed to load config from localStorage', {
+    console.warn('[AppConfig] Failed to load config from localStorage', {
       error: err instanceof Error ? err.message : String(err)
     });
   }
@@ -254,19 +254,19 @@ export function loadConfig(): AppConfig {
  */
 export function saveConfig(config: AppConfig): void {
   if (typeof window === 'undefined') {
-    loggers.config.debug('Config save skipped (no window object)');
+    console.log('[AppConfig] Config save skipped (no window object)');
     return;
   }
 
   try {
     localStorage.setItem('musicLearningAppConfig', JSON.stringify(config));
-    loggers.config.info('Config saved to localStorage', {
+    console.info('[AppConfig] Config saved to localStorage', {
       distributionWidth: config.distribution.initialWidth,
       autoMode: config.progression.autoMode,
       currentSong: config.gameplay.currentSong
     });
   } catch (err) {
-    loggers.config.error('Failed to save config to localStorage', {
+    console.error('[AppConfig] Failed to save config to localStorage', {
       error: err instanceof Error ? err.message : String(err)
     });
   }
@@ -278,9 +278,9 @@ export function saveConfig(config: AppConfig): void {
 export function resetConfig(): AppConfig {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('musicLearningAppConfig');
-    loggers.config.info('Config reset to defaults');
+    console.info('[AppConfig] Config reset to defaults');
   } else {
-    loggers.config.debug('Config reset skipped (no window object)');
+    console.log('[AppConfig] Config reset skipped (no window object)');
   }
   return defaultConfig;
 }
