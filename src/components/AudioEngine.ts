@@ -27,6 +27,7 @@ export interface PlayNoteOptions {
 
 export class AudioEngine {
   private sampler: Tone.Sampler | null = null;
+  private pitchShift: Tone.PitchShift | null = null;
   private filter: Tone.Filter | null = null;
   private config: AppConfig;
   private initialized = false;
@@ -52,7 +53,7 @@ export class AudioEngine {
       latency: Tone.context.latencyHint
     });
 
-    // Create low-pass filter for timbre degradation
+    // Create low-pass filter for timbre degradation (connects to destination)
     this.filter = new Tone.Filter({
       type: 'lowpass',
       frequency: 10000, // Start bright (no filtering)
@@ -60,8 +61,18 @@ export class AudioEngine {
     }).toDestination();
     console.log('[AudioEngine] Low-pass filter created');
 
+    // Create PitchShift for detuning feedback (connects to filter)
+    // Note: Tone.Sampler doesn't have a detune property like Synth, so we use PitchShift
+    this.pitchShift = new Tone.PitchShift({
+      pitch: 0, // No shift initially (in semitones)
+      windowSize: 0.1, // Balance between quality and latency
+      delayTime: 0,
+    });
+    this.pitchShift.connect(this.filter);
+    console.log('[AudioEngine] PitchShift effect created');
+
     // Create sampler with Salamander Grand Piano samples
-    // Wrap in Promise to wait for samples to load
+    // Signal chain: Sampler → PitchShift → Filter → Destination
     console.log('[AudioEngine] Loading Salamander Grand Piano samples from CDN...');
     await new Promise<void>((resolve, reject) => {
       this.sampler = new Tone.Sampler({
@@ -115,7 +126,7 @@ export class AudioEngine {
           });
           reject(err);
         }
-      }).connect(this.filter);
+      }).connect(this.pitchShift!); // Connect to PitchShift (not filter directly)
     });
 
     this.initialized = true;
@@ -161,27 +172,32 @@ export class AudioEngine {
     console.log('[AudioEngine] Note played', {
       note: noteName,
       accuracy: accuracy.toFixed(2),
-      detuningCents: this.sampler.detune.value.toFixed(1),
-      filterFreq: this.filter ? this.filter.frequency.value.toFixed(0) : 'N/A',
+      detuningCents: this.pitchShift ? (this.pitchShift.pitch * 100).toFixed(1) : 'N/A',
+      filterFreq: this.filter?.frequency ? this.filter.frequency.value.toFixed(0) : 'N/A',
       velocity: adjustedVelocity.toFixed(2),
       duration: duration.toFixed(2)
     });
   }
 
   /**
-   * Apply detuning based on accuracy
+   * Apply detuning based on accuracy using PitchShift effect
+   * Note: Tone.Sampler doesn't have a detune property, so we use PitchShift
    *
    * @param accuracy - Accuracy score (0-1)
    */
   private applyDetuning(accuracy: number): void {
-    if (!this.sampler || !this.config.audioFeedback.detuning.enabled) {
-      if (this.sampler) this.sampler.detune.value = 0;
+    if (!this.pitchShift) {
+      return;
+    }
+
+    if (!this.config.audioFeedback.detuning.enabled) {
+      this.pitchShift.pitch = 0;
       return;
     }
 
     // Perfect accuracy = no detuning
     if (accuracy >= 0.999) {
-      this.sampler.detune.value = 0;
+      this.pitchShift.pitch = 0;
       return;
     }
 
@@ -197,8 +213,9 @@ export class AudioEngine {
     const direction = Math.random() > 0.5 ? 1 : -1;
     const actualCents = cents * direction;
 
-    // Apply detuning directly in cents (much simpler than frequency math!)
-    this.sampler.detune.value = actualCents;
+    // Convert cents to semitones (100 cents = 1 semitone)
+    // PitchShift.pitch is in semitones
+    this.pitchShift.pitch = actualCents / 100;
   }
 
   /**
@@ -208,8 +225,13 @@ export class AudioEngine {
    * @param accuracy - Accuracy score (0-1)
    */
   private applyTimbreShift(accuracy: number): void {
-    if (!this.filter || !this.config.audioFeedback.timbre.enabled) {
-      if (this.filter) this.filter.frequency.value = 10000;
+    // Guard against undefined filter or frequency property
+    if (!this.filter || !this.filter.frequency) {
+      return;
+    }
+
+    if (!this.config.audioFeedback.timbre.enabled) {
+      this.filter.frequency.value = 10000;
       return;
     }
 
@@ -311,6 +333,10 @@ export class AudioEngine {
     if (this.sampler) {
       this.sampler.dispose();
       this.sampler = null;
+    }
+    if (this.pitchShift) {
+      this.pitchShift.dispose();
+      this.pitchShift = null;
     }
     if (this.filter) {
       this.filter.dispose();

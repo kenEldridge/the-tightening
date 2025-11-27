@@ -5,8 +5,20 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { WebMidi, Input } from 'webmidi';
 import './App.css';
+
+// Type declaration for Electron API exposed via preload
+declare global {
+  interface Window {
+    electronAPI: {
+      platform: string;
+      onMidiNoteOn: (callback: (data: { note: number; velocity: number; channel: number }) => void) => void;
+      onMidiNoteOff: (callback: (data: { note: number }) => void) => void;
+      onMidiStatus: (callback: (data: { connected: boolean; message: string }) => void) => void;
+      removeMidiListeners: () => void;
+    };
+  }
+}
 
 // Logging
 // TEMPORARILY DISABLED - Testing if this blocks rendering
@@ -34,7 +46,11 @@ import { TheTighteningLogo } from './components/TheTighteningLogo';
 import { loadSong, SONG_LIBRARY } from './data/loadSongs';
 import type { SongData, SongSegment } from './utils/midiParser';
 
+// Startup diagnostic
+console.log('[App] Module loading - if you see this, console capture is working!');
+
 function App() {
+  console.log('[App] Component rendering');
   // Configuration
   const [config, setConfig] = useState<AppConfig>(loadConfig());
 
@@ -75,8 +91,11 @@ function App() {
   const audioEngineRef = useRef<AudioEngine | null>(null);
   const referenceMelodyRef = useRef<ReferenceMelodyPlayer | null>(null);
   const progressTrackerRef = useRef<ProgressTracker | null>(null);
-  const midiInputRef = useRef<Input | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
+
+  // Refs to always point to latest handlers (avoids stale closure in IPC MIDI listeners)
+  const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
+  const handleNoteOffRef = useRef<((data: { note: number }) => void) | null>(null);
 
   // Initialize logger first
   useEffect(() => {
@@ -139,81 +158,99 @@ function App() {
     };
   }, []);
 
-  // Initialize MIDI
+  // Initialize MIDI via IPC (MIDI is handled in main process using native midi package)
   useEffect(() => {
-    const initMidi = async () => {
-      try {
-        console.info('Initializing WebMIDI...');
-        await WebMidi.enable();
+    console.info('Setting up MIDI IPC listeners...');
 
-        if (WebMidi.inputs.length === 0) {
-          console.warn('No MIDI devices found');
-          setMidiStatus('No MIDI devices found. Connect keyboard and refresh.');
-          return;
-        }
+    // Check if electronAPI is available (running in Electron)
+    if (!window.electronAPI) {
+      console.warn('electronAPI not available - not running in Electron');
+      setMidiStatus('MIDI only available in Electron app');
+      return;
+    }
 
-        const input = WebMidi.inputs[0];
-        midiInputRef.current = input;
-        console.info('MIDI device connected', {
-          name: input.name,
-          manufacturer: input.manufacturer,
-          id: input.id,
-          state: input.state
-        });
-        setMidiStatus(`Connected: ${input.name}`);
+    // Listen for MIDI status from main process
+    window.electronAPI.onMidiStatus((data) => {
+      console.info('MIDI status update', data);
+      setMidiStatus(data.message);
+    });
 
-        // Listen for note events
-        input.addListener('noteon', handleNoteOn);
-        input.addListener('noteoff', handleNoteOff);
-        console.debug('MIDI event listeners registered');
-      } catch (err) {
-        const error = err as Error;
-        console.error('MIDI initialization failed', {
-          error: error.message,
-          stack: error.stack
-        });
-        setMidiStatus(`MIDI Error: ${error.message}`);
+    // Listen for note on events - call through ref to get latest handler
+    window.electronAPI.onMidiNoteOn((data) => {
+      if (handleNoteOnRef.current) {
+        handleNoteOnRef.current(data);
       }
-    };
+    });
 
-    initMidi();
+    // Listen for note off events - call through ref to get latest handler
+    window.electronAPI.onMidiNoteOff((data) => {
+      if (handleNoteOffRef.current) {
+        handleNoteOffRef.current(data);
+      }
+    });
+
+    console.debug('MIDI IPC listeners registered');
 
     return () => {
-      if (midiInputRef.current) {
-        midiInputRef.current.removeListener('noteon');
-        midiInputRef.current.removeListener('noteoff');
-      }
+      // Cleanup IPC listeners on unmount
+      window.electronAPI?.removeMidiListeners();
     };
   }, []);
 
-  // Handle MIDI note on
-  const handleNoteOn = useCallback((e: any) => {
-    const pressedMidiKey = e.note.number;
+  // Handle MIDI note on (receives data from IPC: { note, velocity, channel })
+  const handleNoteOn = useCallback((data: { note: number; velocity: number }) => {
+    const pressedMidiKey = data.note;
 
     console.debug('Note ON', {
       midi: pressedMidiKey,
-      noteName: e.note.name,
-      velocity: e.note.attack
+      velocity: data.velocity
     });
 
     // Add to pressed keys
     setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
 
     // Get current correct note from song
-    if (!songData || !keyMapperRef.current || !audioEngineRef.current) return;
+    if (!songData || !keyMapperRef.current || !audioEngineRef.current) {
+      console.warn('[MIDI] Early return - missing:', {
+        hasSongData: !!songData,
+        hasKeyMapper: !!keyMapperRef.current,
+        hasAudioEngine: !!audioEngineRef.current
+      });
+      return;
+    }
 
     const currentNote = getCurrentNote();
-    if (!currentNote) return;
+
+    // Diagnostic logging
+    console.log('[MIDI] Note mapping', {
+      currentTime: currentTime.toFixed(2),
+      hasNote: !!currentNote,
+      noteInfo: currentNote ? {
+        midi: currentNote.midi,
+        name: currentNote.name,
+        time: currentNote.time.toFixed(2),
+        isActive: currentTime >= currentNote.time && currentTime < currentNote.time + currentNote.duration,
+        isGapFallback: currentTime >= currentNote.time + currentNote.duration
+      } : 'No note available'
+    });
+
+    // If no current note (before song starts or in gap), use first note as fallback
+    // This allows practice even before pressing Play
+    const noteToUse = currentNote || songData.notes[0];
+    if (!noteToUse) {
+      console.warn('[MIDI] No notes in song');
+      return;
+    }
 
     // Map pressed key to melody note
     const mapping: KeyMappingResult = keyMapperRef.current.mapKeyToMelody(
       pressedMidiKey,
-      currentNote.midi
+      noteToUse.midi
     );
 
     console.debug('Key mapped', {
       pressed: mapping.pressedKey,
-      correct: currentNote.midi,
+      correct: noteToUse.midi,
       distance: mapping.distance,
       accuracy: mapping.accuracy.toFixed(2)
     });
@@ -222,8 +259,8 @@ function App() {
     audioEngineRef.current.playNote({
       note: mapping.melodyNote,
       accuracy: mapping.accuracy,
-      duration: currentNote.duration,
-      velocity: e.note.attack,
+      duration: noteToUse.duration,
+      velocity: data.velocity,
     });
 
     // Record performance
@@ -233,28 +270,48 @@ function App() {
     }
   }, [songData]);
 
-  // Handle MIDI note off
-  const handleNoteOff = useCallback((e: any) => {
-    console.debug('Note OFF', { midi: e.note.number });
+  // Handle MIDI note off (receives data from IPC: { note })
+  const handleNoteOff = useCallback((data: { note: number }) => {
+    console.debug('Note OFF', { midi: data.note });
     setPressedKeys((prev) => {
       const next = new Set(prev);
-      next.delete(e.note.number);
+      next.delete(data.note);
       return next;
     });
   }, []);
+
+  // Keep refs updated with latest handlers (fixes stale closure in MIDI listeners)
+  useEffect(() => {
+    handleNoteOnRef.current = handleNoteOn;
+    handleNoteOffRef.current = handleNoteOff;
+  }, [handleNoteOn, handleNoteOff]);
 
   // Get current note based on playback time
   const getCurrentNote = useCallback(() => {
     if (!songData) return null;
 
-    // Find the note that should be playing now
-    const note = songData.notes.find((n, i) => {
+    // Find currently active note
+    let note = songData.notes.find((n) => {
       const noteStart = n.time;
       const noteEnd = n.time + n.duration;
       return currentTime >= noteStart && currentTime < noteEnd;
     });
 
-    return note || null;
+    // If in a gap between notes, use the most recent note
+    // This allows practice during rests
+    if (!note) {
+      // Find the note that ended most recently
+      note = songData.notes.reduce((prev, current) => {
+        if (current.time + current.duration <= currentTime) {
+          return (!prev || current.time + current.duration > prev.time + prev.duration)
+            ? current
+            : prev;
+        }
+        return prev;
+      }, null as typeof songData.notes[0] | null);
+    }
+
+    return note;
   }, [songData, currentTime]);
 
   // Update current correct note for visualization

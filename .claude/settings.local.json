@@ -32,7 +32,14 @@
       "Bash(npm run build:*)",
       "Bash(git commit:*)",
       "Bash(npx tsc:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(timeout /t 8 /nobreak)",
+      "Bash(powershell:*)",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(node test-midi.js:*)",
+      "Bash(node test-midi.cjs:*)",
+      "Bash(node test-midi-native.cjs:*)",
+      "Bash(npx electron-rebuild -w midi)"
     ],
     "deny": [],
     "ask": []

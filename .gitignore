@@ -1,5 +1,11 @@
 junk/
 
+# Windows reserved device names (can't be deleted)
+nul
+
+# Test scripts
+test-midi*.cjs
+
 # Logs
 logs
 *.log

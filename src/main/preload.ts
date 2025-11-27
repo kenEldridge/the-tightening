@@ -1,56 +1,80 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import log from 'electron-log';
-import * as fs from 'fs';
-import * as path from 'path';
 
 // ============================================
-// CONSOLE CAPTURE - Write all console output to file for debugging
+// CONSOLE CAPTURE - Send all console output to main process via IPC
 // ============================================
-const rendererLog = log.scope('Renderer');
 
-// Intercept all console methods and write to both file and original console
+// Save original console methods
 const originalConsole = {
-  log: console.log,
-  info: console.info,
-  warn: console.warn,
-  error: console.error,
-  debug: console.debug
+  log: console.log.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  debug: console.debug.bind(console)
 };
 
+// Format args for logging
+function formatArgs(args: any[]): string {
+  return args.map(arg => {
+    if (typeof arg === 'object') {
+      try {
+        return JSON.stringify(arg, null, 2);
+      } catch (e) {
+        return String(arg);
+      }
+    }
+    return String(arg);
+  }).join(' ');
+}
+
+// Intercept all console methods
 (['log', 'info', 'warn', 'error', 'debug'] as const).forEach(method => {
   (console as any)[method] = (...args: any[]) => {
-    // Format message
-    const message = args.map(arg => {
-      if (typeof arg === 'object') {
-        try {
-          return JSON.stringify(arg, null, 2);
-        } catch (e) {
-          return String(arg);
-        }
-      }
-      return String(arg);
-    }).join(' ');
+    const message = formatArgs(args);
 
-    // Write to electron-log (goes to renderer.log)
-    (rendererLog as any)[method](message);
+    // Send to main process via IPC for file logging
+    try {
+      ipcRenderer.send('renderer-log', { level: method, message });
+    } catch (e) {
+      // IPC might not be ready yet
+    }
 
     // Also call original console for DevTools
-    originalConsole[method].apply(console, args);
+    originalConsole[method](...args);
   };
 });
 
-console.log('[Preload] Console capture initialized - all output will be logged to renderer.log');
+originalConsole.log('[Preload] Console capture initialized - sending to main process via IPC');
+
+// ============================================
+// MIDI EVENT BRIDGE - Forward MIDI events from main process to renderer
+// ============================================
+
+type MidiNoteOnCallback = (data: { note: number; velocity: number; channel: number }) => void;
+type MidiNoteOffCallback = (data: { note: number }) => void;
+type MidiStatusCallback = (data: { connected: boolean; message: string }) => void;
 
 // Expose safe APIs for renderer process communication
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
 
-  // Log file access
-  getLogPath: () => {
-    return log.transports.file.getFile().path;
+  // MIDI event listeners
+  onMidiNoteOn: (callback: MidiNoteOnCallback) => {
+    ipcRenderer.on('midi-note-on', (_event, data) => callback(data));
+  },
+  onMidiNoteOff: (callback: MidiNoteOffCallback) => {
+    ipcRenderer.on('midi-note-off', (_event, data) => callback(data));
+  },
+  onMidiStatus: (callback: MidiStatusCallback) => {
+    ipcRenderer.on('midi-status', (_event, data) => callback(data));
   },
 
-  openLogFolder: () => {
-    ipcRenderer.send('open-log-folder');
+  // Remove MIDI listeners (for cleanup)
+  removeMidiListeners: () => {
+    ipcRenderer.removeAllListeners('midi-note-on');
+    ipcRenderer.removeAllListeners('midi-note-off');
+    ipcRenderer.removeAllListeners('midi-status');
   }
 });
+
+originalConsole.log('[Preload] MIDI bridge initialized');
