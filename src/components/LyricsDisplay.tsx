@@ -2,22 +2,28 @@
  * Lyrics Display Component
  *
  * Shows the current section name and lyrics based on playback time.
+ * Supports both section-based lyrics and line-by-line LRC display.
  * Positioned between falling notes and piano keyboard.
  */
 
 import React, { useMemo } from 'react';
 import type { SongSegment } from '../utils/midiParser';
+import type { LrcLine } from '../utils/lrcParser';
+import { getCurrentLine, getCurrentSection } from '../utils/lrcParser';
 
 export interface LyricsDisplayProps {
   segments: SongSegment[];
   currentTime: number;
   width?: number;
+  // Optional LRC lines for line-by-line display
+  lrcLines?: LrcLine[];
 }
 
 export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
   segments,
   currentTime,
   width = 800,
+  lrcLines,
 }) => {
   // Find current segment based on time
   const currentSegment = useMemo(() => {
@@ -33,6 +39,18 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
     const duration = currentSegment.endTime - currentSegment.startTime;
     return Math.min(1, elapsed / duration);
   }, [currentSegment, currentTime]);
+
+  // Get current line from LRC if available
+  const currentLrcLine = useMemo(() => {
+    if (!lrcLines || lrcLines.length === 0) return null;
+    return getCurrentLine(lrcLines, currentTime);
+  }, [lrcLines, currentTime]);
+
+  // Get current section from LRC if available (fallback if no segments)
+  const currentLrcSection = useMemo(() => {
+    if (!lrcLines || lrcLines.length === 0) return null;
+    return getCurrentSection(lrcLines, currentTime);
+  }, [lrcLines, currentTime]);
 
   if (!currentSegment) {
     return (
@@ -111,8 +129,25 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({
         </span>
       </div>
 
-      {/* Lyrics */}
-      {currentSegment.lyrics && (
+      {/* Current LRC line (if available) - prominent display */}
+      {currentLrcLine && !currentLrcLine.isSection && (
+        <div
+          style={{
+            padding: '10px 20px 15px',
+            color: '#fff',
+            fontFamily: 'Georgia, serif',
+            fontSize: '20px',
+            fontWeight: 500,
+            textAlign: 'center',
+            lineHeight: '1.4',
+          }}
+        >
+          {currentLrcLine.text}
+        </div>
+      )}
+
+      {/* Fallback: Section lyrics (if no LRC lines or instrumental) */}
+      {!currentLrcLine && currentSegment.lyrics && (
         <div
           style={{
             padding: '5px 20px 15px',

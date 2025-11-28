@@ -183,7 +183,7 @@ function drawNote(
   distributionWidth: number,
   config: AppConfig
 ): void {
-  const noteHeight = 20;
+  const noteHeight = 12; // Reduced from 20 to prevent overlap of rapid notes
 
   // Option C: Show distribution as glow/width around the note
   if (config.visual.distributionMode === 'C' || config.visual.distributionMode === 'A') {
@@ -216,9 +216,16 @@ function drawNote(
   ctx.fillStyle = config.visual.colors.neutral;
   ctx.fillRect(x + 2, y, noteWidth - 4, noteHeight);
 
-  // Draw note name (for debugging)
-  ctx.fillStyle = '#fff';
-  ctx.font = '10px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(note.name, x + noteWidth / 2, y + 14);
+  // Draw border to distinguish overlapping notes
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 2, y, noteWidth - 4, noteHeight);
+
+  // Draw note name (only if note is tall enough)
+  if (noteHeight >= 12) {
+    ctx.fillStyle = '#000';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(note.name, x + noteWidth / 2, y + 9);
+  }
 }

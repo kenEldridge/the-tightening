@@ -44,8 +44,9 @@ import { TheTighteningLogo } from './components/TheTighteningLogo';
 import { LyricsDisplay } from './components/LyricsDisplay';
 
 // Data
-import { loadSong, SONG_LIBRARY } from './data/loadSongs';
+import { loadSong, getLrcData, SONG_LIBRARY } from './data/loadSongs';
 import type { SongData, SongSegment } from './utils/midiParser';
+import type { LrcLine } from './utils/lrcParser';
 
 // Startup diagnostic
 console.log('[App] Module loading - if you see this, console capture is working!');
@@ -87,6 +88,7 @@ function App() {
   const [currentSongId, setCurrentSongId] = useState<string>(config.gameplay.currentSong);
   const [currentSegment, setCurrentSegment] = useState<SongSegment | null>(null);
   const [isSegmentLoopEnabled, setIsSegmentLoopEnabled] = useState<boolean>(false);
+  const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
 
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
@@ -130,14 +132,21 @@ function App() {
           accompanimentRef.current
         );
 
-        // Load song
+        // Load song and LRC data in parallel
         console.info('Loading initial song', { songId: config.gameplay.currentSong });
-        const song = await loadSong(config.gameplay.currentSong);
+        const [song, lrcData] = await Promise.all([
+          loadSong(config.gameplay.currentSong),
+          getLrcData(config.gameplay.currentSong),
+        ]);
         setSongData(song);
+        if (lrcData) {
+          setLrcLines(lrcData.lines);
+        }
         console.info('Song loaded successfully', {
           name: song.name,
           noteCount: song.notes.length,
-          duration: song.duration
+          duration: song.duration,
+          hasLrc: !!lrcData,
         });
 
         // Initialize audio systems (requires user interaction, will do on play)
@@ -580,16 +589,21 @@ function App() {
       gameplay: { ...prev.gameplay, currentSong: songId },
     }));
 
-    // Load new song
+    // Load new song and LRC data
     setLoading(true);
     try {
-      const song = await loadSong(songId);
+      const [song, lrcData] = await Promise.all([
+        loadSong(songId),
+        getLrcData(songId),
+      ]);
       setSongData(song);
+      setLrcLines(lrcData?.lines || []);
       console.info('New song loaded', {
         name: song.name,
         noteCount: song.notes.length,
         duration: song.duration,
-        segmentCount: song.segments.length
+        segmentCount: song.segments.length,
+        hasLrc: !!lrcData,
       });
 
       // Reset segment selection
@@ -715,6 +729,7 @@ function App() {
               segments={songData.segments}
               currentTime={currentTime}
               width={800}
+              lrcLines={lrcLines}
             />
           </div>
 
