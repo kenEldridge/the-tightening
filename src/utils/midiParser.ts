@@ -35,6 +35,8 @@ export interface SongSegment {
   endNoteIndex: number;
   // Number of notes in segment
   noteCount: number;
+  // Optional lyrics for this segment
+  lyrics?: string;
 }
 
 export interface SongData {

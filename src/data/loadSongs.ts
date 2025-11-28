@@ -1,11 +1,13 @@
 /**
  * Song Data Loader
  *
- * Loads and caches song data from MIDI files
+ * Loads and caches song data from MIDI files.
+ * Merges manual metadata (sections, lyrics) when available.
  */
 
-import type { SongData } from '../utils/midiParser';
+import type { SongData, SongSegment } from '../utils/midiParser';
 import { loadMidiFromUrl } from '../utils/midiParser';
+import { getSongMetadata } from './songMetadata';
 
 // Cache for loaded songs
 const songCache = new Map<string, SongData>();
@@ -66,6 +68,43 @@ export async function loadSong(songId: string): Promise<SongData> {
 
   // Update name from library
   songData.name = songMeta.name;
+
+  // Check for manual metadata (sections with lyrics)
+  const metadata = getSongMetadata(songId);
+  if (metadata) {
+    // Use manual sections instead of auto-detected segments
+    songData.segments = metadata.sections.map((section): SongSegment => {
+      // Calculate note indices for this section
+      let startNoteIndex = 0;
+      let endNoteIndex = songData.notes.length - 1;
+      let noteCount = 0;
+
+      songData.notes.forEach((note, index) => {
+        const noteEnd = note.time + note.duration;
+        if (note.time >= section.startTime && noteEnd <= section.endTime) {
+          if (noteCount === 0) startNoteIndex = index;
+          endNoteIndex = index;
+          noteCount++;
+        }
+      });
+
+      return {
+        id: section.id,
+        name: section.name,
+        startTime: section.startTime,
+        endTime: section.endTime,
+        startNoteIndex,
+        endNoteIndex,
+        noteCount,
+        lyrics: section.lyrics,
+      };
+    });
+
+    console.info('[LoadSongs] Using manual sections for', songId, {
+      sectionCount: songData.segments.length,
+      sections: songData.segments.map(s => s.name),
+    });
+  }
 
   // Cache it
   songCache.set(songId, songData);

@@ -41,6 +41,7 @@ import { FallingNotesCanvas } from './components/FallingNotesCanvas';
 import { VisualKeyboard } from './components/VisualKeyboard';
 import { PracticeControls } from './components/PracticeControls';
 import { TheTighteningLogo } from './components/TheTighteningLogo';
+import { LyricsDisplay } from './components/LyricsDisplay';
 
 // Data
 import { loadSong, SONG_LIBRARY } from './data/loadSongs';
@@ -75,6 +76,7 @@ function App() {
     bestStreak: 0,
     practiceTime: 0,
     progress: 0,
+    confusionMatrix: { hits: 0, misses: 0, extras: 0 },
   });
 
   // Visual state
@@ -94,6 +96,10 @@ function App() {
   const timeUpdateIntervalRef = useRef<number | null>(null);
   const currentTimeRef = useRef<number>(0); // Ref for currentTime to avoid stale closures
 
+  // Confusion matrix tracking
+  const hitNoteIndicesRef = useRef<Set<number>>(new Set()); // Track which notes have been hit
+  const lastCheckedNoteIndexRef = useRef<number>(-1); // Track last note we checked for misses
+
   // Refs to always point to latest handlers (avoids stale closure in IPC MIDI listeners)
   const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
   const handleNoteOffRef = useRef<((data: { note: number }) => void) | null>(null);
@@ -108,6 +114,11 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
+        // DEV: Clear saved progress to ensure fresh start with full distribution width
+        // This resets any tightening that occurred in previous sessions
+        localStorage.removeItem('musicLearningAppProgress');
+        console.info('[App] Cleared saved progress for fresh start');
+
         console.info('Creating core components...');
         // Create core components
         keyMapperRef.current = new AdaptiveKeyMapper(config);
@@ -220,52 +231,83 @@ function App() {
       return;
     }
 
-    const currentNote = getCurrentNote();
+    const time = currentTimeRef.current;
+
+    // Find currently ACTIVE note (not just recent note in gap)
+    const activeNoteIndex = songData.notes.findIndex((n) => {
+      const noteStart = n.time;
+      const noteEnd = n.time + n.duration;
+      return time >= noteStart && time < noteEnd;
+    });
+
+    const isInGap = activeNoteIndex === -1;
+    const currentNote = activeNoteIndex >= 0 ? songData.notes[activeNoteIndex] : null;
 
     // Diagnostic logging
-    const time = currentTimeRef.current;
     console.log('[MIDI] Note mapping', {
       currentTime: time.toFixed(2),
-      hasNote: !!currentNote,
+      hasActiveNote: !isInGap,
+      activeNoteIndex,
       noteInfo: currentNote ? {
         midi: currentNote.midi,
         name: currentNote.name,
         time: currentNote.time.toFixed(2),
-        isActive: time >= currentNote.time && time < currentNote.time + currentNote.duration,
-        isGapFallback: time >= currentNote.time + currentNote.duration
-      } : 'No note available'
+      } : 'In gap - EXTRA'
     });
 
-    // If no current note (before song starts or in gap), use first note as fallback
-    // This allows practice even before pressing Play
-    const noteToUse = currentNote || songData.notes[0];
-    if (!noteToUse) {
-      console.warn('[MIDI] No notes in song');
+    // If in a gap, this is an EXTRA press
+    if (isInGap) {
+      if (progressTrackerRef.current) {
+        progressTrackerRef.current.recordExtra();
+        setStats(progressTrackerRef.current.getStats());
+      }
+      // Still play something (fallback to most recent note for sound)
+      const fallbackNote = songData.notes.reduce((prev, current) => {
+        if (current.time + current.duration <= time) {
+          return (!prev || current.time > prev.time) ? current : prev;
+        }
+        return prev;
+      }, null as typeof songData.notes[0] | null) || songData.notes[0];
+
+      if (fallbackNote && audioEngineRef.current) {
+        const mapping = keyMapperRef.current.mapKeyToMelody(pressedMidiKey, fallbackNote.midi);
+        audioEngineRef.current.playNote({
+          note: mapping.melodyNote,
+          accuracy: mapping.accuracy * 0.5, // Reduce accuracy for extras (degraded sound)
+          duration: fallbackNote.duration,
+          velocity: data.velocity,
+        });
+      }
       return;
     }
+
+    // HIT: Active note being played
+    // Mark this note as hit
+    hitNoteIndicesRef.current.add(activeNoteIndex);
 
     // Map pressed key to melody note
     const mapping: KeyMappingResult = keyMapperRef.current.mapKeyToMelody(
       pressedMidiKey,
-      noteToUse.midi
+      currentNote!.midi
     );
 
-    console.debug('Key mapped', {
+    console.debug('Key mapped (HIT)', {
       pressed: mapping.pressedKey,
-      correct: noteToUse.midi,
+      correct: currentNote!.midi,
       distance: mapping.distance,
-      accuracy: mapping.accuracy.toFixed(2)
+      accuracy: mapping.accuracy.toFixed(2),
+      noteIndex: activeNoteIndex
     });
 
     // Play audio with feedback
     audioEngineRef.current.playNote({
       note: mapping.melodyNote,
       accuracy: mapping.accuracy,
-      duration: noteToUse.duration,
+      duration: currentNote!.duration,
       velocity: data.velocity,
     });
 
-    // Record performance
+    // Record performance (this is a HIT)
     if (progressTrackerRef.current) {
       progressTrackerRef.current.recordNote(mapping.accuracy);
       setStats(progressTrackerRef.current.getStats());
@@ -330,12 +372,50 @@ function App() {
   // NOTE: Using setInterval polling (16ms lag) for simplicity
   // FUTURE: Consider migrating to Transport.scheduleRepeat for tighter sync
   useEffect(() => {
-    if (!isPlaying || !accompanimentRef.current) return;
+    if (!isPlaying || !accompanimentRef.current || !songData) return;
 
     const interval = setInterval(() => {
       const time = accompanimentRef.current!.getCurrentTime();
       currentTimeRef.current = time; // Update ref FIRST (for MIDI callbacks)
       setCurrentTime(time); // Then update state (for UI)
+
+      // Check for MISSED notes (notes whose window has passed without being hit)
+      const lastChecked = lastCheckedNoteIndexRef.current;
+      const hitNotes = hitNoteIndicesRef.current;
+      let missOccurred = false;
+
+      // Find notes that have ended and weren't hit
+      for (let i = lastChecked + 1; i < songData.notes.length; i++) {
+        const note = songData.notes[i];
+        const noteEnd = note.time + note.duration;
+
+        if (noteEnd < time) {
+          // Note window has passed
+          if (!hitNotes.has(i)) {
+            // This note was MISSED
+            if (progressTrackerRef.current) {
+              progressTrackerRef.current.recordMiss();
+              missOccurred = true;
+            }
+            console.log('[MISS] Note missed', {
+              noteIndex: i,
+              midi: note.midi,
+              name: note.name,
+              noteEnd: noteEnd.toFixed(2),
+              currentTime: time.toFixed(2)
+            });
+          }
+          lastCheckedNoteIndexRef.current = i;
+        } else {
+          // Haven't reached this note's end yet, stop checking
+          break;
+        }
+      }
+
+      // Only update stats when a miss occurred (avoid excessive re-renders)
+      if (missOccurred && progressTrackerRef.current) {
+        setStats(progressTrackerRef.current.getStats());
+      }
     }, 16); // ~60fps updates
 
     timeUpdateIntervalRef.current = interval as unknown as number;
@@ -345,7 +425,7 @@ function App() {
         clearInterval(timeUpdateIntervalRef.current);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, songData]);
 
   // Auto-save progress periodically
   useEffect(() => {
@@ -434,6 +514,9 @@ function App() {
       progressTrackerRef.current.reset();
       setStats(progressTrackerRef.current.getStats());
     }
+    // Reset confusion matrix tracking refs
+    hitNoteIndicesRef.current.clear();
+    lastCheckedNoteIndexRef.current = -1;
     handleStop();
   };
 
@@ -513,12 +596,14 @@ function App() {
       setCurrentSegment(null);
       setIsSegmentLoopEnabled(false);
 
-      // Reset progress
+      // Reset progress and confusion matrix tracking
       if (progressTrackerRef.current) {
         progressTrackerRef.current.reset();
         setStats(progressTrackerRef.current.getStats());
         console.info('Progress reset for new song');
       }
+      hitNoteIndicesRef.current.clear();
+      lastCheckedNoteIndexRef.current = -1;
 
       setCurrentSongId(songId);
       setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
@@ -621,6 +706,15 @@ function App() {
               lookAhead={3}
               segments={songData.segments}
               currentSegment={currentSegment}
+            />
+          </div>
+
+          {/* Lyrics display */}
+          <div style={{ marginBottom: '20px' }}>
+            <LyricsDisplay
+              segments={songData.segments}
+              currentTime={currentTime}
+              width={800}
             />
           </div>
 

@@ -216,6 +216,41 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
         />
       </div>
 
+      {/* Confusion Matrix */}
+      <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #444' }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>Note Tracking</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+          <div style={{ padding: '10px', backgroundColor: '#1a4a1a', borderRadius: '5px', textAlign: 'center' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#4ade80' }}>
+              {stats.confusionMatrix?.hits || 0}
+            </div>
+            <div style={{ fontSize: '11px', color: '#86efac' }}>HITS</div>
+          </div>
+          <div style={{ padding: '10px', backgroundColor: '#4a1a1a', borderRadius: '5px', textAlign: 'center' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f87171' }}>
+              {stats.confusionMatrix?.misses || 0}
+            </div>
+            <div style={{ fontSize: '11px', color: '#fca5a5' }}>MISSES</div>
+          </div>
+          <div style={{ padding: '10px', backgroundColor: '#4a4a1a', borderRadius: '5px', textAlign: 'center' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#facc15' }}>
+              {stats.confusionMatrix?.extras || 0}
+            </div>
+            <div style={{ fontSize: '11px', color: '#fde047' }}>EXTRAS</div>
+          </div>
+        </div>
+        {/* Hit Rate */}
+        {(stats.confusionMatrix?.hits || 0) + (stats.confusionMatrix?.misses || 0) > 0 && (
+          <div style={{ marginTop: '10px', padding: '8px', backgroundColor: '#1a1a1a', borderRadius: '5px', textAlign: 'center' }}>
+            <span style={{ color: '#888', fontSize: '12px' }}>Hit Rate: </span>
+            <span style={{ color: '#4ade80', fontWeight: 'bold' }}>
+              {(((stats.confusionMatrix?.hits || 0) /
+                ((stats.confusionMatrix?.hits || 0) + (stats.confusionMatrix?.misses || 0))) * 100).toFixed(1)}%
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Tempo Control */}
       <div style={{ marginBottom: '20px' }}>
         <h3 style={{ margin: '0 0 10px 0' }}>Tempo: {tempo} BPM</h3>

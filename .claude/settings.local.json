@@ -39,7 +39,8 @@
       "Bash(node test-midi.js:*)",
       "Bash(node test-midi.cjs:*)",
       "Bash(node test-midi-native.cjs:*)",
-      "Bash(npx electron-rebuild -w midi)"
+      "Bash(npx electron-rebuild -w midi)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

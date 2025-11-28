@@ -69,14 +69,23 @@ export class AdaptiveKeyMapper {
       ? this.config.distribution.manualWidthOverride
       : this.currentDistributionWidth;
 
-    // If width is very large (Phase 1), all keys are equally good
-    if (width >= 44) {
+    // Phase 1: Full grace period - ALL keys sound perfect
+    // Extended from 44 to 40 to provide smooth transition
+    if (width >= 40) {
       return 1.0;
     }
 
+    // Phase 2: Gradual tightening (width 10-40)
     // Gaussian distribution: e^(-distance^2 / (2 * sigma^2))
     const sigma = width / 2; // Standard deviation
-    const accuracy = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+    let accuracy = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+
+    // Smooth transition for widths 20-40:
+    // Boost accuracy so the tightening feels more gradual
+    if (width >= 20) {
+      const boostFactor = (width - 20) / 20; // 0 at width=20, 1 at width=40
+      accuracy = accuracy + (1 - accuracy) * boostFactor * 0.5;
+    }
 
     // Clamp to [0, 1]
     return Math.max(0, Math.min(1, accuracy));
@@ -155,8 +164,8 @@ export class AdaptiveKeyMapper {
   getAcceptableKeyRange(correctMelodyNote: number): { min: number; max: number } {
     const width = this.getDistributionWidth();
 
-    // If width is very large, return full keyboard range
-    if (width >= 44) {
+    // If width is very large (grace period), return full keyboard range
+    if (width >= 40) {
       return { min: 0, max: 127 };
     }
 

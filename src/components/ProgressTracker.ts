@@ -11,6 +11,15 @@ import { AdaptiveKeyMapper } from './AdaptiveKeyMapper';
 import { AccompanimentPlayer } from './AccompanimentPlayer';
 // import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
+export interface ConfusionMatrix {
+  // Notes played when expected (with accuracy)
+  hits: number;
+  // Notes that scrolled past without being played
+  misses: number;
+  // Keys pressed when no note was expected
+  extras: number;
+}
+
 export interface PerformanceStats {
   // Total notes played
   totalNotes: number;
@@ -26,6 +35,8 @@ export interface PerformanceStats {
   practiceTime: number;
   // Progress percentage (0-100)
   progress: number;
+  // Confusion matrix for detailed performance analysis
+  confusionMatrix: ConfusionMatrix;
 }
 
 interface NotePerformance {
@@ -46,6 +57,11 @@ export class ProgressTracker {
   private totalPracticeTime = 0;
   private lastUpdateTime: number = Date.now();
 
+  // Confusion matrix tracking
+  private hits = 0;      // Notes played when expected
+  private misses = 0;    // Notes that scrolled past without being played
+  private extras = 0;    // Keys pressed when no note was expected
+
   constructor(
     config: AppConfig,
     keyMapper: AdaptiveKeyMapper,
@@ -57,7 +73,7 @@ export class ProgressTracker {
   }
 
   /**
-   * Record a note performance
+   * Record a note performance (HIT - key pressed when note expected)
    *
    * @param accuracy - Accuracy score (0-1)
    */
@@ -74,6 +90,9 @@ export class ProgressTracker {
       accuracy,
       timestamp: now,
     });
+
+    // Record as a HIT in confusion matrix
+    this.hits++;
 
     // Update streak
     if (accuracy > 0.8) {
@@ -97,24 +116,55 @@ export class ProgressTracker {
   }
 
   /**
+   * Record a missed note (MISS - note scrolled past without being played)
+   */
+  recordMiss(): void {
+    this.misses++;
+    // Break the streak on a miss
+    this.currentStreak = 0;
+  }
+
+  /**
+   * Record an extra key press (EXTRA - key pressed when no note expected)
+   */
+  recordExtra(): void {
+    this.extras++;
+  }
+
+  /**
    * Check if progression should occur and update distribution
    */
   private checkAndUpdateProgression(): void {
     const recentAccuracy = this.getRecentAccuracy();
+    const currentWidth = this.keyMapper.getDistributionWidth();
 
     // If recent accuracy is above threshold, tighten distribution
     if (
       recentAccuracy > this.config.progression.accuracyThreshold &&
       this.noteHistory.length >= this.config.progression.consistencyWindow
     ) {
+      // Width-dependent tightening rate:
+      // - At high widths (>40): Very slow (user is still in "all perfect" mode)
+      // - At medium widths (20-40): Slow (gradual transition)
+      // - At low widths (<20): Normal rate (fine-tuning)
+      let tighteningRate: number;
+      if (currentWidth > 40) {
+        tighteningRate = 0.002; // Very slow - takes ~2000 notes to go from 44 to 40
+      } else if (currentWidth > 20) {
+        tighteningRate = 0.005; // Slow - gradual tightening
+      } else {
+        tighteningRate = this.config.distribution.autoTighteningRate; // Normal rate
+      }
+
       const oldProgress = this.keyMapper.getProgress();
-      this.keyMapper.tightenDistribution();
+      this.keyMapper.tightenDistribution(tighteningRate);
       const newProgress = this.keyMapper.getProgress();
 
       console.info('[ProgressTracker] Auto-progression triggered', {
         recentAccuracy: recentAccuracy.toFixed(3),
         threshold: this.config.progression.accuracyThreshold,
-        consistencyWindow: this.config.progression.consistencyWindow,
+        currentWidth: currentWidth.toFixed(2),
+        tighteningRate: tighteningRate.toFixed(4),
         totalNotes: this.noteHistory.length,
         oldProgress: (oldProgress * 100).toFixed(1) + '%',
         newProgress: (newProgress * 100).toFixed(1) + '%'
@@ -157,6 +207,11 @@ export class ProgressTracker {
       bestStreak: this.bestStreak,
       practiceTime: this.totalPracticeTime,
       progress: this.keyMapper.getProgress() * 100,
+      confusionMatrix: {
+        hits: this.hits,
+        misses: this.misses,
+        extras: this.extras,
+      },
     };
   }
 
@@ -172,6 +227,9 @@ export class ProgressTracker {
     this.startTime = Date.now();
     this.totalPracticeTime = 0;
     this.lastUpdateTime = Date.now();
+    this.hits = 0;
+    this.misses = 0;
+    this.extras = 0;
     this.keyMapper.reset();
 
     console.info('[ProgressTracker] Progress reset', {
@@ -179,7 +237,8 @@ export class ProgressTracker {
       previousAverageAccuracy: oldStats.averageAccuracy.toFixed(3),
       previousBestStreak: oldStats.bestStreak,
       previousPracticeTime: oldStats.practiceTime.toFixed(1) + 's',
-      previousProgress: oldStats.progress.toFixed(1) + '%'
+      previousProgress: oldStats.progress.toFixed(1) + '%',
+      previousConfusionMatrix: oldStats.confusionMatrix
     });
   }
 
