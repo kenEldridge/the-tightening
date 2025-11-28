@@ -38,6 +38,13 @@ export interface FallingNotesCanvasProps {
   currentSegment?: SongSegment | null;
 }
 
+// Track note impacts for visual effects
+interface NoteImpact {
+  x: number;
+  time: number; // When the impact started
+  color: string;
+}
+
 export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = memo(({
   notes,
   currentTime,
@@ -52,6 +59,8 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = memo(({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
+  const impactsRef = useRef<NoteImpact[]>([]);
+  const lastNoteTimesRef = useRef<Map<number, number>>(new Map()); // Track which notes have impacted
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -125,6 +134,64 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = memo(({
       const visibleNotes = notes.filter((note) => {
         const timeDiff = note.time - currentTime;
         return timeDiff >= -0.2 && timeDiff <= lookAhead; // Show notes 0.2s past for smooth exit
+      });
+
+      // Check for new impacts (notes hitting the bottom)
+      const now = performance.now();
+      visibleNotes.forEach((note) => {
+        const timeDiff = note.time - currentTime;
+        const noteIndex = note.midi - noteRange.min;
+        const x = noteIndex * noteWidth;
+
+        // Note is hitting the bottom (within small threshold)
+        if (timeDiff <= 0.05 && timeDiff >= -0.05) {
+          const noteKey = note.midi * 10000 + Math.floor(note.time * 100);
+          if (!lastNoteTimesRef.current.has(noteKey)) {
+            lastNoteTimesRef.current.set(noteKey, now);
+            impactsRef.current.push({
+              x: x + noteWidth / 2,
+              time: now,
+              color: config.visual.colors.correctKey,
+            });
+          }
+        }
+      });
+
+      // Clean up old impacts (older than 500ms)
+      impactsRef.current = impactsRef.current.filter(impact => now - impact.time < 500);
+
+      // Clean up old note tracking (older than 2 seconds)
+      lastNoteTimesRef.current.forEach((time, key) => {
+        if (now - time > 2000) lastNoteTimesRef.current.delete(key);
+      });
+
+      // Draw impact effects at the bottom
+      impactsRef.current.forEach((impact) => {
+        const age = now - impact.time;
+        const progress = age / 500; // 0 to 1 over 500ms
+
+        // Expanding ring
+        const ringRadius = 10 + progress * 40;
+        const ringOpacity = 1 - progress;
+
+        ctx.beginPath();
+        ctx.arc(impact.x, height - 5, ringRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = impact.color;
+        ctx.lineWidth = 3 * (1 - progress);
+        ctx.globalAlpha = ringOpacity * 0.8;
+        ctx.stroke();
+
+        // Inner flash
+        if (progress < 0.3) {
+          const flashOpacity = 1 - (progress / 0.3);
+          ctx.beginPath();
+          ctx.arc(impact.x, height - 5, 15, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = flashOpacity * 0.6;
+          ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
       });
 
       // Draw falling notes
