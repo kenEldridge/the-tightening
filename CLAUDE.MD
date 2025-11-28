@@ -4,7 +4,7 @@
 
 **"The Tightening"** is an innovative Electron-based desktop application that teaches piano through a revolutionary adaptive key mapping approach. Unlike traditional learning tools, this app lets you play ANY key initially and gradually guides you to the correct keys through audio feedback and probabilistic distribution tightening.
 
-## Current Status (Nov 27, 2024)
+## Current Status (Nov 28, 2024)
 
 **Phase 1 COMPLETE + Enhancements**
 
@@ -12,6 +12,7 @@
 - Professional piano sound via **smplr SplendidGrandPiano**
 - MIDI keyboard input (Akai MPK Mini 3 tested)
 - Accompaniment mode (chords play while user plays melody)
+- **Melody guide plays 1 octave lower** for bass+melody harmony (configurable)
 - Adaptive key mapping with Gaussian distribution
 - Audio degradation for wrong keys (detuning + volume)
 - Progress tracking with **confusion matrix** (hits/misses/extras)
@@ -80,7 +81,7 @@ the-tightening/
 │   │   ├── AdaptiveKeyMapper.ts         # Core distribution algorithm
 │   │   ├── AudioEngine.ts               # Piano playback (smplr)
 │   │   ├── AccompanimentPlayer.ts       # Chord accompaniment (smplr)
-│   │   ├── ReferenceMelody.ts           # [Legacy - superseded by AccompanimentPlayer]
+│   │   ├── ReferenceMelody.ts           # Melody guide (smplr, plays octave lower)
 │   │   ├── ProgressTracker.ts           # Performance + confusion matrix
 │   │   ├── FallingNotesCanvas.tsx       # Guitar Hero visualization
 │   │   ├── VisualKeyboard.tsx           # Piano keyboard display

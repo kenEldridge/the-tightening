@@ -40,6 +40,10 @@ export interface PracticeControlsProps {
   referenceVolume: number;
   onReferenceVolumeChange: (volume: number) => void;
 
+  // Octave offset for melody guide
+  octaveOffset: number;
+  onOctaveOffsetChange: (offset: number) => void;
+
   // Auto progression mode
   autoProgression: boolean;
   onAutoProgressionToggle: () => void;
@@ -72,6 +76,8 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
   onDistributionChange,
   referenceVolume,
   onReferenceVolumeChange,
+  octaveOffset,
+  onOctaveOffsetChange,
   autoProgression,
   onAutoProgressionToggle,
   stats,
@@ -312,6 +318,29 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '5px' }}>
           <span>Silent</span>
           <span>Full</span>
+        </div>
+      </div>
+
+      {/* Octave Offset for Melody Guide */}
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{ margin: '0 0 10px 0' }}>
+          Melody Guide Octave: {octaveOffset === 0 ? 'Same' : `${Math.abs(octaveOffset / 12)} octave${Math.abs(octaveOffset) > 12 ? 's' : ''} ${octaveOffset < 0 ? 'lower' : 'higher'}`}
+        </h3>
+        <input
+          type="range"
+          min="-24"
+          max="0"
+          step="12"
+          value={octaveOffset}
+          onChange={(e) => onOctaveOffsetChange(Number(e.target.value))}
+          style={sliderStyle}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginTop: '5px' }}>
+          <span>2 oct lower (bass)</span>
+          <span>Same as melody</span>
+        </div>
+        <div style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>
+          Lower octaves create harmony; same octave may cause interference
         </div>
       </div>
     </div>

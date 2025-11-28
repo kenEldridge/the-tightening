@@ -86,6 +86,11 @@ export interface AppConfig {
     // Manual volume override (0-1, null = use auto fade)
     manualVolumeOverride: number | null;
 
+    // Octave offset for melody guide (semitones)
+    // -12 = 1 octave down, -24 = 2 octaves down, 0 = same as melody
+    // Playing lower creates bass+melody harmony instead of collision
+    octaveOffset: number; // Default: -12 (1 octave down)
+
     // Instrument timbre (different from user's piano)
     instrument: 'music-box' | 'soft-piano' | 'synth-pad';
   };
@@ -188,6 +193,7 @@ export const defaultConfig: AppConfig = {
     fadeRate: 0.01,
     minVolume: 0.05,
     manualVolumeOverride: null,
+    octaveOffset: -12, // 1 octave down - creates bass+melody harmony
     instrument: 'music-box',
   },
 

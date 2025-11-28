@@ -595,6 +595,19 @@ function App() {
     }));
   };
 
+  // Octave offset change handler
+  const handleOctaveOffsetChange = (offset: number) => {
+    setConfig((prev) => ({
+      ...prev,
+      referenceMelody: { ...prev.referenceMelody, octaveOffset: offset },
+    }));
+
+    // Note: Song needs to be reloaded to apply new offset
+    // This will happen automatically when config changes trigger re-render
+    // For immediate effect during playback, user should stop and restart
+    console.info('[App] Octave offset changed', { newOffset: offset });
+  };
+
   // Auto progression toggle handler
   const handleAutoProgressionToggle = () => {
     setConfig((prev) => ({
@@ -800,6 +813,8 @@ function App() {
             onDistributionChange={handleDistributionChange}
             referenceVolume={currentReferenceVolume}
             onReferenceVolumeChange={handleReferenceVolumeChange}
+            octaveOffset={config.referenceMelody.octaveOffset}
+            onOctaveOffsetChange={handleOctaveOffsetChange}
             autoProgression={config.progression.autoMode}
             onAutoProgressionToggle={handleAutoProgressionToggle}
             stats={stats}

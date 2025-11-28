@@ -1,28 +1,21 @@
 /**
  * Reference Melody Player
  *
- * Plays the reference melody in the background
- * Fades out as user learns (based on accuracy)
- * Uses different timbre from user's piano
+ * Plays the reference melody in the background using SplendidGrandPiano.
+ * Key insight: Plays melody 1-2 octaves LOWER than user to create
+ * natural bass+melody harmony instead of phase collision.
  *
- * FUTURE OPTIMIZATION - Time Synchronization:
- * Currently App.tsx polls getCurrentTime() via setInterval (16ms lag).
- * For better audio-visual sync, consider adding callback support:
- * - Option 1: Add onTimeUpdate callback parameter to start()
- * - Option 2: Add registerTimeCallback() method
- * - Option 3: Use Transport.scheduleRepeat internally
- * See implementation plan for details.
+ * Fades out as user learns (based on accuracy).
+ * Ducks when user plays so their piano is the lead voice.
  */
 
 import * as Tone from 'tone';
+import { SplendidGrandPiano } from 'smplr';
 import type { AppConfig } from '../config/AppConfig';
 import type { SongData, MelodyNote, SongSegment } from '../utils/midiParser';
-// import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export class ReferenceMelodyPlayer {
-  // Use PolySynth with soft bell-like sound instead of piano
-  // This prevents phasing when user plays along on piano
-  private synth: Tone.PolySynth | null = null;
+  private piano: SplendidGrandPiano | null = null;
   private part: Tone.Part | null = null;
   private config: AppConfig;
   private currentVolume: number;
@@ -30,10 +23,11 @@ export class ReferenceMelodyPlayer {
   private currentSegment: SongSegment | null = null;
   private isSegmentLoopEnabled = false;
   private songDuration = 0;
+  private audioContext: AudioContext | null = null;
 
   // Ducking state - when user plays, reference ducks to let user be the melody
   private isDucked = false;
-  private duckVolumeDb = -20; // About 10% volume when ducked
+  private duckLevel = 0.15; // 15% volume when ducked
 
   constructor(config: AppConfig) {
     this.config = config;
@@ -41,50 +35,53 @@ export class ReferenceMelodyPlayer {
   }
 
   /**
-   * Initialize the reference melody synth
+   * Initialize the reference melody piano
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    console.info('[ReferenceMelody] Initializing ReferenceMelodyPlayer...');
+    const startTime = Date.now();
+    console.info('[ReferenceMelody] Initializing with SplendidGrandPiano...');
 
     await Tone.start();
 
-    // Create a soft bell/celeste synth - different timbre than piano
-    // This prevents phasing when user plays along on their piano
-    console.log('[ReferenceMelody] Creating bell synth for melody guide...');
+    // Get the raw AudioContext from Tone.js
+    this.audioContext = Tone.context.rawContext as AudioContext;
 
-    this.synth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'triangle'  // Soft, bell-like tone
-      },
-      envelope: {
-        attack: 0.02,     // Quick attack for clear note starts
-        decay: 0.4,       // Medium decay
-        sustain: 0.15,    // Low sustain for bell-like quality
-        release: 1.0      // Long release for smooth fade
-      },
-      volume: Tone.gainToDb(this.currentVolume)
-    }).toDestination();
+    // Create SplendidGrandPiano - same quality as user's piano
+    console.log('[ReferenceMelody] Loading SplendidGrandPiano samples...');
+    this.piano = new SplendidGrandPiano(this.audioContext, {
+      decayTime: 1.0, // Slightly shorter than accompaniment for clarity
+    });
+
+    await this.piano.load;
+
+    const loadTime = Date.now() - startTime;
+    console.info('[ReferenceMelody] SplendidGrandPiano loaded', {
+      loadTimeMs: loadTime
+    });
 
     this.initialized = true;
-    console.info('[ReferenceMelody] ReferenceMelodyPlayer initialization complete (bell synth)');
+    console.info('[ReferenceMelody] ReferenceMelodyPlayer initialization complete');
   }
 
   /**
    * Load a song and prepare it for playback
    */
   loadSong(songData: SongData): void {
-    if (!this.initialized || !this.synth) {
+    if (!this.initialized || !this.piano) {
       console.warn('[ReferenceMelody] Cannot load song: ReferenceMelodyPlayer not initialized');
       return;
     }
+
+    const octaveOffset = this.config.referenceMelody.octaveOffset;
 
     console.info('[ReferenceMelody] Loading song', {
       name: songData.name,
       tempo: songData.tempo,
       duration: songData.duration.toFixed(2),
       noteCount: songData.notes.length,
+      octaveOffset: octaveOffset,
       timeSignature: `${songData.timeSignature.numerator}/${songData.timeSignature.denominator}`,
       range: `${songData.range.min}-${songData.range.max}`
     });
@@ -95,22 +92,35 @@ export class ReferenceMelodyPlayer {
       this.part.dispose();
     }
 
-    // Create Tone.Part from melody notes
-    const events = songData.notes.map((note: MelodyNote) => ({
-      time: note.time,
-      note: Tone.Frequency(note.midi, 'midi').toNote(),
-      duration: note.duration,
-      velocity: note.velocity || 0.8,
-    }));
+    // Store reference to piano for closure
+    const piano = this.piano;
+    const getVolume = () => this.isDucked ? this.duckLevel : this.currentVolume;
+    const isEnabled = () => this.config.referenceMelody.enabled;
+
+    // Create Tone.Part from melody notes with octave transposition
+    const events = songData.notes.map((note: MelodyNote) => {
+      // Transpose down by octaveOffset, but clamp to valid piano range (MIDI 21-108)
+      const transposedNote = Math.max(21, Math.min(108, note.midi + octaveOffset));
+
+      return {
+        time: note.time,
+        note: transposedNote,
+        duration: note.duration,
+        velocity: (note.velocity || 0.8) * 0.6, // 60% of original - supportive, not dominant
+      };
+    });
 
     this.part = new Tone.Part((time, event) => {
-      if (this.synth && this.config.referenceMelody.enabled) {
-        this.synth.triggerAttackRelease(
-          event.note,
-          event.duration,
-          time,
-          event.velocity
-        );
+      if (piano && isEnabled()) {
+        // Calculate velocity based on current volume (ducking applied)
+        const velocity = Math.round(event.velocity * 127 * getVolume());
+
+        piano.start({
+          note: event.note,
+          velocity,
+          duration: event.duration,
+          time: time,
+        });
       }
     }, events);
 
@@ -128,7 +138,8 @@ export class ReferenceMelodyPlayer {
       eventCount: events.length,
       loopStart: this.part.loopStart,
       loopEnd: this.part.loopEnd,
-      loop: this.part.loop
+      loop: this.part.loop,
+      octaveOffset: octaveOffset
     });
   }
 
@@ -185,6 +196,11 @@ export class ReferenceMelodyPlayer {
     // Stop Part scheduling
     if (this.part) {
       this.part.stop();
+    }
+
+    // Stop any playing notes
+    if (this.piano) {
+      this.piano.stop();
     }
 
     // Stop and reset Transport
@@ -315,11 +331,6 @@ export class ReferenceMelodyPlayer {
       this.currentVolume = this.config.referenceMelody.manualVolumeOverride;
     }
 
-    // Update synth volume
-    if (this.synth) {
-      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
-    }
-
     // Log volume fade (only if volume changed significantly)
     if (Math.abs(this.currentVolume - oldVolume) > 0.01) {
       console.log('[ReferenceMelody] Reference melody volume faded', {
@@ -339,10 +350,6 @@ export class ReferenceMelodyPlayer {
     const oldVolume = this.currentVolume;
     this.currentVolume = Math.max(0, Math.min(1, volume));
 
-    if (this.synth) {
-      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
-    }
-
     console.info('[ReferenceMelody] Reference melody volume set manually', {
       oldVolume: oldVolume.toFixed(3),
       newVolume: this.currentVolume.toFixed(3)
@@ -361,31 +368,24 @@ export class ReferenceMelodyPlayer {
    * Called when user starts playing so their piano becomes the melody
    */
   duck(): void {
-    if (!this.synth || this.isDucked) return;
+    if (this.isDucked) return;
     this.isDucked = true;
 
-    // Fast duck (10ms) - instant response when user plays
-    this.synth.volume.linearRampTo(this.duckVolumeDb, 0.01);
-
     console.debug('[ReferenceMelody] Ducked (user playing)', {
-      targetDb: this.duckVolumeDb
+      duckLevel: this.duckLevel
     });
   }
 
   /**
-   * Unduck the reference melody (restore volume slowly)
+   * Unduck the reference melody (restore volume)
    * Called when user stops playing so reference melody fades back in
    */
   unduck(): void {
-    if (!this.synth || !this.isDucked) return;
+    if (!this.isDucked) return;
     this.isDucked = false;
 
-    // Slow fade back in (1 second) - smooth transition
-    const targetDb = Tone.gainToDb(this.currentVolume);
-    this.synth.volume.linearRampTo(targetDb, 1.0);
-
     console.debug('[ReferenceMelody] Unducked (user stopped)', {
-      targetDb: targetDb.toFixed(1)
+      restoredVolume: this.currentVolume.toFixed(2)
     });
   }
 
@@ -421,10 +421,13 @@ export class ReferenceMelodyPlayer {
    */
   updateConfig(config: AppConfig): void {
     this.config = config;
-    // Synth doesn't need recreation - just update volume if needed
-    if (this.synth && this.currentVolume !== config.referenceMelody.initialVolume) {
-      this.setVolume(this.currentVolume);
-    }
+  }
+
+  /**
+   * Get current octave offset
+   */
+  getOctaveOffset(): number {
+    return this.config.referenceMelody.octaveOffset;
   }
 
   /**
@@ -438,11 +441,12 @@ export class ReferenceMelodyPlayer {
       this.part = null;
     }
 
-    if (this.synth) {
-      this.synth.dispose();
-      this.synth = null;
+    if (this.piano) {
+      this.piano.stop();
+      this.piano = null;
     }
 
+    this.audioContext = null;
     this.initialized = false;
   }
 }
