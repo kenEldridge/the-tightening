@@ -5,7 +5,7 @@
  * Shows distribution width visually (Option C implementation)
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import type { MelodyNote, SongSegment } from '../utils/midiParser';
 import type { AppConfig } from '../config/AppConfig';
 
@@ -38,7 +38,7 @@ export interface FallingNotesCanvasProps {
   currentSegment?: SongSegment | null;
 }
 
-export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
+export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = memo(({
   notes,
   currentTime,
   distributionWidth,
@@ -66,22 +66,17 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
     // Calculate dimensions
     const noteCount = noteRange.max - noteRange.min + 1;
     const noteWidth = width / noteCount;
-    const hitZoneY = height - 80; // Hit zone at bottom
+    const hitZoneY = height; // Notes fall to very bottom (lands on keyboard below)
 
     const animate = () => {
       // Clear canvas
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, 0, width, height);
 
-      // Draw hit zone line
-      ctx.strokeStyle = config.visual.colors.neutral;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, hitZoneY);
-      ctx.lineTo(width, hitZoneY);
-      ctx.stroke();
+      // No hit zone line - notes fall directly to bottom (onto keyboard)
 
       // Draw segment boundaries and highlight current segment
+      const topMargin = 20; // Small margin at top
       if (segments.length > 0) {
         segments.forEach((segment) => {
           // Calculate Y positions for segment start and end
@@ -92,17 +87,17 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
           if (endTimeDiff >= 0 && startTimeDiff <= lookAhead) {
             // Highlight current segment with green tint
             if (currentSegment && segment.id === currentSegment.id) {
-              const segmentStartY = Math.max(50, hitZoneY - (startTimeDiff / lookAhead) * (hitZoneY - 50));
-              const segmentEndY = Math.min(hitZoneY, hitZoneY - (endTimeDiff / lookAhead) * (hitZoneY - 50));
+              const segmentStartY = Math.max(topMargin, height - (startTimeDiff / lookAhead) * (height - topMargin));
+              const segmentEndY = Math.min(height, height - (endTimeDiff / lookAhead) * (height - topMargin));
 
               ctx.fillStyle = 'rgba(74, 124, 89, 0.15)'; // Green tint
               ctx.fillRect(0, segmentEndY, width, segmentStartY - segmentEndY);
             }
 
             // Draw segment boundary line at end of segment
-            const boundaryY = hitZoneY - (endTimeDiff / lookAhead) * (hitZoneY - 50);
+            const boundaryY = height - (endTimeDiff / lookAhead) * (height - topMargin);
 
-            if (boundaryY >= 50 && boundaryY <= hitZoneY) {
+            if (boundaryY >= topMargin && boundaryY <= height) {
               ctx.setLineDash([5, 5]); // Dashed line
               ctx.strokeStyle = currentSegment && segment.id === currentSegment.id
                 ? '#4a7c59' // Green for current segment
@@ -126,23 +121,24 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
         });
       }
 
-      // Filter notes that should be visible
+      // Filter notes that should be visible (include notes slightly past bottom for visual continuity)
       const visibleNotes = notes.filter((note) => {
         const timeDiff = note.time - currentTime;
-        return timeDiff >= 0 && timeDiff <= lookAhead;
+        return timeDiff >= -0.2 && timeDiff <= lookAhead; // Show notes 0.2s past for smooth exit
       });
 
       // Draw falling notes
       visibleNotes.forEach((note) => {
         const timeDiff = note.time - currentTime;
-        const y = hitZoneY - (timeDiff / lookAhead) * (hitZoneY - 50);
+        // Notes fall from top (topMargin) to bottom (height)
+        const y = height - (timeDiff / lookAhead) * (height - topMargin);
 
         // Calculate X position based on MIDI note
         const noteIndex = note.midi - noteRange.min;
         const x = noteIndex * noteWidth;
 
-        // Draw note with distribution width visualization
-        drawNote(ctx, x, y, noteWidth, note, distributionWidth, config);
+        // Draw note (no distribution glow - that's on the keyboard now)
+        drawNoteSimple(ctx, x, y, noteWidth, note, config);
       });
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -165,67 +161,43 @@ export const FallingNotesCanvas: React.FC<FallingNotesCanvasProps> = ({
       style={{
         display: 'block',
         backgroundColor: '#1a1a1a',
-        border: '2px solid #333',
+        borderRadius: '8px 8px 0 0', // Rounded top corners only
       }}
     />
   );
-};
+});
 
 /**
- * Draw a single falling note with distribution visualization
+ * Draw a single falling note (simple, no distribution glow)
+ * Distribution is shown on the keyboard instead
  */
-function drawNote(
+function drawNoteSimple(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   noteWidth: number,
   note: MelodyNote,
-  distributionWidth: number,
   config: AppConfig
 ): void {
-  const noteHeight = 12; // Reduced from 20 to prevent overlap of rapid notes
+  const noteHeight = 16; // Slightly taller for better visibility
 
-  // Option C: Show distribution as glow/width around the note
-  if (config.visual.distributionMode === 'C' || config.visual.distributionMode === 'A') {
-    // Draw distribution glow
-    const glowWidth = Math.min(distributionWidth * noteWidth * 0.5, noteWidth * 3);
-
-    const gradient = ctx.createRadialGradient(
-      x + noteWidth / 2,
-      y + noteHeight / 2,
-      noteWidth / 2,
-      x + noteWidth / 2,
-      y + noteHeight / 2,
-      glowWidth
-    );
-
-    gradient.addColorStop(0, config.visual.colors.distribution + '80');
-    gradient.addColorStop(0.5, config.visual.colors.distribution + '40');
-    gradient.addColorStop(1, config.visual.colors.distribution + '00');
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(
-      x + noteWidth / 2 - glowWidth,
-      y + noteHeight / 2 - glowWidth,
-      glowWidth * 2,
-      glowWidth * 2
-    );
-  }
-
-  // Draw main note rectangle
+  // Draw main note rectangle with rounded corners
+  const radius = 4;
   ctx.fillStyle = config.visual.colors.neutral;
-  ctx.fillRect(x + 2, y, noteWidth - 4, noteHeight);
+  ctx.beginPath();
+  ctx.roundRect(x + 2, y, noteWidth - 4, noteHeight, radius);
+  ctx.fill();
 
-  // Draw border to distinguish overlapping notes
-  ctx.strokeStyle = '#ffffff';
+  // Draw subtle border
+  ctx.strokeStyle = '#ffffff40';
   ctx.lineWidth = 1;
-  ctx.strokeRect(x + 2, y, noteWidth - 4, noteHeight);
+  ctx.stroke();
 
-  // Draw note name (only if note is tall enough)
-  if (noteHeight >= 12) {
+  // Draw note name if wide enough
+  if (noteWidth > 20) {
     ctx.fillStyle = '#000';
-    ctx.font = '9px monospace';
+    ctx.font = '10px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(note.name, x + noteWidth / 2, y + 9);
+    ctx.fillText(note.name, x + noteWidth / 2, y + 12);
   }
 }

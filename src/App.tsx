@@ -91,6 +91,11 @@ function App() {
   const [isSegmentLoopEnabled, setIsSegmentLoopEnabled] = useState<boolean>(false);
   const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
 
+  // UI state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const mainAreaRef = useRef<HTMLDivElement>(null);
+  const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
+
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
   const audioEngineRef = useRef<AudioEngine | null>(null);
@@ -462,6 +467,18 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // Track main area width for responsive canvas sizing
+  useEffect(() => {
+    const updateWidth = () => {
+      if (mainAreaRef.current) {
+        setMainAreaWidth(mainAreaRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, [sidebarCollapsed]);
+
   // Play/Pause handler
   const handlePlayPause = async () => {
     if (!audioEngineRef.current || !accompanimentRef.current || !melodyRef.current || !songData) return;
@@ -746,88 +763,137 @@ function App() {
   const currentReferenceVolume = accompanimentRef.current?.getVolume() || config.referenceMelody.initialVolume;
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'monospace', backgroundColor: '#1a1a1a', color: '#eee', minHeight: '100vh' }}>
-      <div style={{ marginBottom: '20px' }}>
-        <TheTighteningLogo width={300} />
-      </div>
-      <p style={{ color: '#888', marginBottom: '20px' }}>
-        Song: {songData.name} | MIDI: {midiStatus} | Audio: {audioStatus}
-      </p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '20px' }}>
-        {/* Main visualization area */}
-        <div>
-          {/* Falling notes (Guitar Hero style) */}
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '10px' }}>Falling Notes</h3>
-            <FallingNotesCanvas
-              notes={songData.notes}
-              currentTime={currentTime}
-              distributionWidth={currentDistribution}
-              noteRange={noteRange}
-              config={config}
-              width={800}
-              height={400}
-              lookAhead={3}
-              segments={songData.segments}
-              currentSegment={currentSegment}
-            />
-          </div>
-
-          {/* Lyrics display */}
-          <div style={{ marginBottom: '20px' }}>
-            <LyricsDisplay
-              segments={songData.segments}
-              currentTime={currentTime}
-              width={800}
-              lrcLines={lrcLines}
-            />
-          </div>
-
-          {/* Visual keyboard */}
-          <div>
-            <h3 style={{ marginBottom: '10px' }}>Piano Keyboard</h3>
-            <VisualKeyboard
-              noteRange={noteRange}
-              pressedKeys={pressedKeys}
-              currentCorrectNote={currentCorrectNote}
-              distributionWidth={currentDistribution}
-              config={config}
-              width={800}
-              height={150}
-            />
-          </div>
+    <div style={{
+      display: 'flex',
+      fontFamily: 'monospace',
+      backgroundColor: '#1a1a1a',
+      color: '#eee',
+      height: '100vh',
+      overflow: 'hidden',
+    }}>
+      {/* Main content area */}
+      <div
+        ref={mainAreaRef}
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '15px',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Compact header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          marginBottom: '10px',
+          flexShrink: 0,
+        }}>
+          <TheTighteningLogo width={200} />
+          <span style={{ color: '#888', fontSize: '12px' }}>
+            {songData.name} | {midiStatus} | {audioStatus}
+          </span>
         </div>
 
-        {/* Practice controls sidebar */}
-        <div>
-          <PracticeControls
-            isPlaying={isPlaying}
-            onPlayPause={handlePlayPause}
-            onStop={handleStop}
-            onReset={handleReset}
-            tempo={currentTempo}
-            onTempoChange={handleTempoChange}
+        {/* Falling notes - fills available space */}
+        <div style={{ flex: 1, minHeight: '200px', marginBottom: '0' }}>
+          <FallingNotesCanvas
+            notes={songData.notes}
+            currentTime={currentTime}
             distributionWidth={currentDistribution}
-            maxDistributionWidth={config.distribution.initialWidth}
-            onDistributionChange={handleDistributionChange}
-            referenceVolume={currentReferenceVolume}
-            onReferenceVolumeChange={handleReferenceVolumeChange}
-            octaveOffset={config.referenceMelody.octaveOffset}
-            onOctaveOffsetChange={handleOctaveOffsetChange}
-            autoProgression={config.progression.autoMode}
-            onAutoProgressionToggle={handleAutoProgressionToggle}
-            stats={stats}
-            availableSongs={Object.keys(SONG_LIBRARY)}
-            currentSong={currentSongId}
-            onSongChange={handleSongChange}
-            segments={songData?.segments || []}
+            noteRange={noteRange}
+            config={config}
+            width={mainAreaWidth - 30}
+            height={Math.max(300, window.innerHeight - 450)}
+            lookAhead={3}
+            segments={songData.segments}
             currentSegment={currentSegment}
-            onSegmentChange={handleSegmentChange}
-            isSegmentLoopEnabled={isSegmentLoopEnabled}
-            onSegmentLoopToggle={handleSegmentLoopToggle}
           />
         </div>
+
+        {/* Visual keyboard - notes land directly on keys */}
+        <div style={{ flexShrink: 0 }}>
+          <VisualKeyboard
+            noteRange={noteRange}
+            pressedKeys={pressedKeys}
+            currentCorrectNote={currentCorrectNote}
+            distributionWidth={currentDistribution}
+            config={config}
+            width={mainAreaWidth - 30}
+            height={180}
+          />
+        </div>
+
+        {/* Lyrics display */}
+        <div style={{ flexShrink: 0, marginTop: '10px' }}>
+          <LyricsDisplay
+            segments={songData.segments}
+            currentTime={currentTime}
+            width={mainAreaWidth - 30}
+            lrcLines={lrcLines}
+          />
+        </div>
+      </div>
+
+      {/* Collapsible sidebar */}
+      <div style={{
+        width: sidebarCollapsed ? '50px' : '350px',
+        backgroundColor: '#2a2a2a',
+        borderLeft: '2px solid #333',
+        transition: 'width 0.2s ease',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Sidebar toggle */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{
+            padding: '15px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            color: '#888',
+            cursor: 'pointer',
+            fontSize: '20px',
+            textAlign: 'center',
+          }}
+          title={sidebarCollapsed ? 'Expand controls' : 'Collapse controls'}
+        >
+          {sidebarCollapsed ? '◀' : '▶'}
+        </button>
+
+        {/* Controls content */}
+        {!sidebarCollapsed && (
+          <div style={{ overflow: 'auto', flex: 1 }}>
+            <PracticeControls
+              isPlaying={isPlaying}
+              onPlayPause={handlePlayPause}
+              onStop={handleStop}
+              onReset={handleReset}
+              tempo={currentTempo}
+              onTempoChange={handleTempoChange}
+              distributionWidth={currentDistribution}
+              maxDistributionWidth={config.distribution.initialWidth}
+              onDistributionChange={handleDistributionChange}
+              referenceVolume={currentReferenceVolume}
+              onReferenceVolumeChange={handleReferenceVolumeChange}
+              octaveOffset={config.referenceMelody.octaveOffset}
+              onOctaveOffsetChange={handleOctaveOffsetChange}
+              autoProgression={config.progression.autoMode}
+              onAutoProgressionToggle={handleAutoProgressionToggle}
+              stats={stats}
+              availableSongs={Object.keys(SONG_LIBRARY)}
+              currentSong={currentSongId}
+              onSongChange={handleSongChange}
+              segments={songData?.segments || []}
+              currentSegment={currentSegment}
+              onSegmentChange={handleSegmentChange}
+              isSegmentLoopEnabled={isSegmentLoopEnabled}
+              onSegmentLoopToggle={handleSegmentLoopToggle}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

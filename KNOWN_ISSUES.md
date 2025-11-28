@@ -32,25 +32,32 @@ Last updated: Nov 28, 2024
 
 ---
 
+### 3. LRC Lyrics Timing and Missing Bridge
+**Status:** FIXED in commit (pending)
+**File:** `public/songs/hey-jude.lrc`
+
+**Problem:** LRC timestamps were ~27 seconds off (synced to original Beatles recording, not MIDI file). Also missing the Bridge section entirely.
+
+**MIDI structure discovered:**
+- Section 1: 5.68s - Verse 1
+- Section 2: 58.99s - Verse 2
+- Section 3: 99.73s - Bridge (was MISSING from LRC)
+- Section 4: 127.09s - Verse 3
+- Section 5: 167.84s - Outro
+
+**Solution:** Complete rewrite of LRC with correct timestamps matching MIDI and added Bridge section. Placeholder lyrics kept for now.
+
+---
+
 ## OPEN ISSUES
 
-### 3. Excessive Re-renders (Medium Priority)
+### 4. Excessive Re-renders (Medium Priority)
 **Status:** Open
 **Files:** `src/App.tsx`, `src/config/AppConfig.ts`
 
 App component renders ~60x/second during playback (every 16ms tick), and `loadConfig()` reads from localStorage on EVERY render. This is unnecessary overhead.
 
 **Potential fix:** Memoize config loading, only load on mount.
-
----
-
-### 4. Incomplete LRC Lyrics (Low Priority)
-**Status:** Open
-**File:** `public/songs/hey-jude.lrc`
-
-LRC file has placeholder text like "(Hey Jude line 1)" instead of actual lyrics. Timestamps may not align with MIDI.
-
-**Potential fix:** Add real lyrics and sync timestamps to MIDI.
 
 ---
 

@@ -7,7 +7,7 @@
  * - Highlights for correct/current notes
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import type { AppConfig } from '../config/AppConfig';
 
 export interface VisualKeyboardProps {
@@ -26,7 +26,7 @@ export interface VisualKeyboardProps {
   height: number;
 }
 
-export const VisualKeyboard: React.FC<VisualKeyboardProps> = ({
+export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
   noteRange,
   pressedKeys,
   currentCorrectNote,
@@ -49,10 +49,20 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = ({
       height={height}
       style={{
         display: 'block',
-        backgroundColor: '#2a2a2a',
-        border: '2px solid #333',
+        backgroundColor: '#1a1a1a',
+        borderRadius: '0 0 8px 8px', // Rounded bottom corners only
       }}
     >
+      {/* Define glow filter for active note */}
+      <defs>
+        <filter id="activeGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {/* Draw keys */}
       {Array.from({ length: noteCount }).map((_, index) => {
         const midiNote = noteRange.min + index;
@@ -92,23 +102,25 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = ({
               config={config}
             />
 
-            {/* Note label */}
-            <text
-              x={x + keyWidth / 2}
-              y={height - 5}
-              textAnchor="middle"
-              fontSize="10"
-              fill="#888"
-              fontFamily="monospace"
-            >
-              {getMidiNoteName(midiNote)}
-            </text>
+            {/* Note label - only show for white keys to reduce clutter */}
+            {!isBlackKey && keyWidth > 15 && (
+              <text
+                x={x + keyWidth / 2}
+                y={height - 8}
+                textAnchor="middle"
+                fontSize={keyWidth > 25 ? '11' : '9'}
+                fill="#666"
+                fontFamily="monospace"
+              >
+                {getMidiNoteName(midiNote)}
+              </text>
+            )}
           </g>
         );
       })}
     </svg>
   );
-};
+});
 
 interface PianoKeyProps {
   x: number;
@@ -129,7 +141,7 @@ const PianoKey: React.FC<PianoKeyProps> = ({
   isCorrect,
   config,
 }) => {
-  let fill = isBlackKey ? '#333' : '#eee';
+  let fill = isBlackKey ? '#333' : '#ddd';
 
   if (isPressed) {
     fill = config.visual.colors.neutral;
@@ -139,19 +151,47 @@ const PianoKey: React.FC<PianoKeyProps> = ({
     fill = config.visual.colors.correctKey;
   }
 
-  const keyHeight = isBlackKey ? height * 0.6 : height - 20;
+  const keyHeight = isBlackKey ? height * 0.6 : height - 25;
+  const radius = 4;
 
   return (
-    <rect
-      x={x + 1}
-      y={0}
-      width={width - 2}
-      height={keyHeight}
-      fill={fill}
-      stroke="#000"
-      strokeWidth="1"
-      rx="3"
-    />
+    <g>
+      {/* Glow effect for correct/landing note */}
+      {isCorrect && (
+        <rect
+          x={x}
+          y={0}
+          width={width}
+          height={keyHeight + 10}
+          fill={config.visual.colors.correctKey}
+          opacity={0.4}
+          filter="url(#activeGlow)"
+          rx={radius}
+        />
+      )}
+      {/* Main key */}
+      <rect
+        x={x + 1}
+        y={0}
+        width={width - 2}
+        height={keyHeight}
+        fill={fill}
+        stroke={isCorrect ? config.visual.colors.correctKey : '#000'}
+        strokeWidth={isCorrect ? 2 : 1}
+        rx={radius}
+      />
+      {/* Key highlight (3D effect) */}
+      {!isBlackKey && (
+        <rect
+          x={x + 3}
+          y={2}
+          width={width - 6}
+          height={8}
+          fill="rgba(255,255,255,0.3)"
+          rx={2}
+        />
+      )}
+    </g>
   );
 };
 
@@ -174,20 +214,22 @@ const DistributionGlow: React.FC<DistributionGlowProps> = ({
   distributionWidth,
   color,
 }) => {
-  // Calculate opacity based on distance from correct note
+  // Calculate opacity based on distance from correct note (Gaussian falloff)
   const distance = Math.abs(midiNote - correctNote);
   const sigma = distributionWidth / 2;
   const opacity = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+  const keyHeight = height - 25;
 
   return (
     <rect
       x={x + 1}
       y={0}
       width={keyWidth - 2}
-      height={height - 20}
+      height={keyHeight}
       fill={color}
-      opacity={opacity * 0.5}
+      opacity={opacity * 0.4}
       pointerEvents="none"
+      rx={4}
     />
   );
 };
