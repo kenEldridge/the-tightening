@@ -92,6 +92,7 @@ function App() {
   const accompanimentRef = useRef<AccompanimentPlayer | null>(null);
   const progressTrackerRef = useRef<ProgressTracker | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
+  const currentTimeRef = useRef<number>(0); // Ref for currentTime to avoid stale closures
 
   // Refs to always point to latest handlers (avoids stale closure in IPC MIDI listeners)
   const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
@@ -222,15 +223,16 @@ function App() {
     const currentNote = getCurrentNote();
 
     // Diagnostic logging
+    const time = currentTimeRef.current;
     console.log('[MIDI] Note mapping', {
-      currentTime: currentTime.toFixed(2),
+      currentTime: time.toFixed(2),
       hasNote: !!currentNote,
       noteInfo: currentNote ? {
         midi: currentNote.midi,
         name: currentNote.name,
         time: currentNote.time.toFixed(2),
-        isActive: currentTime >= currentNote.time && currentTime < currentNote.time + currentNote.duration,
-        isGapFallback: currentTime >= currentNote.time + currentNote.duration
+        isActive: time >= currentNote.time && time < currentNote.time + currentNote.duration,
+        isGapFallback: time >= currentNote.time + currentNote.duration
       } : 'No note available'
     });
 
@@ -287,14 +289,18 @@ function App() {
   }, [handleNoteOn, handleNoteOff]);
 
   // Get current note based on playback time
+  // IMPORTANT: Uses ref to avoid stale closure - always reads latest time
   const getCurrentNote = useCallback(() => {
     if (!songData) return null;
+
+    // Read from ref to get LATEST time (avoids stale closure in MIDI callback)
+    const time = currentTimeRef.current;
 
     // Find currently active note
     let note = songData.notes.find((n) => {
       const noteStart = n.time;
       const noteEnd = n.time + n.duration;
-      return currentTime >= noteStart && currentTime < noteEnd;
+      return time >= noteStart && time < noteEnd;
     });
 
     // If in a gap between notes, use the most recent note
@@ -302,7 +308,7 @@ function App() {
     if (!note) {
       // Find the note that ended most recently
       note = songData.notes.reduce((prev, current) => {
-        if (current.time + current.duration <= currentTime) {
+        if (current.time + current.duration <= time) {
           return (!prev || current.time + current.duration > prev.time + prev.duration)
             ? current
             : prev;
@@ -312,7 +318,7 @@ function App() {
     }
 
     return note;
-  }, [songData, currentTime]);
+  }, [songData]); // Note: removed currentTime dependency - using ref instead
 
   // Update current correct note for visualization
   useEffect(() => {
@@ -328,7 +334,8 @@ function App() {
 
     const interval = setInterval(() => {
       const time = accompanimentRef.current!.getCurrentTime();
-      setCurrentTime(time);
+      currentTimeRef.current = time; // Update ref FIRST (for MIDI callbacks)
+      setCurrentTime(time); // Then update state (for UI)
     }, 16); // ~60fps updates
 
     timeUpdateIntervalRef.current = interval as unknown as number;
@@ -411,6 +418,7 @@ function App() {
   const handleStop = () => {
     if (accompanimentRef.current) {
       accompanimentRef.current.stop();
+      currentTimeRef.current = 0; // Reset ref
       setCurrentTime(0);
     }
     if (audioEngineRef.current) {

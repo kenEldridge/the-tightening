@@ -119,9 +119,8 @@ const createWindow = () => {
   if (process.env.NODE_ENV !== 'production') {
     loggers.main.debug('Loading dev server', { url: 'http://localhost:5173' });
     mainWindow.loadURL('http://localhost:5173');
-    // Open the DevTools in development.
-    mainWindow.webContents.openDevTools();
-    loggers.main.debug('Dev tools opened');
+    // DevTools disabled - Claude reads logs from file instead
+    // User can open manually with F12 if needed
   } else {
     const indexPath = path.join(__dirname, '../dist/index.html');
     loggers.main.debug('Loading production build', { path: indexPath });

@@ -425,3 +425,18 @@ TBD
 ## Dev Testing
 
 **Primary test song: Hey Jude** - Do NOT modify the hey-jude.mid file
+
+## Logging & Debugging
+
+**Log file location**: `C:\Users\eldri\AppData\Roaming\the-tightening\logs\main.log`
+
+Claude should read this file directly for error messages - DO NOT ask user to copy/paste errors.
+
+DevTools are disabled by default. User can open with F12 if needed.
+
+## Default Settings (Most Forgiving)
+
+- **Default song**: Hey Jude
+- **Distribution width**: 44 (ALL keys work perfectly)
+- **Auto-progression**: ON (tightening happens automatically as user improves)
+- **manualWidthOverride**: Always null on startup (ensures Phase 1 behavior)
