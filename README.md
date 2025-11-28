@@ -46,7 +46,7 @@ accuracy = e^(-distance² / (2σ²))
 
 **Audio Feedback** with three tunable mechanisms:
 - **Detuning**: ±50 cents pitch shift for wrong keys
-- **Timbre**: Triangle → Sawtooth → Square wave degradation
+- **Timbre**: Low-pass filter reduces brightness (10kHz → 500Hz)
 - **Volume**: Up to 50% quieter for wrong keys
 
 All parameters are **fully configurable** - we expect to iterate based on real use.
@@ -57,10 +57,11 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 
 ### Core
 - 🎹 **Adaptive Key Mapping** - ANY key plays melody initially
-- 🎵 **Reference Melody** - Background track fades as you improve
-- 📊 **Progress Tracking** - Auto-tightening based on accuracy
+- 🎵 **Accompaniment Mode** - Chord progressions play while you play melody
+- 📊 **Confusion Matrix Tracking** - Hits, misses, extras (not just %)
 - 🎮 **Guitar Hero Visualization** - Falling notes with distribution glow
 - 🎛️ **Full Manual Control** - Override all auto-progression
+- 🎤 **Lyrics Display** - Section names and lyrics for songs that have them
 
 ### Technical
 - ⚡ **Low Latency** - <20ms MIDI, <50ms audio
@@ -69,7 +70,8 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 - 🎚️ **Fully Tunable** - Single config file controls all behavior
 
 ### Current Songs
-- Canon in D (Pachelbel) - *More coming soon!*
+- Canon in D (Pachelbel)
+- Hey Jude (The Beatles) - with section lyrics
 
 ---
 
@@ -126,8 +128,8 @@ The app will open in Electron. Click **Play** to start!
 |----------|-----------|
 | **Desktop** | Electron |
 | **Frontend** | React 18 + TypeScript + Vite |
-| **Audio** | Tone.js (Web Audio API) |
-| **MIDI** | WebMidi v3 |
+| **Audio** | smplr (SplendidGrandPiano samples) |
+| **MIDI** | WebMidi v3 + @tonejs/midi (parsing) |
 | **Visualization** | HTML5 Canvas + SVG |
 | **Build** | Vite + TypeScript |
 
@@ -138,26 +140,30 @@ The app will open in Electron. Click **Play** to start!
 ```
 the-tightening/
 ├── src/
-│   ├── App.tsx                    # Main application
+│   ├── App.tsx                      # Main application
 │   ├── config/
-│   │   └── AppConfig.ts          # Central configuration
+│   │   └── AppConfig.ts            # Central configuration
 │   ├── components/
-│   │   ├── AdaptiveKeyMapper.ts  # Core algorithm
-│   │   ├── AudioEngine.ts        # Piano synthesis
-│   │   ├── ReferenceMelody.ts    # Background melody
-│   │   ├── ProgressTracker.ts    # Performance tracking
-│   │   ├── FallingNotesCanvas.tsx # Guitar Hero viz
-│   │   ├── VisualKeyboard.tsx     # Piano display
-│   │   ├── PracticeControls.tsx   # UI controls
-│   │   └── TheTighteningLogo.tsx  # Branding
+│   │   ├── AdaptiveKeyMapper.ts    # Core algorithm
+│   │   ├── AudioEngine.ts          # Piano synthesis (smplr)
+│   │   ├── AccompanimentPlayer.ts  # Chord progressions
+│   │   ├── ProgressTracker.ts      # Performance + confusion matrix
+│   │   ├── FallingNotesCanvas.tsx  # Guitar Hero viz
+│   │   ├── VisualKeyboard.tsx      # Piano display
+│   │   ├── PracticeControls.tsx    # UI controls
+│   │   ├── LyricsDisplay.tsx       # Section lyrics
+│   │   └── TheTighteningLogo.tsx   # Branding
 │   ├── utils/
-│   │   └── midiParser.ts         # MIDI file parsing
+│   │   ├── midiParser.ts           # MIDI file parsing
+│   │   └── logger.ts               # Logging utility
 │   └── data/
-│       └── loadSongs.ts          # Song library
+│       ├── loadSongs.ts            # Song library
+│       ├── songMetadata.ts         # Manual sections/lyrics
+│       └── chordProgressions.ts    # Chord data per song
 ├── public/
-│   └── songs/                    # MIDI files
-├── CLAUDE.MD                     # Detailed docs
-└── README.md                     # You are here!
+│   └── songs/                      # MIDI files (canon-in-d, hey-jude)
+├── CLAUDE.MD                       # Detailed docs
+└── README.md                       # You are here!
 ```
 
 ---
@@ -175,7 +181,7 @@ All behavior is controlled by `src/config/AppConfig.ts`:
   },
   audioFeedback: {
     detuning: { enabled: true, maxCents: 50, weight: 0.4 },
-    timbre: { enabled: true, weight: 0.3 },
+    timbre: { enabled: true, filterReduction: 2000, weight: 0.3 },
     volume: { enabled: true, maxReduction: 0.5, weight: 0.3 }
   },
   progression: {
@@ -191,14 +197,18 @@ See [CLAUDE.MD](./CLAUDE.MD) for complete configuration reference.
 
 ## 🐛 Known Issues
 
-### Currently In Progress
-- **Tone.js Transport Errors** - Reference melody playback has timing issues
-- **Audio Feedback Tuning** - Parameters need real-world testing
+### Recently Fixed
+- **Stale closure bug** - Same note playing every time (fixed with refs)
+- **Audio degradation cliff** - Width=44 caused sudden quality drop (fixed)
+- **Toy piano sound** - Replaced with smplr SplendidGrandPiano samples
+- **Excessive re-renders** - Stats updating every frame (optimized)
 
 ### Roadmap
-- [ ] Fix Tone.js timing errors
+- [x] ~~Fix Tone.js timing errors~~ (replaced with smplr)
+- [x] ~~Add more songs to library~~ (Hey Jude added)
+- [x] ~~Add confusion matrix tracking~~ (hits/misses/extras)
+- [x] ~~Add lyrics/sections display~~
 - [ ] Test adaptive key mapping with real users
-- [ ] Add more songs to library
 - [ ] Implement hand separation (left/right)
 - [ ] Add session history graphs
 - [ ] Custom song import
