@@ -29,6 +29,10 @@ export class ReferenceMelodyPlayer {
   private isSegmentLoopEnabled = false;
   private songDuration = 0;
 
+  // Ducking state - when user plays, reference ducks to let user be the melody
+  private isDucked = false;
+  private duckVolumeDb = -20; // About 10% volume when ducked
+
   constructor(config: AppConfig) {
     this.config = config;
     this.currentVolume = config.referenceMelody.initialVolume;
@@ -154,7 +158,8 @@ export class ReferenceMelodyPlayer {
 
     this.part.loop = true;
     this.part.loopStart = 0;
-    this.part.loopEnd = songData.duration;
+    // Subtract tiny offset to prevent double-triggering notes at loop boundary
+    this.part.loopEnd = songData.duration - 0.001;
     this.songDuration = songData.duration;
 
     // Reset segment looping when loading new song
@@ -282,9 +287,9 @@ export class ReferenceMelodyPlayer {
     if (!this.part) return;
 
     if (segment) {
-      // Loop the selected segment
+      // Loop the selected segment (with tiny offset to prevent double-triggers)
       this.part.loopStart = segment.startTime;
-      this.part.loopEnd = segment.endTime;
+      this.part.loopEnd = segment.endTime - 0.001;
       this.isSegmentLoopEnabled = true;
 
       console.info('[ReferenceMelody] Enabling segment loop', {
@@ -301,9 +306,9 @@ export class ReferenceMelodyPlayer {
         console.log('[ReferenceMelody] Seeked to segment start');
       }
     } else {
-      // Loop entire song
+      // Loop entire song (with tiny offset to prevent double-triggers)
       this.part.loopStart = 0;
-      this.part.loopEnd = this.songDuration;
+      this.part.loopEnd = this.songDuration - 0.001;
       this.isSegmentLoopEnabled = false;
 
       console.info('[ReferenceMelody] Disabling segment loop (looping entire song)', {
@@ -391,6 +396,46 @@ export class ReferenceMelodyPlayer {
    */
   getVolume(): number {
     return this.currentVolume;
+  }
+
+  /**
+   * Duck the reference melody (reduce volume quickly)
+   * Called when user starts playing so their piano becomes the melody
+   */
+  duck(): void {
+    if (!this.sampler || this.isDucked) return;
+    this.isDucked = true;
+
+    // Fast duck (10ms) - instant response when user plays
+    this.sampler.volume.linearRampTo(this.duckVolumeDb, 0.01);
+
+    console.debug('[ReferenceMelody] Ducked (user playing)', {
+      targetDb: this.duckVolumeDb
+    });
+  }
+
+  /**
+   * Unduck the reference melody (restore volume slowly)
+   * Called when user stops playing so reference melody fades back in
+   */
+  unduck(): void {
+    if (!this.sampler || !this.isDucked) return;
+    this.isDucked = false;
+
+    // Slow fade back in (1 second) - smooth transition
+    const targetDb = Tone.gainToDb(this.currentVolume);
+    this.sampler.volume.linearRampTo(targetDb, 1.0);
+
+    console.debug('[ReferenceMelody] Unducked (user stopped)', {
+      targetDb: targetDb.toFixed(1)
+    });
+  }
+
+  /**
+   * Check if currently ducked
+   */
+  isDuckedState(): boolean {
+    return this.isDucked;
   }
 
   /**

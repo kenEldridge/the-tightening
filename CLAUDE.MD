@@ -421,3 +421,7 @@ TBD
 - Powered by Claude (Anthropic)
 - Canon in D by Johann Pachelbel (public domain)
 - MIDI file from MidiFind.com
+
+## Dev Testing
+
+**Primary test song: Hey Jude** - Do NOT modify the hey-jude.mid file

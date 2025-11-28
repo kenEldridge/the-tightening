@@ -32,7 +32,7 @@ import { loadConfig, saveConfig } from './config/AppConfig';
 import type { KeyMappingResult } from './components/AdaptiveKeyMapper';
 import { AdaptiveKeyMapper } from './components/AdaptiveKeyMapper';
 import { AudioEngine } from './components/AudioEngine';
-import { ReferenceMelodyPlayer } from './components/ReferenceMelody';
+import { AccompanimentPlayer } from './components/AccompanimentPlayer';
 import type { PerformanceStats } from './components/ProgressTracker';
 import { ProgressTracker } from './components/ProgressTracker';
 
@@ -89,7 +89,7 @@ function App() {
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
   const audioEngineRef = useRef<AudioEngine | null>(null);
-  const referenceMelodyRef = useRef<ReferenceMelodyPlayer | null>(null);
+  const accompanimentRef = useRef<AccompanimentPlayer | null>(null);
   const progressTrackerRef = useRef<ProgressTracker | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
 
@@ -111,11 +111,11 @@ function App() {
         // Create core components
         keyMapperRef.current = new AdaptiveKeyMapper(config);
         audioEngineRef.current = new AudioEngine(config);
-        referenceMelodyRef.current = new ReferenceMelodyPlayer(config);
+        accompanimentRef.current = new AccompanimentPlayer(config);
         progressTrackerRef.current = new ProgressTracker(
           config,
           keyMapperRef.current,
-          referenceMelodyRef.current
+          accompanimentRef.current
         );
 
         // Load song
@@ -154,7 +154,7 @@ function App() {
     return () => {
       // Cleanup on unmount
       if (audioEngineRef.current) audioEngineRef.current.dispose();
-      if (referenceMelodyRef.current) referenceMelodyRef.current.dispose();
+      if (accompanimentRef.current) accompanimentRef.current.dispose();
     };
   }, []);
 
@@ -324,10 +324,10 @@ function App() {
   // NOTE: Using setInterval polling (16ms lag) for simplicity
   // FUTURE: Consider migrating to Transport.scheduleRepeat for tighter sync
   useEffect(() => {
-    if (!isPlaying || !referenceMelodyRef.current) return;
+    if (!isPlaying || !accompanimentRef.current) return;
 
     const interval = setInterval(() => {
-      const time = referenceMelodyRef.current!.getCurrentTime();
+      const time = accompanimentRef.current!.getCurrentTime();
       setCurrentTime(time);
     }, 16); // ~60fps updates
 
@@ -353,7 +353,7 @@ function App() {
 
   // Play/Pause handler
   const handlePlayPause = async () => {
-    if (!audioEngineRef.current || !referenceMelodyRef.current || !songData) return;
+    if (!audioEngineRef.current || !accompanimentRef.current || !songData) return;
 
     try {
       if (!isPlaying) {
@@ -369,7 +369,7 @@ function App() {
 
         // Initialize audio (loads samples) - now properly waits for completion
         await audioEngineRef.current.initialize();
-        await referenceMelodyRef.current.initialize();
+        await accompanimentRef.current.initialize();
 
         const loadTime = Date.now() - startTime;
         console.info('Piano samples loaded', { loadTimeMs: loadTime });
@@ -378,21 +378,21 @@ function App() {
 
         // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
         const tempo = songData.tempo * config.gameplay.tempoMultiplier;
-        referenceMelodyRef.current.setTempo(tempo);
+        accompanimentRef.current.setTempo(tempo);
         console.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
 
         // Load song into reference melody player (uses current Transport.bpm)
-        referenceMelodyRef.current.loadSong(songData);
+        accompanimentRef.current.loadSong(songData);
 
         // Start playback
-        referenceMelodyRef.current.start();
+        accompanimentRef.current.start();
         setIsPlaying(true);
         setAudioStatus('Playing');
         console.info('Playback started');
       } else {
         // Pause
         console.info('Pausing playback');
-        referenceMelodyRef.current.pause();
+        accompanimentRef.current.pause();
         setIsPlaying(false);
         setAudioStatus('Paused');
       }
@@ -409,8 +409,8 @@ function App() {
 
   // Stop handler
   const handleStop = () => {
-    if (referenceMelodyRef.current) {
-      referenceMelodyRef.current.stop();
+    if (accompanimentRef.current) {
+      accompanimentRef.current.stop();
       setCurrentTime(0);
     }
     if (audioEngineRef.current) {
@@ -439,8 +439,8 @@ function App() {
       gameplay: { ...prev.gameplay, tempoMultiplier: multiplier },
     }));
 
-    if (referenceMelodyRef.current) {
-      referenceMelodyRef.current.setTempo(tempo);
+    if (accompanimentRef.current) {
+      accompanimentRef.current.setTempo(tempo);
     }
   };
 
@@ -458,8 +458,8 @@ function App() {
 
   // Reference volume change handler
   const handleReferenceVolumeChange = (volume: number) => {
-    if (referenceMelodyRef.current) {
-      referenceMelodyRef.current.setVolume(volume);
+    if (accompanimentRef.current) {
+      accompanimentRef.current.setVolume(volume);
     }
 
     setConfig((prev) => ({
@@ -531,8 +531,8 @@ function App() {
   const handleSegmentChange = (segment: SongSegment | null) => {
     setCurrentSegment(segment);
 
-    if (referenceMelodyRef.current) {
-      referenceMelodyRef.current.setLoopSegment(segment);
+    if (accompanimentRef.current) {
+      accompanimentRef.current.setLoopSegment(segment);
     }
 
     // If segment selected, enable loop by default
@@ -548,11 +548,11 @@ function App() {
     const newState = !isSegmentLoopEnabled;
     setIsSegmentLoopEnabled(newState);
 
-    if (referenceMelodyRef.current) {
+    if (accompanimentRef.current) {
       if (newState && currentSegment) {
-        referenceMelodyRef.current.setLoopSegment(currentSegment);
+        accompanimentRef.current.setLoopSegment(currentSegment);
       } else {
-        referenceMelodyRef.current.setLoopSegment(null);
+        accompanimentRef.current.setLoopSegment(null);
       }
     }
   };
@@ -564,7 +564,7 @@ function App() {
     // Update component configs
     if (keyMapperRef.current) keyMapperRef.current.updateConfig(config);
     if (audioEngineRef.current) audioEngineRef.current.updateConfig(config);
-    if (referenceMelodyRef.current) referenceMelodyRef.current.updateConfig(config);
+    if (accompanimentRef.current) accompanimentRef.current.updateConfig(config);
     if (progressTrackerRef.current) progressTrackerRef.current.updateConfig(config);
   }, [config]);
 
@@ -585,7 +585,7 @@ function App() {
 
   const currentTempo = Math.round(songData.tempo * config.gameplay.tempoMultiplier);
   const currentDistribution = keyMapperRef.current?.getDistributionWidth() || config.distribution.initialWidth;
-  const currentReferenceVolume = referenceMelodyRef.current?.getVolume() || config.referenceMelody.initialVolume;
+  const currentReferenceVolume = accompanimentRef.current?.getVolume() || config.referenceMelody.initialVolume;
 
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace', backgroundColor: '#1a1a1a', color: '#eee', minHeight: '100vh' }}>

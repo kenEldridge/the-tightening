@@ -213,7 +213,7 @@ export const defaultConfig: AppConfig = {
   },
 
   gameplay: {
-    currentSong: 'canon-in-d',
+    currentSong: 'hey-jude',
     tempoMultiplier: 1.0,
     allowTempoChange: true,
   },
@@ -231,9 +231,26 @@ export function loadConfig(): AppConfig {
   try {
     const saved = localStorage.getItem('musicLearningAppConfig');
     if (saved) {
-      const config = { ...defaultConfig, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      // Deep merge to preserve nested object defaults
+      const config: AppConfig = {
+        ...defaultConfig,
+        distribution: { ...defaultConfig.distribution, ...parsed.distribution },
+        audioFeedback: { ...defaultConfig.audioFeedback, ...parsed.audioFeedback },
+        referenceMelody: { ...defaultConfig.referenceMelody, ...parsed.referenceMelody },
+        progression: { ...defaultConfig.progression, ...parsed.progression },
+        visual: { ...defaultConfig.visual, ...parsed.visual },
+        gameplay: { ...defaultConfig.gameplay, ...parsed.gameplay },
+      };
+
+      // CRITICAL: Always start with full distribution width (manualWidthOverride = null)
+      // This ensures Phase 1 behavior: ANY key sounds PERFECT
+      // The Tightening only happens as user improves
+      config.distribution.manualWidthOverride = null;
+
       console.info('[AppConfig] Config loaded from localStorage', {
         distributionWidth: config.distribution.initialWidth,
+        manualWidthOverride: config.distribution.manualWidthOverride,
         autoMode: config.progression.autoMode,
         currentSong: config.gameplay.currentSong
       });

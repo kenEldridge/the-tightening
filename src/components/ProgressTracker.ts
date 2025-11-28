@@ -8,7 +8,7 @@
 import type { AppConfig } from '../config/AppConfig';
 import { saveConfig } from '../config/AppConfig';
 import { AdaptiveKeyMapper } from './AdaptiveKeyMapper';
-import { ReferenceMelodyPlayer } from './ReferenceMelody';
+import { AccompanimentPlayer } from './AccompanimentPlayer';
 // import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export interface PerformanceStats {
@@ -36,7 +36,7 @@ interface NotePerformance {
 export class ProgressTracker {
   private config: AppConfig;
   private keyMapper: AdaptiveKeyMapper;
-  private referenceMelody: ReferenceMelodyPlayer | null = null;
+  private accompaniment: AccompanimentPlayer | null = null;
 
   // Performance tracking
   private noteHistory: NotePerformance[] = [];
@@ -49,11 +49,11 @@ export class ProgressTracker {
   constructor(
     config: AppConfig,
     keyMapper: AdaptiveKeyMapper,
-    referenceMelody?: ReferenceMelodyPlayer
+    accompaniment?: AccompanimentPlayer
   ) {
     this.config = config;
     this.keyMapper = keyMapper;
-    this.referenceMelody = referenceMelody || null;
+    this.accompaniment = accompaniment || null;
   }
 
   /**
@@ -90,9 +90,9 @@ export class ProgressTracker {
     }
 
     // Update reference melody volume
-    if (this.referenceMelody) {
+    if (this.accompaniment) {
       const avgAccuracy = this.getAverageAccuracy();
-      this.referenceMelody.fadeBasedOnAccuracy(avgAccuracy);
+      this.accompaniment.fadeBasedOnAccuracy(avgAccuracy);
     }
   }
 
@@ -269,8 +269,8 @@ export class ProgressTracker {
   /**
    * Set reference melody player (for volume fading)
    */
-  setReferenceMelody(referenceMelody: ReferenceMelodyPlayer): void {
-    this.referenceMelody = referenceMelody;
+  setReferenceMelody(accompaniment: AccompanimentPlayer): void {
+    this.accompaniment = accompaniment;
   }
 
   /**
