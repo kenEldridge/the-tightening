@@ -33,6 +33,7 @@ import type { KeyMappingResult } from './components/AdaptiveKeyMapper';
 import { AdaptiveKeyMapper } from './components/AdaptiveKeyMapper';
 import { AudioEngine } from './components/AudioEngine';
 import { AccompanimentPlayer } from './components/AccompanimentPlayer';
+import { ReferenceMelodyPlayer } from './components/ReferenceMelody';
 import type { PerformanceStats } from './components/ProgressTracker';
 import { ProgressTracker } from './components/ProgressTracker';
 
@@ -94,6 +95,7 @@ function App() {
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
   const audioEngineRef = useRef<AudioEngine | null>(null);
   const accompanimentRef = useRef<AccompanimentPlayer | null>(null);
+  const melodyRef = useRef<ReferenceMelodyPlayer | null>(null);  // Bell synth melody guide
   const progressTrackerRef = useRef<ProgressTracker | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
   const currentTimeRef = useRef<number>(0); // Ref for currentTime to avoid stale closures
@@ -126,6 +128,7 @@ function App() {
         keyMapperRef.current = new AdaptiveKeyMapper(config);
         audioEngineRef.current = new AudioEngine(config);
         accompanimentRef.current = new AccompanimentPlayer(config);
+        melodyRef.current = new ReferenceMelodyPlayer(config);  // Bell synth melody guide
         progressTrackerRef.current = new ProgressTracker(
           config,
           keyMapperRef.current,
@@ -176,6 +179,7 @@ function App() {
       // Cleanup on unmount
       if (audioEngineRef.current) audioEngineRef.current.dispose();
       if (accompanimentRef.current) accompanimentRef.current.dispose();
+      if (melodyRef.current) melodyRef.current.dispose();
     };
   }, []);
 
@@ -226,6 +230,11 @@ function App() {
       midi: pressedMidiKey,
       velocity: data.velocity
     });
+
+    // Duck the melody guide when user plays (so their piano is the lead voice)
+    if (melodyRef.current) {
+      melodyRef.current.duck();
+    }
 
     // Add to pressed keys
     setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
@@ -329,6 +338,12 @@ function App() {
     setPressedKeys((prev) => {
       const next = new Set(prev);
       next.delete(data.note);
+
+      // If no more keys pressed, unduck the melody guide (fade it back in)
+      if (next.size === 0 && melodyRef.current) {
+        melodyRef.current.unduck();
+      }
+
       return next;
     });
   }, []);
@@ -449,7 +464,7 @@ function App() {
 
   // Play/Pause handler
   const handlePlayPause = async () => {
-    if (!audioEngineRef.current || !accompanimentRef.current || !songData) return;
+    if (!audioEngineRef.current || !accompanimentRef.current || !melodyRef.current || !songData) return;
 
     try {
       if (!isPlaying) {
@@ -466,6 +481,7 @@ function App() {
         // Initialize audio (loads samples) - now properly waits for completion
         await audioEngineRef.current.initialize();
         await accompanimentRef.current.initialize();
+        await melodyRef.current.initialize();  // Bell synth (instant, no samples)
 
         const loadTime = Date.now() - startTime;
         console.info('Piano samples loaded', { loadTimeMs: loadTime });
@@ -475,20 +491,25 @@ function App() {
         // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
         const tempo = songData.tempo * config.gameplay.tempoMultiplier;
         accompanimentRef.current.setTempo(tempo);
+        melodyRef.current.setTempo(tempo);
         console.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
 
-        // Load song into reference melody player (uses current Transport.bpm)
+        // Load song into both players
         accompanimentRef.current.loadSong(songData);
+        melodyRef.current.loadSong(songData);
 
-        // Start playback
+        // Start both players (melody = bell guide, accompaniment = piano chords)
+        // Note: They share the same Tone.Transport so they stay in sync
         accompanimentRef.current.start();
+        melodyRef.current.start();
         setIsPlaying(true);
-        setAudioStatus('Playing');
+        setAudioStatus('Playing (melody guide + accompaniment)');
         console.info('Playback started');
       } else {
-        // Pause
+        // Pause both
         console.info('Pausing playback');
         accompanimentRef.current.pause();
+        melodyRef.current.pause();
         setIsPlaying(false);
         setAudioStatus('Paused');
       }
@@ -507,9 +528,12 @@ function App() {
   const handleStop = () => {
     if (accompanimentRef.current) {
       accompanimentRef.current.stop();
-      currentTimeRef.current = 0; // Reset ref
-      setCurrentTime(0);
     }
+    if (melodyRef.current) {
+      melodyRef.current.stop();
+    }
+    currentTimeRef.current = 0; // Reset ref
+    setCurrentTime(0);
     if (audioEngineRef.current) {
       audioEngineRef.current.stopAll();
     }
@@ -541,6 +565,9 @@ function App() {
 
     if (accompanimentRef.current) {
       accompanimentRef.current.setTempo(tempo);
+    }
+    if (melodyRef.current) {
+      melodyRef.current.setTempo(tempo);
     }
   };
 
@@ -641,6 +668,9 @@ function App() {
     if (accompanimentRef.current) {
       accompanimentRef.current.setLoopSegment(segment);
     }
+    if (melodyRef.current) {
+      melodyRef.current.setLoopSegment(segment);
+    }
 
     // If segment selected, enable loop by default
     if (segment) {
@@ -662,6 +692,13 @@ function App() {
         accompanimentRef.current.setLoopSegment(null);
       }
     }
+    if (melodyRef.current) {
+      if (newState && currentSegment) {
+        melodyRef.current.setLoopSegment(currentSegment);
+      } else {
+        melodyRef.current.setLoopSegment(null);
+      }
+    }
   };
 
   // Save config when it changes
@@ -672,6 +709,7 @@ function App() {
     if (keyMapperRef.current) keyMapperRef.current.updateConfig(config);
     if (audioEngineRef.current) audioEngineRef.current.updateConfig(config);
     if (accompanimentRef.current) accompanimentRef.current.updateConfig(config);
+    if (melodyRef.current) melodyRef.current.updateConfig(config);
     if (progressTrackerRef.current) progressTrackerRef.current.updateConfig(config);
   }, [config]);
 

@@ -20,7 +20,9 @@ import type { SongData, MelodyNote, SongSegment } from '../utils/midiParser';
 // import { loggers } from '../utils/logger'; // REMOVED - causes renderer blocking
 
 export class ReferenceMelodyPlayer {
-  private sampler: Tone.Sampler | null = null;
+  // Use PolySynth with soft bell-like sound instead of piano
+  // This prevents phasing when user plays along on piano
+  private synth: Tone.PolySynth | null = null;
   private part: Tone.Part | null = null;
   private config: AppConfig;
   private currentVolume: number;
@@ -39,85 +41,41 @@ export class ReferenceMelodyPlayer {
   }
 
   /**
-   * Initialize the reference melody sampler
+   * Initialize the reference melody synth
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    const startTime = Date.now();
     console.info('[ReferenceMelody] Initializing ReferenceMelodyPlayer...');
 
     await Tone.start();
 
-    // Create sampler with same Salamander Grand Piano samples as user
-    // Wrap in Promise to wait for samples to load
-    console.log('[ReferenceMelody] Loading reference piano samples from CDN...');
-    await new Promise<void>((resolve, reject) => {
-      this.sampler = new Tone.Sampler({
-        urls: {
-          A0: "A0.mp3",
-          C1: "C1.mp3",
-          "D#1": "Ds1.mp3",
-          "F#1": "Fs1.mp3",
-          A1: "A1.mp3",
-          C2: "C2.mp3",
-          "D#2": "Ds2.mp3",
-          "F#2": "Fs2.mp3",
-          A2: "A2.mp3",
-          C3: "C3.mp3",
-          "D#3": "Ds3.mp3",
-          "F#3": "Fs3.mp3",
-          A3: "A3.mp3",
-          C4: "C4.mp3",
-          "D#4": "Ds4.mp3",
-          "F#4": "Fs4.mp3",
-          A4: "A4.mp3",
-          C5: "C5.mp3",
-          "D#5": "Ds5.mp3",
-          "F#5": "Fs5.mp3",
-          A5: "A5.mp3",
-          C6: "C6.mp3",
-          "D#6": "Ds6.mp3",
-          "F#6": "Fs6.mp3",
-          A6: "A6.mp3",
-          C7: "C7.mp3",
-          "D#7": "Ds7.mp3",
-          "F#7": "Fs7.mp3",
-          A7: "A7.mp3",
-          C8: "C8.mp3"
-        },
-        baseUrl: "https://tonejs.github.io/audio/salamander/",
-        release: 1,
-        volume: Tone.gainToDb(this.currentVolume),
-        onload: () => {
-          const loadTime = Date.now() - startTime;
-          console.info('[ReferenceMelody] Reference piano samples loaded successfully', {
-            sampleCount: 31,
-            loadTimeMs: loadTime,
-            initialVolume: this.currentVolume,
-            baseUrl: "https://tonejs.github.io/audio/salamander/"
-          });
-          resolve();
-        },
-        onerror: (err) => {
-          console.error('[ReferenceMelody] Failed to load reference piano samples', {
-            error: err instanceof Error ? err.message : String(err),
-            baseUrl: "https://tonejs.github.io/audio/salamander/"
-          });
-          reject(err);
-        }
-      }).toDestination();
-    });
+    // Create a soft bell/celeste synth - different timbre than piano
+    // This prevents phasing when user plays along on their piano
+    console.log('[ReferenceMelody] Creating bell synth for melody guide...');
+
+    this.synth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: {
+        type: 'triangle'  // Soft, bell-like tone
+      },
+      envelope: {
+        attack: 0.02,     // Quick attack for clear note starts
+        decay: 0.4,       // Medium decay
+        sustain: 0.15,    // Low sustain for bell-like quality
+        release: 1.0      // Long release for smooth fade
+      },
+      volume: Tone.gainToDb(this.currentVolume)
+    }).toDestination();
 
     this.initialized = true;
-    console.info('[ReferenceMelody] ReferenceMelodyPlayer initialization complete');
+    console.info('[ReferenceMelody] ReferenceMelodyPlayer initialization complete (bell synth)');
   }
 
   /**
    * Load a song and prepare it for playback
    */
   loadSong(songData: SongData): void {
-    if (!this.initialized || !this.sampler) {
+    if (!this.initialized || !this.synth) {
       console.warn('[ReferenceMelody] Cannot load song: ReferenceMelodyPlayer not initialized');
       return;
     }
@@ -146,8 +104,8 @@ export class ReferenceMelodyPlayer {
     }));
 
     this.part = new Tone.Part((time, event) => {
-      if (this.sampler && this.config.referenceMelody.enabled) {
-        this.sampler.triggerAttackRelease(
+      if (this.synth && this.config.referenceMelody.enabled) {
+        this.synth.triggerAttackRelease(
           event.note,
           event.duration,
           time,
@@ -357,9 +315,9 @@ export class ReferenceMelodyPlayer {
       this.currentVolume = this.config.referenceMelody.manualVolumeOverride;
     }
 
-    // Update sampler volume
-    if (this.sampler) {
-      this.sampler.volume.value = Tone.gainToDb(this.currentVolume);
+    // Update synth volume
+    if (this.synth) {
+      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
     }
 
     // Log volume fade (only if volume changed significantly)
@@ -381,8 +339,8 @@ export class ReferenceMelodyPlayer {
     const oldVolume = this.currentVolume;
     this.currentVolume = Math.max(0, Math.min(1, volume));
 
-    if (this.sampler) {
-      this.sampler.volume.value = Tone.gainToDb(this.currentVolume);
+    if (this.synth) {
+      this.synth.volume.value = Tone.gainToDb(this.currentVolume);
     }
 
     console.info('[ReferenceMelody] Reference melody volume set manually', {
@@ -403,11 +361,11 @@ export class ReferenceMelodyPlayer {
    * Called when user starts playing so their piano becomes the melody
    */
   duck(): void {
-    if (!this.sampler || this.isDucked) return;
+    if (!this.synth || this.isDucked) return;
     this.isDucked = true;
 
     // Fast duck (10ms) - instant response when user plays
-    this.sampler.volume.linearRampTo(this.duckVolumeDb, 0.01);
+    this.synth.volume.linearRampTo(this.duckVolumeDb, 0.01);
 
     console.debug('[ReferenceMelody] Ducked (user playing)', {
       targetDb: this.duckVolumeDb
@@ -419,12 +377,12 @@ export class ReferenceMelodyPlayer {
    * Called when user stops playing so reference melody fades back in
    */
   unduck(): void {
-    if (!this.sampler || !this.isDucked) return;
+    if (!this.synth || !this.isDucked) return;
     this.isDucked = false;
 
     // Slow fade back in (1 second) - smooth transition
     const targetDb = Tone.gainToDb(this.currentVolume);
-    this.sampler.volume.linearRampTo(targetDb, 1.0);
+    this.synth.volume.linearRampTo(targetDb, 1.0);
 
     console.debug('[ReferenceMelody] Unducked (user stopped)', {
       targetDb: targetDb.toFixed(1)
@@ -463,8 +421,8 @@ export class ReferenceMelodyPlayer {
    */
   updateConfig(config: AppConfig): void {
     this.config = config;
-    // Sampler doesn't need recreation - just update volume if needed
-    if (this.sampler && this.currentVolume !== config.referenceMelody.initialVolume) {
+    // Synth doesn't need recreation - just update volume if needed
+    if (this.synth && this.currentVolume !== config.referenceMelody.initialVolume) {
       this.setVolume(this.currentVolume);
     }
   }
@@ -480,9 +438,9 @@ export class ReferenceMelodyPlayer {
       this.part = null;
     }
 
-    if (this.sampler) {
-      this.sampler.dispose();
-      this.sampler = null;
+    if (this.synth) {
+      this.synth.dispose();
+      this.synth = null;
     }
 
     this.initialized = false;
