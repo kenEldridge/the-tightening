@@ -4,7 +4,7 @@
 
 **"The Tightening"** is an innovative Electron-based desktop application that teaches piano through a revolutionary adaptive key mapping approach. Unlike traditional learning tools, this app lets you play ANY key initially and gradually guides you to the correct keys through audio feedback and probabilistic distribution tightening.
 
-## Current Status (Nov 28, 2024)
+## Current Status (Nov 29, 2024)
 
 **Phase 1 COMPLETE + Enhancements**
 
@@ -23,7 +23,7 @@
 - **Collapsible sidebar** - maximize screen space for practice
 - **Responsive layout** - fills available screen space
 - **Smart song search** - 51K+ MIDI files with aggressive deduplication
-- Song library: 33K unique songs (51K files with variants grouped)
+- Song library: **33K unique songs** (51K files with variants grouped)
 
 ### The Core Innovation
 
@@ -287,6 +287,7 @@ Claude should read this file directly for error messages.
 8. **Confusing vertical distribution glow**: Removed from falling notes, kept on keyboard
 9. **Unclear hit point**: Notes now fall directly onto keyboard keys
 10. **Fixed layout wastes space**: Responsive flexbox layout fills screen
+11. **Excessive re-renders**: Config was being loaded 60x/second during playback - fixed with lazy initializer
 
 ## UI Layout
 

@@ -53,9 +53,8 @@ import type { LrcLine } from './utils/lrcParser';
 console.log('[App] Module loading - if you see this, console capture is working!');
 
 function App() {
-  console.log('[App] Component rendering');
-  // Configuration
-  const [config, setConfig] = useState<AppConfig>(loadConfig());
+  // Configuration - use lazy initializer to only load config once on mount
+  const [config, setConfig] = useState<AppConfig>(() => loadConfig());
 
   // System state
   const [midiStatus, setMidiStatus] = useState<string>('Initializing MIDI...');

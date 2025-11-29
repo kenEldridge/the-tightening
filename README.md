@@ -63,6 +63,7 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 - 💥 **Impact Effects** - Visual ripple/flash when notes hit
 - 🎛️ **Collapsible Sidebar** - Maximize screen space for practice
 - 🎤 **Lyrics Display** - Section names and lyrics for songs that have them
+- 🔍 **Song Search** - Fast fuzzy search across 33K+ songs with smart grouping
 
 ### Technical
 - ⚡ **Low Latency** - <20ms MIDI, <50ms audio
@@ -71,9 +72,12 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 - 💾 **Progress Persistence** - LocalStorage save/load
 - 🎚️ **Fully Tunable** - Single config file controls all behavior
 
-### Current Songs
-- Canon in D (Pachelbel)
-- Hey Jude (The Beatles) - with section lyrics
+### Song Library
+- **51,000+ MIDI files** indexed with smart deduplication
+- **33,000 unique songs** (variants grouped together)
+- Searchable by name, artist, category
+- Includes classical, pop, rock, jazz, and more
+- Built-in favorites: Canon in D, Hey Jude (with lyrics)
 
 ---
 
@@ -154,6 +158,7 @@ the-tightening/
 │   │   ├── VisualKeyboard.tsx      # Piano display
 │   │   ├── PracticeControls.tsx    # UI controls
 │   │   ├── LyricsDisplay.tsx       # Section lyrics
+│   │   ├── SongSearch.tsx          # Song search UI
 │   │   └── TheTighteningLogo.tsx   # Branding
 │   ├── utils/
 │   │   ├── midiParser.ts           # MIDI file parsing
@@ -163,7 +168,11 @@ the-tightening/
 │       ├── songMetadata.ts         # Manual sections/lyrics
 │       └── chordProgressions.ts    # Chord data per song
 ├── public/
-│   └── songs/                      # MIDI files (canon-in-d, hey-jude)
+│   ├── songs/                      # Built-in MIDI files
+│   ├── song-index.json             # Searchable index (33K songs)
+│   └── personally_owned_MIDI/      # 51K+ MIDI files
+├── scripts/
+│   └── build-song-index.js         # Song index builder
 ├── CLAUDE.MD                       # Detailed docs
 └── README.md                       # You are here!
 ```
@@ -209,15 +218,15 @@ See [CLAUDE.MD](./CLAUDE.MD) for complete configuration reference.
 
 ### Roadmap
 - [x] ~~Fix Tone.js timing errors~~ (replaced with smplr)
-- [x] ~~Add more songs to library~~ (Hey Jude added)
+- [x] ~~Add more songs to library~~ (51K+ MIDI files!)
 - [x] ~~Add confusion matrix tracking~~ (hits/misses/extras)
 - [x] ~~Add lyrics/sections display~~
 - [x] ~~UI overhaul~~ (responsive, notes land on keys, impact effects)
+- [x] ~~Song search~~ (33K unique songs, fuzzy search, smart grouping)
 - [ ] Karaoke file support (.kar with embedded lyrics)
 - [ ] Test adaptive key mapping with real users
 - [ ] Implement hand separation (left/right)
 - [ ] Add session history graphs
-- [ ] Custom song import
 
 See [Issues](https://github.com/kenEldridge/the-tightening/issues) for full list.
 
