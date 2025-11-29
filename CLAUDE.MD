@@ -17,9 +17,13 @@
 - Audio degradation for wrong keys (detuning + volume)
 - Progress tracking with **confusion matrix** (hits/misses/extras)
 - Lyrics display with meaningful song sections
-- Guitar Hero falling notes visualization
+- **Guitar Hero falling notes** - notes fall directly onto keyboard
+- **Impact effects** - visual ripple/flash when notes land
 - Visual piano keyboard with distribution glow
-- Song library: Hey Jude, Canon in D
+- **Collapsible sidebar** - maximize screen space for practice
+- **Responsive layout** - fills available screen space
+- **Smart song search** - 51K+ MIDI files with aggressive deduplication
+- Song library: 33K unique songs (51K files with variants grouped)
 
 ### The Core Innovation
 
@@ -65,8 +69,9 @@
 - **@tonejs/midi** - MIDI file parsing
 
 ### Rendering
-- **HTML5 Canvas** - Falling notes visualization
-- **SVG** - Piano keyboard display
+- **HTML5 Canvas** - Falling notes with impact effects
+- **SVG** - Piano keyboard with glow effects
+- **React.memo** - Memoized components for performance
 
 ## Project Structure
 
@@ -87,6 +92,7 @@ the-tightening/
 │   │   ├── VisualKeyboard.tsx           # Piano keyboard display
 │   │   ├── PracticeControls.tsx         # UI controls + stats
 │   │   ├── LyricsDisplay.tsx            # Section lyrics display
+│   │   ├── SongSearch.tsx               # Song search with grouping
 │   │   └── TheTighteningLogo.tsx        # Logo component
 │   ├── utils/
 │   │   ├── midiParser.ts                # MIDI file parsing
@@ -188,9 +194,21 @@ the-tightening/
 
 ## Song System
 
-### Song Library (`src/data/loadSongs.ts`)
-- **Hey Jude** (The Beatles) - Primary test song
-- **Canon in D** (Pachelbel) - Public domain
+### Song Search & Library
+
+**51,559 MIDI files** indexed with smart deduplication:
+
+- **Searchable index**: `public/song-index.json` (~21 MB)
+- **Aggressive grouping**: All songs with same name grouped (ignores folder/artist)
+- **Variant detection**: Key variations (-C120), versions (2, 3), formats (MM GM/XG)
+- **Primary selection**: Best version shown, others accessible via "+X ver" badge
+
+Build/rebuild index: `npm run build-index`
+
+### Included Collections
+- **50000midifiles.zip** - Extracted to 46,853 files
+- **Classical Archives** - 4,704 classical pieces
+- Built-in songs: Hey Jude, Canon in D
 
 ### Song Metadata (`src/data/songMetadata.ts`)
 Manual section definitions with lyrics:
@@ -264,6 +282,39 @@ Claude should read this file directly for error messages.
 3. **Toy piano sound**: Replaced Tone.js Sampler with smplr SplendidGrandPiano
 4. **Same note every time**: Fixed getCurrentNote to use ref instead of stale state
 5. **Playing along sounds bad**: Changed from melody reference to chord accompaniment
+6. **8-bit melody guide sound**: ReferenceMelody now uses SplendidGrandPiano
+7. **Same-octave collision**: Melody guide plays 1 octave lower (configurable)
+8. **Confusing vertical distribution glow**: Removed from falling notes, kept on keyboard
+9. **Unclear hit point**: Notes now fall directly onto keyboard keys
+10. **Fixed layout wastes space**: Responsive flexbox layout fills screen
+
+## UI Layout
+
+The app uses a responsive flexbox layout:
+
+```
+┌─────────────────────────────────────────────┬─────────┐
+│  Logo + Status (compact header)             │ [◀/▶]   │
+├─────────────────────────────────────────────┤ Sidebar │
+│                                             │         │
+│  FALLING NOTES (fills available height)     │ Play/   │
+│  - Notes fall into lanes aligned with keys  │ Pause   │
+│  - Impact effects when notes land           │ Stats   │
+│           ↓  ↓  ↓  ↓  ↓                    │ Tempo   │
+├─────────────────────────────────────────────┤ etc     │
+│  KEYBOARD (notes land directly on keys)     │         │
+│  - Distribution glow shown on keys          │         │
+│  - Keys light up when notes arrive          │         │
+├─────────────────────────────────────────────┤         │
+│  LYRICS / SECTION                           │         │
+└─────────────────────────────────────────────┴─────────┘
+```
+
+**Key Design Decisions:**
+- Notes fall to keyboard (no separate hit line)
+- Sidebar collapses to maximize practice space
+- Distribution glow on keyboard (horizontal = intuitive)
+- Impact effects provide satisfying visual feedback
 
 ## Architecture Decisions
 

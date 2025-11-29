@@ -45,7 +45,7 @@ import { TheTighteningLogo } from './components/TheTighteningLogo';
 import { LyricsDisplay } from './components/LyricsDisplay';
 
 // Data
-import { loadSong, getLrcData, SONG_LIBRARY } from './data/loadSongs';
+import { loadSong, getLrcData, SONG_LIBRARY, loadSongByPath, type SongIndexEntry } from './data/loadSongs';
 import type { SongData, SongSegment } from './utils/midiParser';
 import type { LrcLine } from './utils/lrcParser';
 
@@ -87,6 +87,7 @@ function App() {
 
   // Song and segment state
   const [currentSongId, setCurrentSongId] = useState<string>(config.gameplay.currentSong);
+  const [currentSongName, setCurrentSongName] = useState<string>('');
   const [currentSegment, setCurrentSegment] = useState<SongSegment | null>(null);
   const [isSegmentLoopEnabled, setIsSegmentLoopEnabled] = useState<boolean>(false);
   const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
@@ -677,6 +678,7 @@ function App() {
       lastCheckedNoteIndexRef.current = -1;
 
       setCurrentSongId(songId);
+      setCurrentSongName(song.name);
       setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
       setLoading(false);
     } catch (err) {
@@ -685,6 +687,52 @@ function App() {
         songId,
         error: error.message,
         stack: error.stack
+      });
+      setAudioStatus(`Error loading song: ${err}`);
+      setLoading(false);
+    }
+  };
+
+  // Song selection from search handler
+  const handleSongSelect = async (entry: SongIndexEntry) => {
+    console.info('Selecting song from search', { name: entry.name, path: entry.path });
+
+    // Stop current playback
+    handleStop();
+
+    // Load new song by path
+    setLoading(true);
+    try {
+      const song = await loadSongByPath(entry.path, entry.name);
+      setSongData(song);
+      setLrcLines([]); // Index songs don't have LRC files
+      console.info('Song loaded from index', {
+        name: song.name,
+        noteCount: song.notes.length,
+        duration: song.duration,
+      });
+
+      // Reset segment selection
+      setCurrentSegment(null);
+      setIsSegmentLoopEnabled(false);
+
+      // Reset progress and confusion matrix tracking
+      if (progressTrackerRef.current) {
+        progressTrackerRef.current.reset();
+        setStats(progressTrackerRef.current.getStats());
+      }
+      hitNoteIndicesRef.current.clear();
+      lastCheckedNoteIndexRef.current = -1;
+
+      setCurrentSongId(`path:${entry.path}`);
+      setCurrentSongName(entry.name);
+      setAudioStatus('Ready (click Play to load piano)');
+      setLoading(false);
+    } catch (err) {
+      const error = err as Error;
+      console.error('Failed to load song from path', {
+        path: entry.path,
+        error: error.message,
       });
       setAudioStatus(`Error loading song: ${err}`);
       setLoading(false);
@@ -885,7 +933,9 @@ function App() {
               stats={stats}
               availableSongs={Object.keys(SONG_LIBRARY)}
               currentSong={currentSongId}
+              currentSongName={currentSongName || songData?.name || 'Unknown'}
               onSongChange={handleSongChange}
+              onSongSelect={handleSongSelect}
               segments={songData?.segments || []}
               currentSegment={currentSegment}
               onSegmentChange={handleSegmentChange}

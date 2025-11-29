@@ -59,13 +59,15 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 - 🎹 **Adaptive Key Mapping** - ANY key plays melody initially
 - 🎵 **Accompaniment Mode** - Chord progressions play while you play melody
 - 📊 **Confusion Matrix Tracking** - Hits, misses, extras (not just %)
-- 🎮 **Guitar Hero Visualization** - Falling notes with distribution glow
-- 🎛️ **Full Manual Control** - Override all auto-progression
+- 🎮 **Notes Land on Keyboard** - Guitar Hero style, notes fall directly onto keys
+- 💥 **Impact Effects** - Visual ripple/flash when notes hit
+- 🎛️ **Collapsible Sidebar** - Maximize screen space for practice
 - 🎤 **Lyrics Display** - Section names and lyrics for songs that have them
 
 ### Technical
 - ⚡ **Low Latency** - <20ms MIDI, <50ms audio
-- 🎨 **60fps Rendering** - Canvas + SVG visualizations
+- 🎨 **60fps Rendering** - Canvas + SVG with React.memo optimization
+- 📐 **Responsive Layout** - Fills available screen space
 - 💾 **Progress Persistence** - LocalStorage save/load
 - 🎚️ **Fully Tunable** - Single config file controls all behavior
 
@@ -115,10 +117,10 @@ The app will open in Electron. Click **Play** to start!
 - **Auto Progression** - Toggle automatic tightening
 
 ### Understanding the UI
-- **Falling Notes** - Guitar Hero visualization showing upcoming notes
-- **Distribution Glow** - Shows acceptable key range (tighter = harder)
-- **Piano Keyboard** - Visual feedback with distribution gradient
-- **Stats Dashboard** - Progress, accuracy, streaks, practice time
+- **Falling Notes** - Notes fall directly onto keyboard keys with impact effects
+- **Piano Keyboard** - Keys glow when notes land, distribution shown as gradient
+- **Collapsible Sidebar** - Click ◀/▶ to show/hide controls
+- **Stats Dashboard** - Progress, accuracy, streaks, confusion matrix
 
 ---
 
@@ -128,9 +130,9 @@ The app will open in Electron. Click **Play** to start!
 |----------|-----------|
 | **Desktop** | Electron |
 | **Frontend** | React 18 + TypeScript + Vite |
-| **Audio** | smplr (SplendidGrandPiano samples) |
-| **MIDI** | WebMidi v3 + @tonejs/midi (parsing) |
-| **Visualization** | HTML5 Canvas + SVG |
+| **Audio** | smplr (SplendidGrandPiano samples) + Tone.js (timing) |
+| **MIDI** | Native `midi` package (via Electron IPC) + @tonejs/midi (parsing) |
+| **Visualization** | HTML5 Canvas + SVG + React.memo |
 | **Build** | Vite + TypeScript |
 
 ---
@@ -201,13 +203,17 @@ See [CLAUDE.MD](./CLAUDE.MD) for complete configuration reference.
 - **Stale closure bug** - Same note playing every time (fixed with refs)
 - **Audio degradation cliff** - Width=44 caused sudden quality drop (fixed)
 - **Toy piano sound** - Replaced with smplr SplendidGrandPiano samples
-- **Excessive re-renders** - Stats updating every frame (optimized)
+- **8-bit melody guide** - Now uses SplendidGrandPiano, plays 1 octave lower
+- **Confusing UI** - Responsive layout, notes land on keyboard, impact effects
+- **Excessive re-renders** - Components memoized with React.memo
 
 ### Roadmap
 - [x] ~~Fix Tone.js timing errors~~ (replaced with smplr)
 - [x] ~~Add more songs to library~~ (Hey Jude added)
 - [x] ~~Add confusion matrix tracking~~ (hits/misses/extras)
 - [x] ~~Add lyrics/sections display~~
+- [x] ~~UI overhaul~~ (responsive, notes land on keys, impact effects)
+- [ ] Karaoke file support (.kar with embedded lyrics)
 - [ ] Test adaptive key mapping with real users
 - [ ] Implement hand separation (left/right)
 - [ ] Add session history graphs

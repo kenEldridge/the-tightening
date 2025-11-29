@@ -182,6 +182,116 @@ export function getAvailableSongs(): Array<{ id: string; name: string }> {
   }));
 }
 
+// Song index types
+export interface SongMetadata {
+  k?: string;  // key (C, F#, Bb, etc.)
+  t?: number;  // tempo
+  v?: number;  // version number
+  f?: string;  // format (GM, XG, 3k)
+  a?: string;  // arrangement (harp, piano, words)
+}
+
+export interface SongIndexEntry {
+  id: string;
+  name: string;
+  filename: string;
+  path: string;
+  category: string;
+  size: number;
+  groupKey: string;  // For grouping variants
+  meta?: SongMetadata;  // Optional metadata
+}
+
+export interface SongIndex {
+  songs: SongIndexEntry[];
+  primaries: Record<string, string>;  // groupKey -> primary song id
+  totalCount: number;
+  uniqueGroups: number;
+  indexedAt: string;
+}
+
+// Helper to get variant count for a song
+export function getVariantCount(song: SongIndexEntry, index: SongIndex): number {
+  const groupSongs = index.songs.filter(s => s.groupKey === song.groupKey);
+  return groupSongs.length;
+}
+
+// Check if a song is the primary for its group
+export function isPrimarySong(song: SongIndexEntry, index: SongIndex): boolean {
+  const primaryId = index.primaries[song.groupKey];
+  // If not in primaries map, it's a single-song group (implicitly primary)
+  return !primaryId || primaryId === song.id;
+}
+
+// Get primary song for a group
+export function getPrimarySong(groupKey: string, index: SongIndex): SongIndexEntry | undefined {
+  const primaryId = index.primaries[groupKey];
+  if (primaryId) {
+    return index.songs.find(s => s.id === primaryId);
+  }
+  // Single-song group - find the song
+  return index.songs.find(s => s.groupKey === groupKey);
+}
+
+// Cache for song index
+let songIndexCache: SongIndex | null = null;
+
+/**
+ * Load the song index
+ */
+export async function loadSongIndex(): Promise<SongIndex> {
+  if (songIndexCache) {
+    return songIndexCache;
+  }
+
+  try {
+    const response = await fetch('/song-index.json');
+    if (!response.ok) {
+      throw new Error(`Failed to load song index: ${response.status}`);
+    }
+    songIndexCache = await response.json();
+    console.info('[LoadSongs] Song index loaded:', {
+      songs: songIndexCache?.totalCount,
+      groups: songIndexCache?.uniqueGroups,
+      primaries: Object.keys(songIndexCache?.primaries || {}).length,
+    });
+    return songIndexCache!;
+  } catch (err) {
+    console.error('[LoadSongs] Failed to load song index:', err);
+    // Return empty index as fallback
+    return { songs: [], primaries: {}, totalCount: 0, uniqueGroups: 0, indexedAt: '' };
+  }
+}
+
+/**
+ * Load a song by its file path (from the index)
+ */
+export async function loadSongByPath(filePath: string, songName?: string): Promise<SongData> {
+  // Check cache first using path as key
+  const cacheKey = `path:${filePath}`;
+  if (songCache.has(cacheKey)) {
+    return songCache.get(cacheKey)!;
+  }
+
+  // Load MIDI from path
+  const url = '/' + filePath;
+  const songData = await loadMidiFromUrl(url);
+
+  // Set name from parameter or derive from path
+  if (songName) {
+    songData.name = songName;
+  } else {
+    // Extract name from filename
+    const filename = filePath.split('/').pop() || filePath;
+    songData.name = filename.replace(/\.(mid|midi)$/i, '').replace(/_/g, ' ');
+  }
+
+  // Cache it
+  songCache.set(cacheKey, songData);
+
+  return songData;
+}
+
 /**
  * Clear song cache (useful for debugging)
  */

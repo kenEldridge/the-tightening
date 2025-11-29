@@ -13,12 +13,8 @@
 import React from 'react';
 import type { PerformanceStats } from './ProgressTracker';
 import type { SongSegment } from '../utils/midiParser';
-
-// Song name mappings
-const SONG_NAMES: Record<string, string> = {
-  'canon-in-d': 'Canon in D (Pachelbel)',
-  'hey-jude': 'Hey Jude (The Beatles)',
-};
+import { SongSearch } from './SongSearch';
+import type { SongIndexEntry } from '../data/loadSongs';
 
 export interface PracticeControlsProps {
   // Playback state
@@ -54,7 +50,9 @@ export interface PracticeControlsProps {
   // Song selection
   availableSongs: string[];
   currentSong: string;
+  currentSongName: string;
   onSongChange: (songId: string) => void;
+  onSongSelect: (entry: SongIndexEntry) => void;
 
   // Segment selection
   segments: SongSegment[];
@@ -83,7 +81,9 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
   stats,
   availableSongs,
   currentSong,
+  currentSongName,
   onSongChange,
+  onSongSelect,
   segments,
   currentSegment,
   onSegmentChange,
@@ -119,26 +119,11 @@ export const PracticeControls: React.FC<PracticeControlsProps> = ({
       {/* Song Selection */}
       <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #444' }}>
         <h3 style={{ margin: '0 0 10px 0' }}>Song</h3>
-        <select
-          value={currentSong}
-          onChange={(e) => onSongChange(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px',
-            backgroundColor: '#2a2a2a',
-            color: '#eee',
-            border: '1px solid #555',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontFamily: 'monospace',
-          }}
-        >
-          {availableSongs.map((songId) => (
-            <option key={songId} value={songId}>
-              {SONG_NAMES[songId] || songId}
-            </option>
-          ))}
-        </select>
+        <SongSearch
+          currentSongName={currentSongName}
+          onSongSelect={onSongSelect}
+          disabled={isPlaying}
+        />
       </div>
 
       {/* Segment Selection */}

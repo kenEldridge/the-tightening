@@ -1,5 +1,6 @@
 junk/
 public/personally_owned_MIDI/
+public/song-index.json
 
 # Windows reserved device names (can't be deleted)
 nul
