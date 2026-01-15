@@ -1,0 +1,227 @@
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.app-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(30, 30, 50, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #aaa;
+}
+
+.controls {
+  max-width: 100%;
+  margin: 2rem 2rem;
+  padding: 1.5rem;
+  background: rgba(30, 30, 50, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.control-group label {
+  font-weight: 500;
+  color: #ddd;
+}
+
+select, .file-input {
+  padding: 0.5rem 1rem;
+  border: 2px solid #444;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: #2a2a3e;
+  color: #eee;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+select:hover, .file-input:hover {
+  border-color: #667eea;
+}
+
+select:focus, .file-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.btn-create-song,
+.btn-create-segment,
+.btn-download,
+.btn-auto-arrange {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-create-song {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-create-song:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-create-segment {
+  background: linear-gradient(135deg, #4a9eff 0%, #3a8eef 100%);
+  color: white;
+}
+
+.btn-create-segment:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.4);
+}
+
+.btn-create-segment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-download {
+  background: linear-gradient(135deg, #67dd6a 0%, #57cd5a 100%);
+  color: white;
+}
+
+.btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(103, 221, 106, 0.4);
+}
+
+.btn-auto-arrange {
+  background: linear-gradient(135deg, #ffaa44 0%, #ff9922 100%);
+  color: white;
+}
+
+.btn-auto-arrange:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 170, 68, 0.4);
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-zoom,
+.btn-zoom-reset {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #2a2a3e;
+  color: #eee;
+  min-width: 40px;
+}
+
+.btn-zoom:hover:not(:disabled),
+.btn-zoom-reset:hover {
+  background: #3a3a4e;
+  transform: translateY(-2px);
+}
+
+.btn-zoom:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.zoom-display {
+  min-width: 50px;
+  text-align: center;
+  font-weight: 600;
+  color: #4a9eff;
+  font-size: 1rem;
+}
+
+.song-info {
+  max-width: 100%;
+  margin: 1rem 2rem;
+  padding: 1.5rem;
+  background: rgba(30, 30, 50, 0.9);
+  border-radius: 8px;
+  text-align: center;
+  border: 2px solid rgba(74, 158, 255, 0.3);
+}
+
+.song-info h2 {
+  margin: 0 0 0.5rem 0;
+  color: #fff;
+  font-size: 2rem;
+}
+
+.song-info .artist {
+  margin: 0 0 1rem 0;
+  color: #aaa;
+  font-size: 1.2rem;
+}
+
+.song-info .segment-count {
+  margin: 0;
+  color: #4a9eff;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.error-message {
+  max-width: 100%;
+  margin: 1rem 2rem;
+  padding: 1rem;
+  background: rgba(200, 50, 50, 0.2);
+  border: 2px solid #c44;
+  border-radius: 8px;
+  color: #faa;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .control-group {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+}

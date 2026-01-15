@@ -167,6 +167,11 @@ the-tightening/
 │       ├── loadSongs.ts            # Song library
 │       ├── songMetadata.ts         # Manual sections/lyrics
 │       └── chordProgressions.ts    # Chord data per song
+├── research/
+│   ├── dissonance/                 # Psychoacoustic research
+│   ├── song-visualizer/            # Song structure tool
+│   ├── scale_images/               # Scale visualizations
+│   └── RESEARCH_NOTES.md           # Research documentation
 ├── public/
 │   ├── songs/                      # Built-in MIDI files
 │   ├── song-index.json             # Searchable index (33K songs)
@@ -252,9 +257,33 @@ npm run lint     # Run ESLint
 
 ---
 
+## 🔬 Research & Explorations
+
+This repository includes music theory and psychoacoustic research that informs and complements The Tightening's adaptive learning approach.
+
+### [`research/`](./research/) Directory
+
+- **`dissonance/`** - Psychoacoustic research on consonance/dissonance
+  - 3-panel visualizations showing ear-level roughness, total dissonance, and frequency interactions
+  - Key insight: Major thirds and perfect fifths overlap at 100 Hz, explaining why major triads sound stable
+  - Based on Plomp-Levelt psychoacoustic models
+
+- **`song-visualizer/`** - Song structure visualization tool
+  - React webapp for breaking down songs into visual flowchart tiles
+  - Helps understand song structure and patterns
+
+- **`scale_images/`** - Pentatonic scale visualizations across different keys
+
+See [research/RESEARCH_NOTES.md](./research/RESEARCH_NOTES.md) for detailed documentation of all research explorations.
+
+**Future potential**: This psychoacoustic research could inform future enhancements like real-time consonance visualization, progression suggestions based on dissonance models, and more precise convergence algorithms.
+
+---
+
 ## 📚 Learn More
 
 - **Detailed Documentation**: [CLAUDE.MD](./CLAUDE.MD)
+- **Research Documentation**: [research/RESEARCH_NOTES.md](./research/RESEARCH_NOTES.md)
 - **Algorithm Deep Dive**: See `src/components/AdaptiveKeyMapper.ts`
 - **Configuration Guide**: See `src/config/AppConfig.ts`
 

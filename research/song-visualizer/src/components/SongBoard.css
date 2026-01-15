@@ -1,0 +1,51 @@
+.song-board {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - 300px);
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  overflow: auto;
+  padding: 20px;
+}
+
+.song-board-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 300px);
+  color: #999;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+}
+
+.board-content {
+  position: relative;
+  min-width: 1600px;
+  min-height: 900px;
+  transition: transform 0.3s ease;
+}
+
+.connections-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 1600px;
+  min-height: 900px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tiles-container {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  z-index: 2;
+}
+
+.tile-wrapper {
+  position: absolute;
+  transition: left 0.3s ease, top 0.3s ease;
+}

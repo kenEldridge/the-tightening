@@ -1,0 +1,45 @@
+.song-viewer {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2rem 2rem;
+}
+
+.song-viewer.empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #999;
+}
+
+.song-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #444;
+}
+
+.song-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #eee;
+}
+
+.song-header .artist {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #aaa;
+}
+
+.sections-container {
+  margin: 2rem 0;
+}
+
+.song-footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 2px solid #444;
+  color: #999;
+  font-size: 0.9rem;
+}
