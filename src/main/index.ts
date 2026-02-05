@@ -1,14 +1,22 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { createRequire } from 'module';
 import { initializeLogger, loggers } from '../utils/logger';
 import log from 'electron-log';
+import { getYouTubeExtractor, type ExtractionProgress } from './YouTubeExtractor';
 
 // Create require for CommonJS modules (midi is a native addon)
 const require = createRequire(import.meta.url);
-// @ts-ignore - midi package has no types
-const midi = require('midi');
+
+// Try to load midi module - it's optional (may fail if native module version mismatch)
+let midi: any = null;
+try {
+  midi = require('midi');
+} catch (err) {
+  console.warn('[Main] MIDI module failed to load - MIDI input disabled:', (err as Error).message);
+}
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +43,12 @@ let midiInput: any = null;
 
 // Initialize MIDI in main process
 const initializeMidi = () => {
+  if (!midi) {
+    loggers.main.warn('MIDI module not available - using microphone input instead');
+    mainWindow?.webContents.send('midi-status', { connected: false, message: 'MIDI unavailable - use microphone' });
+    return;
+  }
+
   try {
     midiInput = new midi.Input();
     const portCount = midiInput.getPortCount();
@@ -196,4 +210,152 @@ ipcMain.on('renderer-log', (_event, { level, message }) => {
   // Map level to log method
   const logMethod = (rendererLog as any)[level] || rendererLog.info;
   logMethod.call(rendererLog, message);
+});
+
+// ============================================
+// YouTube Extraction IPC Handlers
+// ============================================
+
+// Get video info without downloading
+ipcMain.handle('youtube-get-info', async (_event, url: string) => {
+  const extractor = getYouTubeExtractor();
+  return await extractor.getVideoInfo(url);
+});
+
+// Extract audio from YouTube URL
+ipcMain.handle('youtube-extract-audio', async (event, url: string) => {
+  const extractor = getYouTubeExtractor();
+
+  const result = await extractor.extractAudio(url, (progress: ExtractionProgress) => {
+    // Send progress updates to renderer
+    event.sender.send('youtube-extraction-progress', progress);
+  });
+
+  return result;
+});
+
+// Get the extracted audio directory (for loading files)
+ipcMain.handle('youtube-get-output-dir', () => {
+  const extractor = getYouTubeExtractor();
+  return extractor.getOutputDir();
+});
+
+// Clean up old extracted files
+ipcMain.handle('youtube-cleanup', async (_event, maxAgeHours: number = 24) => {
+  const extractor = getYouTubeExtractor();
+  extractor.cleanupOldFiles(maxAgeHours);
+  return true;
+});
+
+// ============================================
+// Analysis Cache IPC Handlers
+// ============================================
+
+// Save analysis results to cache
+ipcMain.handle('analysis-cache-save', async (_event, videoId: string, data: any) => {
+  try {
+    const extractor = getYouTubeExtractor();
+    const cacheDir = path.join(extractor.getOutputDir(), 'cache');
+
+    // Ensure cache directory exists
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+    }
+
+    const cachePath = path.join(cacheDir, `${videoId}.json`);
+    fs.writeFileSync(cachePath, JSON.stringify(data, null, 2));
+
+    loggers.main.info('[AnalysisCache] Saved', { videoId, path: cachePath });
+    return true;
+  } catch (err) {
+    const error = err as Error;
+    loggers.main.error('[AnalysisCache] Save failed', { videoId, error: error.message });
+    return false;
+  }
+});
+
+// Load analysis results from cache
+ipcMain.handle('analysis-cache-load', async (_event, videoId: string) => {
+  try {
+    const extractor = getYouTubeExtractor();
+    const cachePath = path.join(extractor.getOutputDir(), 'cache', `${videoId}.json`);
+
+    if (!fs.existsSync(cachePath)) {
+      loggers.main.debug('[AnalysisCache] Cache miss', { videoId });
+      return null;
+    }
+
+    const data = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+    loggers.main.info('[AnalysisCache] Cache hit', { videoId, noteCount: data.notes?.length });
+    return data;
+  } catch (err) {
+    const error = err as Error;
+    loggers.main.error('[AnalysisCache] Load failed', { videoId, error: error.message });
+    return null;
+  }
+});
+
+// Check if analysis cache exists
+ipcMain.handle('analysis-cache-exists', async (_event, videoId: string) => {
+  const extractor = getYouTubeExtractor();
+  const cachePath = path.join(extractor.getOutputDir(), 'cache', `${videoId}.json`);
+  return fs.existsSync(cachePath);
+});
+
+// Read audio file and return as base64 (for renderer to use with Web Audio API)
+ipcMain.handle('read-audio-file', async (_event, filePath: string) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      loggers.main.error('[ReadAudioFile] File not found', { filePath });
+      return null;
+    }
+    const buffer = fs.readFileSync(filePath);
+    const base64 = buffer.toString('base64');
+    loggers.main.info('[ReadAudioFile] File read', { filePath, size: buffer.length });
+    return base64;
+  } catch (err) {
+    const error = err as Error;
+    loggers.main.error('[ReadAudioFile] Failed', { filePath, error: error.message });
+    return null;
+  }
+});
+
+// ============================================
+// Video & Frame Extraction IPC Handlers
+// ============================================
+
+// Download video file (for frame extraction)
+ipcMain.handle('youtube-download-video', async (event, url: string) => {
+  const extractor = getYouTubeExtractor();
+  return await extractor.downloadVideo(url, (progress) => {
+    event.sender.send('youtube-extraction-progress', progress);
+  });
+});
+
+// Extract frames from video at specific timestamps
+ipcMain.handle('extract-frames', async (_event, videoPath: string, timestamps: number[]) => {
+  const extractor = getYouTubeExtractor();
+  return await extractor.extractFrames(videoPath, timestamps);
+});
+
+// Get video path if already downloaded
+ipcMain.handle('get-video-path', async (_event, url: string) => {
+  const extractor = getYouTubeExtractor();
+  return extractor.getVideoPath(url);
+});
+
+// Read image file as base64 (for displaying frames)
+ipcMain.handle('read-image-file', async (_event, filePath: string) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return null;
+    }
+    const buffer = fs.readFileSync(filePath);
+    const base64 = buffer.toString('base64');
+    const ext = path.extname(filePath).toLowerCase();
+    const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
+    return `data:${mimeType};base64,${base64}`;
+  } catch (err) {
+    return null;
+  }
 });

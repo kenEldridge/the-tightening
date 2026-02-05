@@ -12,10 +12,29 @@ declare global {
   interface Window {
     electronAPI: {
       platform: string;
+      // MIDI
       onMidiNoteOn: (callback: (data: { note: number; velocity: number; channel: number }) => void) => void;
       onMidiNoteOff: (callback: (data: { note: number }) => void) => void;
       onMidiStatus: (callback: (data: { connected: boolean; message: string }) => void) => void;
       removeMidiListeners: () => void;
+      // YouTube extraction
+      youtubeGetInfo: (url: string) => Promise<{ title: string; duration: number; thumbnail?: string; uploader?: string } | null>;
+      youtubeExtractAudio: (url: string) => Promise<string | null>;
+      onYoutubeProgress: (callback: (progress: { status: string; progress?: number; message?: string; outputPath?: string }) => void) => void;
+      removeYoutubeProgressListener: () => void;
+      youtubeGetOutputDir: () => Promise<string>;
+      youtubeCleanup: (maxAgeHours?: number) => Promise<boolean>;
+      // Analysis cache
+      analysisCacheSave: (videoId: string, data: any) => Promise<boolean>;
+      analysisCacheLoad: (videoId: string) => Promise<any | null>;
+      analysisCacheExists: (videoId: string) => Promise<boolean>;
+      // File access
+      readAudioFile: (filePath: string) => Promise<string | null>;
+      readImageFile: (filePath: string) => Promise<string | null>;
+      // Video & Frame extraction
+      youtubeDownloadVideo: (url: string) => Promise<string | null>;
+      extractFrames: (videoPath: string, timestamps: number[]) => Promise<string[]>;
+      getVideoPath: (url: string) => Promise<string | null>;
     };
   }
 }
@@ -37,12 +56,22 @@ import { ReferenceMelodyPlayer } from './components/ReferenceMelody';
 import type { PerformanceStats } from './components/ProgressTracker';
 import { ProgressTracker } from './components/ProgressTracker';
 
+// Microphone input for pitch detection
+import { MicrophoneInput, type NoteEvent, type AudioCaptureStatus } from './core/MicrophoneInput';
+
+// Comparison engine for note matching
+import { ComparisonEngine, type ComparisonStats, type NoteComparisonResult } from './core/ComparisonEngine';
+
 // UI components
 import { FallingNotesCanvas } from './components/FallingNotesCanvas';
 import { VisualKeyboard } from './components/VisualKeyboard';
 import { PracticeControls } from './components/PracticeControls';
 import { TheTighteningLogo } from './components/TheTighteningLogo';
 import { LyricsDisplay } from './components/LyricsDisplay';
+import { YouTubeImporter, type PassageSelection } from './components/YouTubeImporter';
+import { PracticeFrameDisplay } from './components/PracticeFrameDisplay';
+import type { DetectedNoteEvent } from './core/VideoAnalyzer';
+import type { MelodyNote } from './utils/midiParser';
 
 // Data
 import { loadSong, getLrcData, SONG_LIBRARY, loadSongByPath, type SongIndexEntry } from './data/loadSongs';
@@ -62,6 +91,15 @@ function App() {
   const [songData, setSongData] = useState<SongData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [samplesLoaded, setSamplesLoaded] = useState<boolean>(false);
+
+  // Input mode state (MIDI vs Microphone)
+  const [inputMode, setInputMode] = useState<'midi' | 'microphone'>('midi');
+  const [micStatus, setMicStatus] = useState<AudioCaptureStatus>('uninitialized');
+  const [lastDetectedNote, setLastDetectedNote] = useState<{ midi: number; noteName: string; clarity: number } | null>(null);
+
+  // Comparison engine state (for microphone mode)
+  const [comparisonStats, setComparisonStats] = useState<ComparisonStats | null>(null);
+  const [lastComparisonResult, setLastComparisonResult] = useState<NoteComparisonResult | null>(null);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -96,6 +134,13 @@ function App() {
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
 
+  // YouTube importer state
+  const [showYouTubeImporter, setShowYouTubeImporter] = useState<boolean>(false);
+  const [youtubeExtractedNotes, setYoutubeExtractedNotes] = useState<DetectedNoteEvent[]>([]);
+  const [practiceFrames, setPracticeFrames] = useState<Map<number, string> | null>(null);
+  const [practiceAudioUrl, setPracticeAudioUrl] = useState<string | null>(null);
+  const [practiceStartTime, setPracticeStartTime] = useState<number>(0); // Segment start in full audio
+
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
   const audioEngineRef = useRef<AudioEngine | null>(null);
@@ -112,6 +157,12 @@ function App() {
   // Refs to always point to latest handlers (avoids stale closure in IPC MIDI listeners)
   const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
   const handleNoteOffRef = useRef<((data: { note: number }) => void) | null>(null);
+
+  // Microphone input ref
+  const microphoneInputRef = useRef<MicrophoneInput | null>(null);
+
+  // Comparison engine ref (for matching detected vs expected notes)
+  const comparisonEngineRef = useRef<ComparisonEngine | null>(null);
 
   // Initialize logger first
   useEffect(() => {
@@ -139,6 +190,8 @@ function App() {
           keyMapperRef.current,
           accompanimentRef.current
         );
+        // Create comparison engine for mic mode
+        comparisonEngineRef.current = new ComparisonEngine();
 
         // Load song and LRC data in parallel
         console.info('Loading initial song', { songId: config.gameplay.currentSong });
@@ -185,8 +238,109 @@ function App() {
       if (audioEngineRef.current) audioEngineRef.current.dispose();
       if (accompanimentRef.current) accompanimentRef.current.dispose();
       if (melodyRef.current) melodyRef.current.dispose();
+      if (microphoneInputRef.current) microphoneInputRef.current.dispose();
     };
   }, []);
+
+  // Handle microphone note events
+  const handleMicrophoneNote = useCallback((event: NoteEvent) => {
+    console.log('[Mic] Note event:', event.type, event.noteName, 'MIDI:', event.midi, 'clarity:', event.clarity.toFixed(2));
+
+    if (event.type === 'on') {
+      // Update last detected note for display
+      setLastDetectedNote({
+        midi: event.midi,
+        noteName: event.noteName,
+        clarity: event.clarity,
+      });
+
+      // Record to comparison engine if active
+      if (comparisonEngineRef.current && isPlaying) {
+        const result = comparisonEngineRef.current.recordDetectedNote({
+          midi: event.midi,
+          noteName: event.noteName,
+          time: currentTimeRef.current,
+          clarity: event.clarity,
+          velocity: event.velocity,
+        });
+
+        if (result) {
+          setLastComparisonResult(result);
+          // Update stats periodically
+          const stats = comparisonEngineRef.current.getCurrentStats();
+          setComparisonStats(stats);
+        }
+      }
+
+      // Convert velocity from 0-1 to 0-127 for consistency with MIDI
+      const velocity = Math.round(event.velocity * 127);
+
+      // Route through the same handleNoteOn logic as MIDI
+      if (handleNoteOnRef.current) {
+        handleNoteOnRef.current({ note: event.midi, velocity });
+      }
+    } else {
+      // Note off
+      setLastDetectedNote(null);
+      if (handleNoteOffRef.current) {
+        handleNoteOffRef.current({ note: event.midi });
+      }
+    }
+  }, [isPlaying]);
+
+  // Toggle between MIDI and Microphone input
+  const toggleInputMode = useCallback(async () => {
+    if (inputMode === 'midi') {
+      // Switch to microphone
+      console.log('[App] Switching to microphone input...');
+
+      // Create microphone input if not exists
+      if (!microphoneInputRef.current) {
+        microphoneInputRef.current = new MicrophoneInput({
+          pitchDetector: {
+            clarityThreshold: 0.85, // Slightly lower threshold for piano
+          },
+        });
+      }
+
+      // Initialize (request permission)
+      const success = await microphoneInputRef.current.initialize();
+      if (success) {
+        setInputMode('microphone');
+        // Start listening immediately for testing (even without playing)
+        microphoneInputRef.current.start(handleMicrophoneNote);
+        setMicStatus('listening');
+        console.log('[App] Microphone initialized and listening!');
+      } else {
+        const status = microphoneInputRef.current.getStatus();
+        setMicStatus(status);
+        console.error('[App] Microphone initialization failed:', status);
+      }
+    } else {
+      // Switch back to MIDI
+      console.log('[App] Switching to MIDI input...');
+      if (microphoneInputRef.current) {
+        microphoneInputRef.current.stop();
+      }
+      setInputMode('midi');
+      setLastDetectedNote(null);
+    }
+  }, [inputMode, handleMicrophoneNote]);
+
+  // Start/stop microphone listening when playing state changes
+  useEffect(() => {
+    if (inputMode !== 'microphone' || !microphoneInputRef.current) {
+      return;
+    }
+
+    if (isPlaying) {
+      microphoneInputRef.current.start(handleMicrophoneNote);
+      setMicStatus('listening');
+    } else {
+      microphoneInputRef.current.stop();
+      setMicStatus('ready');
+    }
+  }, [isPlaying, inputMode, handleMicrophoneNote]);
 
   // Initialize MIDI via IPC (MIDI is handled in main process using native midi package)
   useEffect(() => {
@@ -519,6 +673,15 @@ function App() {
         // Note: They share the same Tone.Transport so they stay in sync
         accompanimentRef.current.start();
         melodyRef.current.start();
+
+        // Start comparison session if in microphone mode
+        if (inputMode === 'microphone' && comparisonEngineRef.current) {
+          comparisonEngineRef.current.startSession(songData.notes);
+          setComparisonStats(null);
+          setLastComparisonResult(null);
+          console.info('[Comparison] Session started with', songData.notes.length, 'expected notes');
+        }
+
         setIsPlaying(true);
         setAudioStatus('Playing (melody guide + accompaniment)');
         console.info('Playback started');
@@ -543,6 +706,18 @@ function App() {
 
   // Stop handler
   const handleStop = () => {
+    // End comparison session if active
+    if (comparisonEngineRef.current && inputMode === 'microphone') {
+      const finalStats = comparisonEngineRef.current.endSession();
+      setComparisonStats(finalStats);
+      console.info('[Comparison] Session ended', {
+        accuracy: (finalStats.accuracy * 100).toFixed(1) + '%',
+        hits: finalStats.hits,
+        misses: finalStats.misses,
+        extras: finalStats.extras,
+      });
+    }
+
     if (accompanimentRef.current) {
       accompanimentRef.current.stop();
     }
@@ -678,6 +853,8 @@ function App() {
 
       setCurrentSongId(songId);
       setCurrentSongName(song.name);
+      setPracticeFrames(null); // Clear frames when switching songs
+      setPracticeAudioUrl(null);
       setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
       setLoading(false);
     } catch (err) {
@@ -725,6 +902,8 @@ function App() {
 
       setCurrentSongId(`path:${entry.path}`);
       setCurrentSongName(entry.name);
+      setPracticeFrames(null);
+      setPracticeAudioUrl(null);
       setAudioStatus('Ready (click Play to load piano)');
       setLoading(false);
     } catch (err) {
@@ -839,24 +1018,184 @@ function App() {
         }}>
           <TheTighteningLogo width={200} />
           <span style={{ color: '#888', fontSize: '12px' }}>
-            {songData.name} | {midiStatus} | {audioStatus}
+            {songData.name} | {inputMode === 'midi' ? midiStatus : `Mic: ${micStatus}`} | {audioStatus}
           </span>
+
+          {/* Input mode toggle */}
+          <button
+            onClick={toggleInputMode}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: inputMode === 'microphone' ? '#4CAF50' : '#555',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              marginLeft: 'auto',
+            }}
+            title={inputMode === 'midi' ? 'Click to use microphone' : 'Click to use MIDI keyboard'}
+          >
+            {inputMode === 'midi' ? 'MIDI' : 'MIC'}
+          </button>
+
+          {/* YouTube Import button */}
+          <button
+            onClick={() => setShowYouTubeImporter(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#FF0000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+            title="Import notes from YouTube tutorial video"
+          >
+            YouTube
+          </button>
+
+          {/* Show detected note when using microphone */}
+          {inputMode === 'microphone' && lastDetectedNote && (
+            <span style={{
+              padding: '4px 8px',
+              backgroundColor: '#2196F3',
+              color: '#fff',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+            }}>
+              {lastDetectedNote.noteName} ({lastDetectedNote.clarity.toFixed(2)})
+            </span>
+          )}
         </div>
 
-        {/* Falling notes - fills available space */}
+        {/* DEBUG: Microphone input status panel */}
+        {inputMode === 'microphone' && (
+          <div style={{
+            backgroundColor: '#333',
+            border: '2px solid #4CAF50',
+            borderRadius: '8px',
+            padding: '10px 15px',
+            marginBottom: '10px',
+            fontSize: '14px',
+          }}>
+            <div style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#4CAF50' }}>MICROPHONE MODE ACTIVE</strong>
+              <span style={{ marginLeft: '20px', color: '#aaa' }}>
+                Status: <span style={{ color: micStatus === 'listening' ? '#4CAF50' : '#FFC107' }}>{micStatus}</span>
+              </span>
+              <span style={{ marginLeft: '20px', color: '#aaa' }}>
+                Detected: {lastDetectedNote ? (
+                  <span style={{ color: '#2196F3', fontWeight: 'bold' }}>
+                    {lastDetectedNote.noteName} (MIDI {lastDetectedNote.midi}) - clarity: {lastDetectedNote.clarity.toFixed(2)}
+                  </span>
+                ) : (
+                  <span style={{ color: '#666' }}>None (play a note!)</span>
+                )}
+              </span>
+            </div>
+
+            {/* Last comparison result */}
+            {lastComparisonResult && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#aaa' }}>Last match: </span>
+                <span style={{
+                  color: lastComparisonResult.type === 'hit' ? '#4CAF50' :
+                         lastComparisonResult.type === 'early' || lastComparisonResult.type === 'late' ? '#FFC107' :
+                         lastComparisonResult.type === 'miss' ? '#F44336' :
+                         lastComparisonResult.type === 'extra' ? '#FF9800' : '#F44336',
+                  fontWeight: 'bold',
+                }}>
+                  {lastComparisonResult.type.toUpperCase()}
+                </span>
+                {lastComparisonResult.expectedNote && (
+                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
+                    Expected: {lastComparisonResult.expectedNote.name}
+                  </span>
+                )}
+                {lastComparisonResult.timingDiffMs !== null && (
+                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
+                    Timing: {lastComparisonResult.timingDiffMs > 0 ? '+' : ''}{lastComparisonResult.timingDiffMs.toFixed(0)}ms
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Comparison stats */}
+            {comparisonStats && (
+              <div style={{
+                display: 'flex',
+                gap: '20px',
+                flexWrap: 'wrap',
+                paddingTop: '8px',
+                borderTop: '1px solid #555',
+              }}>
+                <span>
+                  <span style={{ color: '#aaa' }}>Accuracy: </span>
+                  <span style={{
+                    color: comparisonStats.accuracy >= 0.8 ? '#4CAF50' :
+                           comparisonStats.accuracy >= 0.5 ? '#FFC107' : '#F44336',
+                    fontWeight: 'bold',
+                  }}>
+                    {(comparisonStats.accuracy * 100).toFixed(0)}%
+                  </span>
+                </span>
+                <span style={{ color: '#4CAF50' }}>Hits: {comparisonStats.hits}</span>
+                <span style={{ color: '#FFC107' }}>Early: {comparisonStats.earlyNotes}</span>
+                <span style={{ color: '#FFC107' }}>Late: {comparisonStats.lateNotes}</span>
+                <span style={{ color: '#F44336' }}>Wrong: {comparisonStats.wrongPitch + comparisonStats.wrongOctave}</span>
+                <span style={{ color: '#F44336' }}>Misses: {comparisonStats.misses}</span>
+                <span style={{ color: '#FF9800' }}>Extras: {comparisonStats.extras}</span>
+                <span style={{ color: '#aaa' }}>
+                  Avg timing: {comparisonStats.averageTimingDiffMs > 0 ? '+' : ''}{comparisonStats.averageTimingDiffMs.toFixed(0)}ms
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Practice visualization - show frames if available, otherwise falling notes */}
         <div style={{ flex: 1, minHeight: '200px', marginBottom: '0' }}>
-          <FallingNotesCanvas
-            notes={songData.notes}
-            currentTime={currentTime}
-            distributionWidth={currentDistribution}
-            noteRange={noteRange}
-            config={config}
-            width={mainAreaWidth - 30}
-            height={Math.max(300, window.innerHeight - 450)}
-            lookAhead={3}
-            segments={songData.segments}
-            currentSegment={currentSegment}
-          />
+          {/* Debug: ALWAYS show frame status */}
+          <div style={{
+            position: 'absolute',
+            top: 60,
+            right: 360,
+            backgroundColor: practiceFrames && practiceFrames.size > 0 ? '#9C27B0' : '#F44336',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            color: '#fff',
+            zIndex: 100,
+            fontWeight: 'bold',
+          }}>
+            {practiceFrames ? `FRAMES: ${practiceFrames.size}` : 'NO FRAMES'}
+          </div>
+          {practiceFrames && practiceFrames.size > 0 ? (
+            <PracticeFrameDisplay
+              notes={songData.notes}
+              frames={practiceFrames}
+              audioBlobUrl={practiceAudioUrl}
+              audioStartTime={practiceStartTime}
+              width={mainAreaWidth - 30}
+              height={Math.max(300, window.innerHeight - 450)}
+            />
+          ) : (
+            <FallingNotesCanvas
+              notes={songData.notes}
+              currentTime={currentTime}
+              distributionWidth={currentDistribution}
+              noteRange={noteRange}
+              config={config}
+              width={mainAreaWidth - 30}
+              height={Math.max(300, window.innerHeight - 450)}
+              lookAhead={3}
+              segments={songData.segments}
+              currentSegment={currentSegment}
+            />
+          )}
         </div>
 
         {/* Visual keyboard - notes land directly on keys */}
@@ -944,6 +1283,81 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* YouTube Importer Modal */}
+      {showYouTubeImporter && (
+        <YouTubeImporter
+          onNotesExtracted={(notes, videoInfo) => {
+            console.log('[App] YouTube notes extracted', { count: notes.length, videoTitle: videoInfo.title });
+            setYoutubeExtractedNotes(notes);
+          }}
+          onPassageSelected={(passage, videoInfo) => {
+            console.log('[App] YouTube passage selected', {
+              start: passage.startTime,
+              end: passage.endTime,
+              noteCount: passage.notes.length,
+              frameCount: passage.frames?.size || 0,
+              hasFrames: !!passage.frames,
+              frameType: passage.frames ? typeof passage.frames : 'undefined',
+              isMap: passage.frames instanceof Map,
+              videoTitle: videoInfo.title,
+            });
+
+            // Convert DetectedNoteEvent[] to MelodyNote[] for use as practice target
+            const melodyNotes: MelodyNote[] = passage.notes.map((note) => ({
+              midi: note.midi,
+              name: note.noteName,
+              time: note.startTime - passage.startTime, // Normalize to start at 0
+              duration: note.duration,
+              velocity: 80, // Default velocity since we don't have this from audio
+            }));
+
+            if (melodyNotes.length === 0) {
+              console.error('[App] No notes in passage!');
+              return;
+            }
+
+            // Store frames for practice visualization
+            if (passage.frames && passage.frames.size > 0) {
+              setPracticeFrames(passage.frames);
+              console.log('[App] Stored', passage.frames.size, 'frames for practice');
+            } else {
+              setPracticeFrames(null);
+            }
+
+            // Store audio for practice playback
+            if (passage.audioBlobUrl) {
+              setPracticeAudioUrl(passage.audioBlobUrl);
+              setPracticeStartTime(passage.startTime);
+              console.log('[App] Stored audio for practice', { startTime: passage.startTime });
+            } else {
+              setPracticeAudioUrl(null);
+            }
+
+            // Create a custom song data from the passage (matching SongData interface)
+            const customSongData: SongData = {
+              name: `${videoInfo.title} (Passage)`,
+              tempo: 120, // Default tempo
+              timeSignature: { numerator: 4, denominator: 4 },
+              duration: passage.endTime - passage.startTime,
+              notes: melodyNotes,
+              segments: [],
+              range: {
+                min: Math.min(...melodyNotes.map(n => n.midi)),
+                max: Math.max(...melodyNotes.map(n => n.midi)),
+              },
+            };
+
+            // Load this as the current song
+            setSongData(customSongData);
+            setCurrentSongName(customSongData.name);
+            setShowYouTubeImporter(false);
+
+            console.log('[App] Custom song loaded from YouTube passage', customSongData);
+          }}
+          onClose={() => setShowYouTubeImporter(false)}
+        />
+      )}
     </div>
   );
 }

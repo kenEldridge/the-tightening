@@ -14,6 +14,8 @@
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "electron-log": "^5.4.3",
+    "pitchy": "^4.1.0",
+    "yt-dlp-wrap": "^2.3.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "smplr": "^0.16.3",

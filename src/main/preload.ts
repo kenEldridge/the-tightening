@@ -74,7 +74,67 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('midi-note-on');
     ipcRenderer.removeAllListeners('midi-note-off');
     ipcRenderer.removeAllListeners('midi-status');
-  }
+  },
+
+  // ============================================
+  // YouTube Extraction API
+  // ============================================
+
+  // Get video info without downloading
+  youtubeGetInfo: (url: string) => ipcRenderer.invoke('youtube-get-info', url),
+
+  // Extract audio from YouTube URL
+  youtubeExtractAudio: (url: string) => ipcRenderer.invoke('youtube-extract-audio', url),
+
+  // Listen for extraction progress updates
+  onYoutubeProgress: (callback: (progress: any) => void) => {
+    ipcRenderer.on('youtube-extraction-progress', (_event, progress) => callback(progress));
+  },
+
+  // Remove YouTube progress listener
+  removeYoutubeProgressListener: () => {
+    ipcRenderer.removeAllListeners('youtube-extraction-progress');
+  },
+
+  // Get output directory for extracted audio
+  youtubeGetOutputDir: () => ipcRenderer.invoke('youtube-get-output-dir'),
+
+  // Clean up old extracted files
+  youtubeCleanup: (maxAgeHours?: number) => ipcRenderer.invoke('youtube-cleanup', maxAgeHours),
+
+  // ============================================
+  // Analysis Cache API
+  // ============================================
+
+  // Save analysis results to cache
+  analysisCacheSave: (videoId: string, data: any) => ipcRenderer.invoke('analysis-cache-save', videoId, data),
+
+  // Load analysis results from cache
+  analysisCacheLoad: (videoId: string) => ipcRenderer.invoke('analysis-cache-load', videoId),
+
+  // Check if analysis cache exists
+  analysisCacheExists: (videoId: string) => ipcRenderer.invoke('analysis-cache-exists', videoId),
+
+  // Read audio file as base64 (bypasses file:// security restriction)
+  readAudioFile: (filePath: string) => ipcRenderer.invoke('read-audio-file', filePath),
+
+  // ============================================
+  // Video & Frame Extraction API
+  // ============================================
+
+  // Download video file (for frame extraction)
+  youtubeDownloadVideo: (url: string) => ipcRenderer.invoke('youtube-download-video', url),
+
+  // Extract frames from video at specific timestamps
+  extractFrames: (videoPath: string, timestamps: number[]) => ipcRenderer.invoke('extract-frames', videoPath, timestamps),
+
+  // Get video path if already downloaded
+  getVideoPath: (url: string) => ipcRenderer.invoke('get-video-path', url),
+
+  // Read image file as base64 data URL
+  readImageFile: (filePath: string) => ipcRenderer.invoke('read-image-file', filePath),
 });
 
 originalConsole.log('[Preload] MIDI bridge initialized');
+originalConsole.log('[Preload] YouTube extraction bridge initialized');
+originalConsole.log('[Preload] Analysis cache bridge initialized');
