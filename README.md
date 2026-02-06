@@ -2,82 +2,63 @@
 
 > **From any key to the right key**
 
-A revolutionary piano learning app that lets you play the melody from day one. No frustration. No wrong notes. Just gradual, natural improvement through adaptive key mapping and audio feedback.
+A piano learning app that lets you play the melody from day one. Import YouTube tutorials, practice with video frames showing hand positions, and get real-time feedback from your microphone or MIDI keyboard.
 
-![The Tightening Logo](https://img.shields.io/badge/status-alpha-orange) ![MIT License](https://img.shields.io/badge/license-TBD-blue) ![Electron](https://img.shields.io/badge/electron-latest-47848F?logo=electron) ![React](https://img.shields.io/badge/react-18-61DAFB?logo=react)
+![The Tightening Logo](https://img.shields.io/badge/status-alpha-orange) ![Electron](https://img.shields.io/badge/electron-latest-47848F?logo=electron) ![React](https://img.shields.io/badge/react-18-61DAFB?logo=react)
 
 ---
 
-## 🎯 The Big Idea
+## 🎯 What It Does
 
+### Learn From YouTube Tutorials
+1. Paste a YouTube URL of a piano tutorial
+2. The app extracts the audio and detects notes
+3. Video frames are captured showing hand positions
+4. Practice the passage with audio + visual guidance
+5. Get feedback comparing your playing to the tutorial
+
+### Adaptive Key Mapping (The Core Idea)
 Traditional piano learning: **"You pressed the wrong key. Try again."**
 
 The Tightening: **"Great! You played the melody. Now let's make it sound even better."**
 
-### How It Works
-
-1. **Phase 1 - Complete Freedom** (Day 1)
-   - Press **ANY key** on your MIDI keyboard
-   - It plays the correct melody note
-   - You're playing Canon in D from minute one!
-
-2. **Phase 2 - Gentle Guidance** (Weeks 1-4)
-   - Wrong keys still play the melody
-   - But they sound slightly off (detuned, different timbre, quieter)
-   - Correct keys sound perfect
-   - Your brain naturally gravitates toward better-sounding keys
-
-3. **Phase 3 - Mastery** (Month 2+)
-   - Distribution has tightened to correct keys only
-   - You're playing the actual song correctly
-   - You learned without frustration
-
-## 🧠 The Science
-
-**Adaptive Key Mapping** using Gaussian probability distributions:
-
-```
-accuracy = e^(-distance² / (2σ²))
-```
-
-- **Initially**: σ = 44 semitones → all 88 keys work equally
-- **Progressively**: σ gradually decreases based on your performance
-- **Finally**: σ = 0.5 semitones → only correct keys sound good
-
-**Audio Feedback** with three tunable mechanisms:
-- **Detuning**: ±50 cents pitch shift for wrong keys
-- **Timbre**: Low-pass filter reduces brightness (10kHz → 500Hz)
-- **Volume**: Up to 50% quieter for wrong keys
-
-All parameters are **fully configurable** - we expect to iterate based on real use.
+- **Day 1**: Press ANY key → It plays the correct melody note
+- **Week 2**: Wrong keys still work but sound slightly off
+- **Month 2**: Distribution tightens → You're playing correctly
 
 ---
 
 ## ✨ Features
 
-### Core
-- 🎹 **Adaptive Key Mapping** - ANY key plays melody initially
-- 🎵 **Accompaniment Mode** - Chord progressions play while you play melody
-- 📊 **Confusion Matrix Tracking** - Hits, misses, extras (not just %)
-- 🎮 **Notes Land on Keyboard** - Guitar Hero style, notes fall directly onto keys
-- 💥 **Impact Effects** - Visual ripple/flash when notes hit
-- 🎛️ **Collapsible Sidebar** - Maximize screen space for practice
-- 🎤 **Lyrics Display** - Section names and lyrics for songs that have them
-- 🔍 **Song Search** - Fast fuzzy search across 33K+ songs with smart grouping
+### YouTube Import
+- 📺 **Paste any YouTube URL** - Piano tutorials, lessons, performances
+- 🎵 **Automatic note detection** - Extracts notes from audio (pitchy)
+- 🖼️ **Video frame extraction** - Captures hand positions at each note
+- ✂️ **Passage selection** - Select specific sections to practice
+- 🔁 **Loop practice** - Repeat passages until mastered
 
-### Technical
-- ⚡ **Low Latency** - <20ms MIDI, <50ms audio
-- 🎨 **60fps Rendering** - Canvas + SVG with React.memo optimization
-- 📐 **Responsive Layout** - Fills available screen space
-- 💾 **Progress Persistence** - LocalStorage save/load
-- 🎚️ **Fully Tunable** - Single config file controls all behavior
+### Practice Mode
+- 🎬 **Video frames** - See hand positions synced to audio playback
+- 🎤 **Microphone input** - Play your piano, get real-time feedback
+- 🎹 **MIDI input** - Connect a MIDI keyboard for precise input
+- 📊 **Performance stats** - Accuracy, hits, misses, extras
+- 🔄 **Loop toggle** - Keep practicing the same passage
+
+### Sheet Music OCR (Experimental)
+- 🤖 **AI vision** - Uses local Ollama + llava model
+- 📝 **Read notation** - Extracts notes from sheet music in video frames
+- 🎯 **More reliable** - Better than audio detection when notation is visible
+
+### Core Learning System
+- 🎹 **Adaptive Key Mapping** - Gaussian distribution guides you to correct keys
+- 🎵 **Accompaniment Mode** - Chords play while you play melody
+- 📊 **Confusion Matrix** - Tracks hits, misses, extras (not just %)
+- 🎮 **Guitar Hero Style** - Notes fall onto keyboard keys
 
 ### Song Library
-- **51,000+ MIDI files** indexed with smart deduplication
-- **33,000 unique songs** (variants grouped together)
+- **51,000+ MIDI files** indexed
+- **33,000 unique songs** with smart deduplication
 - Searchable by name, artist, category
-- Includes classical, pop, rock, jazz, and more
-- Built-in favorites: Canon in D, Hey Jude (with lyrics)
 
 ---
 
@@ -85,8 +66,9 @@ All parameters are **fully configurable** - we expect to iterate based on real u
 
 ### Prerequisites
 - **Node.js** (latest LTS)
-- **MIDI Keyboard** (tested with Akai MPK Mini 3)
-- **Git**
+- **yt-dlp** (for YouTube extraction): `pip install yt-dlp`
+- **ffmpeg** (for audio processing): Install via your package manager
+- **MIDI Keyboard** (optional) or **Microphone** for input
 
 ### Installation
 
@@ -102,29 +84,47 @@ npm install
 npm run dev
 ```
 
-The app will open in Electron. Click **Play** to start!
+### Optional: Sheet Music OCR Setup
+
+For AI-powered sheet music reading (when videos show notation):
+
+```bash
+# Windows (recommended - needs 8GB+ RAM)
+# Download from https://ollama.com/download/windows
+# Then in PowerShell:
+ollama pull llava
+
+# macOS
+# Download from https://ollama.com/download/mac
+ollama pull llava
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+ollama serve &
+ollama pull llava
+```
 
 ---
 
 ## 🎮 Usage
 
-### First Time Setup
-1. Connect your MIDI keyboard before opening the app
-2. Click the **Play** button to initialize audio
-3. Start playing any keys - you're playing Canon in D!
+### Import a YouTube Tutorial
+1. Click the **YouTube** button
+2. Paste a tutorial URL
+3. Wait for audio extraction and note detection
+4. Click **Extract Video Frames** to capture hand positions
+5. Select a passage by clicking start/end points on the timeline
+6. Click **Practice This Passage**
 
-### Practice Controls
-- **Play/Pause** - Control playback
-- **Tempo Slider** - Adjust speed (40-200 BPM)
-- **Distribution Width** - Manual difficulty control
-- **Reference Volume** - Adjust background melody
-- **Auto Progression** - Toggle automatic tightening
+### Practice Mode
+- **Play** - Start the audio and video frame playback
+- **Loop ON/OFF** - Toggle looping (on by default)
+- **MIC OFF/ON** - Enable microphone to detect your playing
+- Watch the stats bar for accuracy feedback
 
-### Understanding the UI
-- **Falling Notes** - Notes fall directly onto keyboard keys with impact effects
-- **Piano Keyboard** - Keys glow when notes land, distribution shown as gradient
-- **Collapsible Sidebar** - Click ◀/▶ to show/hide controls
-- **Stats Dashboard** - Progress, accuracy, streaks, confusion matrix
+### Input Modes
+- **Microphone** - Play an acoustic/electric piano near your computer
+- **MIDI** - Connect a MIDI keyboard (lower latency, more precise)
 
 ---
 
@@ -134,10 +134,10 @@ The app will open in Electron. Click **Play** to start!
 |----------|-----------|
 | **Desktop** | Electron |
 | **Frontend** | React 18 + TypeScript + Vite |
-| **Audio** | smplr (SplendidGrandPiano samples) + Tone.js (timing) |
-| **MIDI** | Native `midi` package (via Electron IPC) + @tonejs/midi (parsing) |
-| **Visualization** | HTML5 Canvas + SVG + React.memo |
-| **Build** | Vite + TypeScript |
+| **Audio** | smplr (piano samples) + Tone.js + pitchy (pitch detection) |
+| **Video** | yt-dlp + ffmpeg + HTML5 Canvas |
+| **MIDI** | Native `midi` package + @tonejs/midi |
+| **AI Vision** | Ollama + llava (optional, for sheet music OCR) |
 
 ---
 
@@ -147,153 +147,62 @@ The app will open in Electron. Click **Play** to start!
 the-tightening/
 ├── src/
 │   ├── App.tsx                      # Main application
-│   ├── config/
-│   │   └── AppConfig.ts            # Central configuration
+│   ├── config/AppConfig.ts          # Central configuration
 │   ├── components/
-│   │   ├── AdaptiveKeyMapper.ts    # Core algorithm
-│   │   ├── AudioEngine.ts          # Piano synthesis (smplr)
-│   │   ├── AccompanimentPlayer.ts  # Chord progressions
-│   │   ├── ProgressTracker.ts      # Performance + confusion matrix
-│   │   ├── FallingNotesCanvas.tsx  # Guitar Hero viz
-│   │   ├── VisualKeyboard.tsx      # Piano display
-│   │   ├── PracticeControls.tsx    # UI controls
-│   │   ├── LyricsDisplay.tsx       # Section lyrics
-│   │   ├── SongSearch.tsx          # Song search UI
-│   │   └── TheTighteningLogo.tsx   # Branding
-│   ├── utils/
-│   │   ├── midiParser.ts           # MIDI file parsing
-│   │   └── logger.ts               # Logging utility
+│   │   ├── YouTubeImporter.tsx      # YouTube URL input & extraction
+│   │   ├── PracticeFrameDisplay.tsx # Video frame practice mode
+│   │   ├── AdaptiveKeyMapper.ts     # Core algorithm
+│   │   ├── AudioEngine.ts           # Piano synthesis
+│   │   ├── FallingNotesCanvas.tsx   # Guitar Hero visualization
+│   │   └── VisualKeyboard.tsx       # Piano display
+│   ├── core/
+│   │   ├── MicrophoneInput.ts       # Mic audio capture
+│   │   ├── PitchDetector.ts         # Note detection from audio
+│   │   ├── ComparisonEngine.ts      # Compare played vs expected
+│   │   ├── VideoAnalyzer.ts         # Extract notes from video audio
+│   │   └── SheetMusicOCR.ts         # AI vision for notation
 │   └── data/
-│       ├── loadSongs.ts            # Song library
-│       ├── songMetadata.ts         # Manual sections/lyrics
-│       └── chordProgressions.ts    # Chord data per song
-├── research/
-│   ├── dissonance/                 # Psychoacoustic research
-│   ├── song-visualizer/            # Song structure tool
-│   ├── scale_images/               # Scale visualizations
-│   └── RESEARCH_NOTES.md           # Research documentation
+│       └── loadSongs.ts             # Song library
+├── electron/
+│   ├── main.ts                      # Electron main process
+│   └── preload.ts                   # IPC bridge
 ├── public/
-│   ├── songs/                      # Built-in MIDI files
-│   ├── song-index.json             # Searchable index (33K songs)
-│   └── personally_owned_MIDI/      # 51K+ MIDI files
-├── scripts/
-│   └── build-song-index.js         # Song index builder
-├── CLAUDE.MD                       # Detailed docs
-└── README.md                       # You are here!
+│   ├── songs/                       # Built-in MIDI files
+│   └── song-index.json              # Searchable index
+└── research/                        # Music theory explorations
 ```
 
 ---
 
-## ⚙️ Configuration
+## 🐛 Known Issues & Roadmap
 
-All behavior is controlled by `src/config/AppConfig.ts`:
-
-```typescript
-{
-  distribution: {
-    initialWidth: 44,      // All keys work
-    finalWidth: 0.5,       // Only correct keys
-    autoTighteningRate: 0.01
-  },
-  audioFeedback: {
-    detuning: { enabled: true, maxCents: 50, weight: 0.4 },
-    timbre: { enabled: true, filterReduction: 2000, weight: 0.3 },
-    volume: { enabled: true, maxReduction: 0.5, weight: 0.3 }
-  },
-  progression: {
-    autoMode: true,
-    accuracyThreshold: 0.7  // 70% to trigger tightening
-  }
-}
-```
-
-See [CLAUDE.MD](./CLAUDE.MD) for complete configuration reference.
-
----
-
-## 🐛 Known Issues
-
-### Recently Fixed
-- **Stale closure bug** - Same note playing every time (fixed with refs)
-- **Audio degradation cliff** - Width=44 caused sudden quality drop (fixed)
-- **Toy piano sound** - Replaced with smplr SplendidGrandPiano samples
-- **8-bit melody guide** - Now uses SplendidGrandPiano, plays 1 octave lower
-- **Confusing UI** - Responsive layout, notes land on keyboard, impact effects
-- **Excessive re-renders** - Components memoized with React.memo
+### Current Limitations
+- Audio pitch detection can be unreliable (3-9 notes instead of 16)
+- Sheet music OCR requires 8GB+ RAM for the AI model
+- Some YouTube videos may fail to extract
 
 ### Roadmap
-- [x] ~~Fix Tone.js timing errors~~ (replaced with smplr)
-- [x] ~~Add more songs to library~~ (51K+ MIDI files!)
-- [x] ~~Add confusion matrix tracking~~ (hits/misses/extras)
-- [x] ~~Add lyrics/sections display~~
-- [x] ~~UI overhaul~~ (responsive, notes land on keys, impact effects)
-- [x] ~~Song search~~ (33K unique songs, fuzzy search, smart grouping)
-- [ ] Karaoke file support (.kar with embedded lyrics)
-- [ ] Test adaptive key mapping with real users
-- [ ] Implement hand separation (left/right)
-- [ ] Add session history graphs
-
-See [Issues](https://github.com/kenEldridge/the-tightening/issues) for full list.
+- [x] YouTube video import
+- [x] Video frame extraction
+- [x] Microphone input mode
+- [x] Practice mode with looping
+- [x] Real-time comparison feedback
+- [ ] Sheet music OCR testing & refinement
+- [ ] Hand separation (left/right)
+- [ ] Session history graphs
+- [ ] Karaoke file support (.kar)
 
 ---
 
 ## 🤝 Contributing
 
-This project is in **early alpha**. Contributions, ideas, and feedback are welcome!
+Contributions welcome! See [CLAUDE.MD](./CLAUDE.MD) for detailed documentation.
 
-### Ways to Contribute
-- 🎵 **Add songs** - Find/create public domain MIDI files
-- 🐛 **Report bugs** - Open an issue
-- 💡 **Suggest features** - What would help you learn?
-- 🎹 **Test with real keyboards** - Share your experience
-- 📖 **Improve docs** - Clarity is key
-
-### Development Setup
 ```bash
-npm run dev      # Start development server
+npm run dev      # Start development
 npm run build    # Build for production
 npm run lint     # Run ESLint
 ```
-
----
-
-## 🔬 Research & Explorations
-
-This repository includes music theory and psychoacoustic research that informs and complements The Tightening's adaptive learning approach.
-
-### [`research/`](./research/) Directory
-
-- **`dissonance/`** - Psychoacoustic research on consonance/dissonance
-  - 3-panel visualizations showing ear-level roughness, total dissonance, and frequency interactions
-  - Key insight: Major thirds and perfect fifths overlap at 100 Hz, explaining why major triads sound stable
-  - Based on Plomp-Levelt psychoacoustic models
-
-- **`song-visualizer/`** - Song structure visualization tool
-  - React webapp for breaking down songs into visual flowchart tiles
-  - Helps understand song structure and patterns
-
-- **`scale_images/`** - Pentatonic scale visualizations across different keys
-
-See [research/RESEARCH_NOTES.md](./research/RESEARCH_NOTES.md) for detailed documentation of all research explorations.
-
-**Future potential**: This psychoacoustic research could inform future enhancements like real-time consonance visualization, progression suggestions based on dissonance models, and more precise convergence algorithms.
-
----
-
-## 📚 Learn More
-
-- **Detailed Documentation**: [CLAUDE.MD](./CLAUDE.MD)
-- **Research Documentation**: [research/RESEARCH_NOTES.md](./research/RESEARCH_NOTES.md)
-- **Algorithm Deep Dive**: See `src/components/AdaptiveKeyMapper.ts`
-- **Configuration Guide**: See `src/config/AppConfig.ts`
-
----
-
-## 🎼 The Name
-
-**"The Tightening"** refers to the core mechanic: the gradual tightening of the probability distribution that guides learners from complete freedom to precise accuracy.
-
-Chaos → Order. Any key → The right key.
 
 ---
 
@@ -307,14 +216,8 @@ TBD
 
 - **Created by**: Ken Eldridge
 - **AI Pair Programming**: Claude (Anthropic)
-- **Music**: Canon in D by Johann Pachelbel (public domain)
-- **MIDI Source**: [MidiFind.com](https://midifind.com)
-
----
-
-## 🌟 Star History
-
-If this project helps you learn piano, consider giving it a star! ⭐
+- **Audio/Video**: yt-dlp, ffmpeg, pitchy
+- **Piano Samples**: smplr (SplendidGrandPiano)
 
 ---
 
