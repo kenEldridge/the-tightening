@@ -149,6 +149,7 @@ function App() {
   const progressTrackerRef = useRef<ProgressTracker | null>(null);
   const timeUpdateIntervalRef = useRef<number | null>(null);
   const currentTimeRef = useRef<number>(0); // Ref for currentTime to avoid stale closures
+  const practiceTimeRef = useRef<number>(0); // Time from PracticeFrameDisplay for mic comparison
 
   // Confusion matrix tracking
   const hitNoteIndicesRef = useRef<Set<number>>(new Set()); // Track which notes have been hit
@@ -255,11 +256,15 @@ function App() {
       });
 
       // Record to comparison engine if active
-      if (comparisonEngineRef.current && isPlaying) {
+      // Use practiceTimeRef when in practice frame mode, otherwise use currentTimeRef
+      const isPracticeMode = practiceFrames && practiceFrames.size > 0;
+      const time = isPracticeMode ? practiceTimeRef.current : currentTimeRef.current;
+
+      if (comparisonEngineRef.current && (isPlaying || isPracticeMode)) {
         const result = comparisonEngineRef.current.recordDetectedNote({
           midi: event.midi,
           noteName: event.noteName,
-          time: currentTimeRef.current,
+          time: time,
           clarity: event.clarity,
           velocity: event.velocity,
         });
@@ -286,7 +291,7 @@ function App() {
         handleNoteOffRef.current({ note: event.midi });
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, practiceFrames]);
 
   // Toggle between MIDI and Microphone input
   const toggleInputMode = useCallback(async () => {
@@ -328,19 +333,23 @@ function App() {
   }, [inputMode, handleMicrophoneNote]);
 
   // Start/stop microphone listening when playing state changes
+  // In practice frame mode, keep mic running since PracticeFrameDisplay has its own play state
   useEffect(() => {
     if (inputMode !== 'microphone' || !microphoneInputRef.current) {
       return;
     }
 
-    if (isPlaying) {
+    const isPracticeMode = practiceFrames && practiceFrames.size > 0;
+
+    if (isPlaying || isPracticeMode) {
+      // Keep mic running in practice mode or when main playback is active
       microphoneInputRef.current.start(handleMicrophoneNote);
       setMicStatus('listening');
     } else {
       microphoneInputRef.current.stop();
       setMicStatus('ready');
     }
-  }, [isPlaying, inputMode, handleMicrophoneNote]);
+  }, [isPlaying, inputMode, handleMicrophoneNote, practiceFrames]);
 
   // Initialize MIDI via IPC (MIDI is handled in main process using native midi package)
   useEffect(() => {
@@ -1021,24 +1030,6 @@ function App() {
             {songData.name} | {inputMode === 'midi' ? midiStatus : `Mic: ${micStatus}`} | {audioStatus}
           </span>
 
-          {/* Input mode toggle */}
-          <button
-            onClick={toggleInputMode}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: inputMode === 'microphone' ? '#4CAF50' : '#555',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              marginLeft: 'auto',
-            }}
-            title={inputMode === 'midi' ? 'Click to use microphone' : 'Click to use MIDI keyboard'}
-          >
-            {inputMode === 'midi' ? 'MIDI' : 'MIC'}
-          </button>
-
           {/* YouTube Import button */}
           <button
             onClick={() => setShowYouTubeImporter(true)}
@@ -1056,123 +1047,10 @@ function App() {
             YouTube
           </button>
 
-          {/* Show detected note when using microphone */}
-          {inputMode === 'microphone' && lastDetectedNote && (
-            <span style={{
-              padding: '4px 8px',
-              backgroundColor: '#2196F3',
-              color: '#fff',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}>
-              {lastDetectedNote.noteName} ({lastDetectedNote.clarity.toFixed(2)})
-            </span>
-          )}
         </div>
-
-        {/* DEBUG: Microphone input status panel */}
-        {inputMode === 'microphone' && (
-          <div style={{
-            backgroundColor: '#333',
-            border: '2px solid #4CAF50',
-            borderRadius: '8px',
-            padding: '10px 15px',
-            marginBottom: '10px',
-            fontSize: '14px',
-          }}>
-            <div style={{ marginBottom: '8px' }}>
-              <strong style={{ color: '#4CAF50' }}>MICROPHONE MODE ACTIVE</strong>
-              <span style={{ marginLeft: '20px', color: '#aaa' }}>
-                Status: <span style={{ color: micStatus === 'listening' ? '#4CAF50' : '#FFC107' }}>{micStatus}</span>
-              </span>
-              <span style={{ marginLeft: '20px', color: '#aaa' }}>
-                Detected: {lastDetectedNote ? (
-                  <span style={{ color: '#2196F3', fontWeight: 'bold' }}>
-                    {lastDetectedNote.noteName} (MIDI {lastDetectedNote.midi}) - clarity: {lastDetectedNote.clarity.toFixed(2)}
-                  </span>
-                ) : (
-                  <span style={{ color: '#666' }}>None (play a note!)</span>
-                )}
-              </span>
-            </div>
-
-            {/* Last comparison result */}
-            {lastComparisonResult && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#aaa' }}>Last match: </span>
-                <span style={{
-                  color: lastComparisonResult.type === 'hit' ? '#4CAF50' :
-                         lastComparisonResult.type === 'early' || lastComparisonResult.type === 'late' ? '#FFC107' :
-                         lastComparisonResult.type === 'miss' ? '#F44336' :
-                         lastComparisonResult.type === 'extra' ? '#FF9800' : '#F44336',
-                  fontWeight: 'bold',
-                }}>
-                  {lastComparisonResult.type.toUpperCase()}
-                </span>
-                {lastComparisonResult.expectedNote && (
-                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
-                    Expected: {lastComparisonResult.expectedNote.name}
-                  </span>
-                )}
-                {lastComparisonResult.timingDiffMs !== null && (
-                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
-                    Timing: {lastComparisonResult.timingDiffMs > 0 ? '+' : ''}{lastComparisonResult.timingDiffMs.toFixed(0)}ms
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Comparison stats */}
-            {comparisonStats && (
-              <div style={{
-                display: 'flex',
-                gap: '20px',
-                flexWrap: 'wrap',
-                paddingTop: '8px',
-                borderTop: '1px solid #555',
-              }}>
-                <span>
-                  <span style={{ color: '#aaa' }}>Accuracy: </span>
-                  <span style={{
-                    color: comparisonStats.accuracy >= 0.8 ? '#4CAF50' :
-                           comparisonStats.accuracy >= 0.5 ? '#FFC107' : '#F44336',
-                    fontWeight: 'bold',
-                  }}>
-                    {(comparisonStats.accuracy * 100).toFixed(0)}%
-                  </span>
-                </span>
-                <span style={{ color: '#4CAF50' }}>Hits: {comparisonStats.hits}</span>
-                <span style={{ color: '#FFC107' }}>Early: {comparisonStats.earlyNotes}</span>
-                <span style={{ color: '#FFC107' }}>Late: {comparisonStats.lateNotes}</span>
-                <span style={{ color: '#F44336' }}>Wrong: {comparisonStats.wrongPitch + comparisonStats.wrongOctave}</span>
-                <span style={{ color: '#F44336' }}>Misses: {comparisonStats.misses}</span>
-                <span style={{ color: '#FF9800' }}>Extras: {comparisonStats.extras}</span>
-                <span style={{ color: '#aaa' }}>
-                  Avg timing: {comparisonStats.averageTimingDiffMs > 0 ? '+' : ''}{comparisonStats.averageTimingDiffMs.toFixed(0)}ms
-                </span>
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Practice visualization - show frames if available, otherwise falling notes */}
         <div style={{ flex: 1, minHeight: '200px', marginBottom: '0' }}>
-          {/* Debug: ALWAYS show frame status */}
-          <div style={{
-            position: 'absolute',
-            top: 60,
-            right: 360,
-            backgroundColor: practiceFrames && practiceFrames.size > 0 ? '#9C27B0' : '#F44336',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            color: '#fff',
-            zIndex: 100,
-            fontWeight: 'bold',
-          }}>
-            {practiceFrames ? `FRAMES: ${practiceFrames.size}` : 'NO FRAMES'}
-          </div>
           {practiceFrames && practiceFrames.size > 0 ? (
             <PracticeFrameDisplay
               notes={songData.notes}
@@ -1181,6 +1059,36 @@ function App() {
               audioStartTime={practiceStartTime}
               width={mainAreaWidth - 30}
               height={Math.max(300, window.innerHeight - 450)}
+              onTimeUpdate={(time) => {
+                practiceTimeRef.current = time;
+              }}
+              onPlayStateChange={(playing) => {
+                if (playing) {
+                  // Start comparison session for practice mode
+                  if (comparisonEngineRef.current && inputMode === 'microphone') {
+                    comparisonEngineRef.current.startSession(songData.notes);
+                    setComparisonStats(null);
+                    setLastComparisonResult(null);
+                    console.info('[Comparison] Practice session started with', songData.notes.length, 'expected notes');
+                  }
+                } else {
+                  // End comparison session
+                  if (comparisonEngineRef.current && inputMode === 'microphone') {
+                    const finalStats = comparisonEngineRef.current.endSession();
+                    setComparisonStats(finalStats);
+                    console.info('[Comparison] Practice session ended', {
+                      accuracy: (finalStats.accuracy * 100).toFixed(1) + '%',
+                      hits: finalStats.hits,
+                      misses: finalStats.misses,
+                      extras: finalStats.extras,
+                    });
+                  }
+                }
+              }}
+              micEnabled={inputMode === 'microphone'}
+              onMicToggle={toggleInputMode}
+              lastDetectedNote={lastDetectedNote}
+              comparisonStats={comparisonStats}
             />
           ) : (
             <FallingNotesCanvas
