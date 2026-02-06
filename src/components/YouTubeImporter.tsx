@@ -7,6 +7,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { getVideoAnalyzer, type DetectedNoteEvent, type AnalysisProgress } from '../core/VideoAnalyzer';
+import { checkOllamaStatus, analyzeMultipleFrames, type OllamaStatus, type SheetMusicAnalysis } from '../core/SheetMusicOCR';
 
 interface VideoInfo {
   title: string;
@@ -59,6 +60,11 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
   const [isExtractingFrames, setIsExtractingFrames] = useState(false);
   const [frameExtractionProgress, setFrameExtractionProgress] = useState<string>('');
 
+  // Sheet music OCR state
+  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
+  const [isAnalyzingSheetMusic, setIsAnalyzingSheetMusic] = useState(false);
+  const [ocrProgress, setOcrProgress] = useState<string>('');
+
   // Passage selection state
   const [selectionStart, setSelectionStart] = useState<number | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
@@ -99,6 +105,77 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       };
     }
   }, []);
+
+  // Check Ollama status on mount
+  useEffect(() => {
+    checkOllamaStatus().then(status => {
+      console.log('[YouTubeImporter] Ollama status:', status);
+      setOllamaStatus(status);
+    });
+  }, []);
+
+  // Analyze sheet music from frames using Ollama
+  const analyzeSheetMusicFromFrames = useCallback(async () => {
+    if (!ollamaStatus?.available || extractedFrames.size === 0) {
+      console.log('[YouTubeImporter] Cannot analyze - Ollama not available or no frames');
+      return;
+    }
+
+    setIsAnalyzingSheetMusic(true);
+    setOcrProgress('Analyzing sheet music with AI vision...');
+
+    try {
+      const result = await analyzeMultipleFrames(extractedFrames, ollamaStatus.model || 'llava');
+
+      console.log('[YouTubeImporter] Sheet music analysis result:', result);
+      setOcrProgress(`Found ${result.notes.length} notes (${(result.confidence * 100).toFixed(0)}% confidence)`);
+
+      if (result.notes.length > 0) {
+        // Convert OCR notes to DetectedNoteEvent format
+        // We need to estimate timing based on tempo and beat positions
+        const tempo = result.tempo || 120;
+        const beatsPerSecond = tempo / 60;
+        const secondsPerBeat = 1 / beatsPerSecond;
+
+        const ocrNotes: DetectedNoteEvent[] = result.notes.map((note, index) => {
+          // Calculate time based on measure and beat
+          const measureOffset = (note.measure - 1) * result.timeSignature.numerator * secondsPerBeat;
+          const beatOffset = (note.beat - 1) * secondsPerBeat;
+          const startTime = measureOffset + beatOffset;
+
+          // Duration based on note type
+          const durationMap: Record<string, number> = {
+            'whole': 4,
+            'half': 2,
+            'quarter': 1,
+            'eighth': 0.5,
+            'sixteenth': 0.25,
+          };
+          const durationBeats = durationMap[note.duration] || 1;
+          const durationSeconds = durationBeats * secondsPerBeat;
+
+          return {
+            midi: note.midi,
+            noteName: note.noteName,
+            startTime: (selectionStart || 0) + startTime,
+            endTime: (selectionStart || 0) + startTime + durationSeconds,
+            duration: durationSeconds,
+            clarity: result.confidence,
+            velocity: 0.8,
+          };
+        });
+
+        // Replace or merge with existing notes
+        setExtractedNotes(ocrNotes);
+        setOcrProgress(`Loaded ${ocrNotes.length} notes from sheet music`);
+      }
+    } catch (err) {
+      console.error('[YouTubeImporter] Sheet music analysis failed:', err);
+      setOcrProgress(`Analysis failed: ${err}`);
+    } finally {
+      setIsAnalyzingSheetMusic(false);
+    }
+  }, [ollamaStatus, extractedFrames, selectionStart]);
 
   // Extract video ID from URL for embedding
   const getVideoId = useCallback((youtubeUrl: string): string | null => {
@@ -1027,6 +1104,46 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
                         >
                           Practice This Passage ({getSelectedNotes().length} notes)
                         </button>
+
+                        {/* Sheet Music OCR Button */}
+                        {extractedFrames.size > 0 && (
+                          <div style={{ marginTop: '10px' }}>
+                            {ollamaStatus === null ? (
+                              <div style={{ color: '#888', fontSize: '12px' }}>
+                                Checking AI vision availability...
+                              </div>
+                            ) : ollamaStatus.available ? (
+                              <>
+                                <button
+                                  onClick={analyzeSheetMusicFromFrames}
+                                  disabled={isAnalyzingSheetMusic}
+                                  style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '4px',
+                                    border: 'none',
+                                    backgroundColor: isAnalyzingSheetMusic ? '#555' : '#9C27B0',
+                                    color: '#fff',
+                                    cursor: isAnalyzingSheetMusic ? 'wait' : 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    width: '100%',
+                                  }}
+                                >
+                                  {isAnalyzingSheetMusic ? 'Analyzing...' : 'Read Sheet Music (AI Vision)'}
+                                </button>
+                                {ocrProgress && (
+                                  <div style={{ color: '#9C27B0', fontSize: '12px', marginTop: '5px' }}>
+                                    {ocrProgress}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div style={{ color: '#FF9800', fontSize: '12px' }}>
+                                AI Vision: {ollamaStatus.error}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

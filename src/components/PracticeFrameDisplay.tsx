@@ -15,6 +15,13 @@ interface PracticeFrameDisplayProps {
   audioStartTime: number;  // Where in the full audio this segment starts
   width: number;
   height: number;
+  onTimeUpdate?: (time: number) => void;  // Called during playback with relative time
+  onPlayStateChange?: (isPlaying: boolean) => void;  // Called when play/pause state changes
+  // Mic feedback props
+  micEnabled?: boolean;
+  onMicToggle?: () => void;
+  lastDetectedNote?: { midi: number; noteName: string; clarity: number } | null;
+  comparisonStats?: { accuracy: number; hits: number; misses: number; extras: number } | null;
 }
 
 export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
@@ -24,11 +31,24 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
   audioStartTime,
   width,
   height,
+  onTimeUpdate,
+  onPlayStateChange,
+  micEnabled = false,
+  onMicToggle,
+  lastDetectedNote,
+  comparisonStats,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // Time relative to segment start
   const [duration, setDuration] = useState(0);
+  const [loopEnabled, setLoopEnabled] = useState(true); // Loop by default for practice
+  const loopEnabledRef = useRef(loopEnabled); // Ref for event handlers
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    loopEnabledRef.current = loopEnabled;
+  }, [loopEnabled]);
 
   // Calculate segment duration from notes
   const segmentDuration = useMemo(() => {
@@ -53,19 +73,28 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
     audio.addEventListener('timeupdate', () => {
       const relativeTime = audio.currentTime - audioStartTime;
       setCurrentTime(Math.max(0, relativeTime));
+      onTimeUpdate?.(Math.max(0, relativeTime));
 
-      // Stop at segment end
+      // Handle segment end
       if (relativeTime >= segmentDuration) {
-        audio.pause();
-        setIsPlaying(false);
-        // Loop back to start
+        // Always seek back to start
         audio.currentTime = audioStartTime;
         setCurrentTime(0);
+        onTimeUpdate?.(0);
+
+        // If not looping, pause
+        if (!loopEnabledRef.current) {
+          audio.pause();
+          setIsPlaying(false);
+          onPlayStateChange?.(false);
+        }
+        // If looping, audio continues playing from start
       }
     });
 
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
+      onPlayStateChange?.(false);
       setCurrentTime(0);
     });
 
@@ -82,6 +111,7 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      onPlayStateChange?.(false);
     } else {
       // Ensure we're at the right position
       if (audioRef.current.currentTime < audioStartTime ||
@@ -90,19 +120,22 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
       }
       audioRef.current.play().catch(err => console.error('Play failed:', err));
       setIsPlaying(true);
+      onPlayStateChange?.(true);
     }
-  }, [isPlaying, audioStartTime, segmentDuration]);
+  }, [isPlaying, audioStartTime, segmentDuration, onPlayStateChange]);
 
   // Restart from beginning
   const restart = useCallback(() => {
     if (!audioRef.current) return;
     audioRef.current.currentTime = audioStartTime;
     setCurrentTime(0);
+    onTimeUpdate?.(0);
     if (!isPlaying) {
       audioRef.current.play().catch(err => console.error('Play failed:', err));
       setIsPlaying(true);
+      onPlayStateChange?.(true);
     }
-  }, [audioStartTime, isPlaying]);
+  }, [audioStartTime, isPlaying, onTimeUpdate, onPlayStateChange]);
 
   // Find current frame
   const currentFrame = useMemo(() => {
@@ -204,6 +237,57 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
         >
           Restart
         </button>
+
+        {/* Loop toggle */}
+        <button
+          onClick={() => setLoopEnabled(!loopEnabled)}
+          style={{
+            padding: '10px 16px',
+            borderRadius: '4px',
+            border: 'none',
+            backgroundColor: loopEnabled ? '#9C27B0' : '#555',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: '14px',
+          }}
+          title={loopEnabled ? 'Loop is ON - click to disable' : 'Loop is OFF - click to enable'}
+        >
+          {loopEnabled ? 'Loop ON' : 'Loop OFF'}
+        </button>
+
+        {/* Mic toggle */}
+        {onMicToggle && (
+          <button
+            onClick={onMicToggle}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: micEnabled ? '#4CAF50' : '#555',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+            title={micEnabled ? 'Microphone is listening' : 'Click to enable microphone'}
+          >
+            {micEnabled ? 'MIC ON' : 'MIC OFF'}
+          </button>
+        )}
+
+        {/* Detected note display */}
+        {micEnabled && lastDetectedNote && (
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: '#2196F3',
+            borderRadius: '4px',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '16px',
+            fontFamily: 'monospace',
+          }}>
+            {lastDetectedNote.noteName} ({lastDetectedNote.clarity.toFixed(2)})
+          </div>
+        )}
 
         {/* Progress bar */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -348,6 +432,32 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Comparison stats bar */}
+      {micEnabled && comparisonStats && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          padding: '10px 15px',
+          backgroundColor: '#222',
+          borderTop: '1px solid #333',
+          fontSize: '14px',
+        }}>
+          <span style={{ color: '#888' }}>Performance:</span>
+          <span style={{
+            color: comparisonStats.accuracy >= 0.8 ? '#4CAF50' :
+                   comparisonStats.accuracy >= 0.5 ? '#FFC107' : '#F44336',
+            fontWeight: 'bold',
+            fontSize: '18px',
+          }}>
+            {(comparisonStats.accuracy * 100).toFixed(0)}%
+          </span>
+          <span style={{ color: '#4CAF50' }}>Hits: {comparisonStats.hits}</span>
+          <span style={{ color: '#F44336' }}>Misses: {comparisonStats.misses}</span>
+          <span style={{ color: '#FF9800' }}>Extras: {comparisonStats.extras}</span>
+        </div>
+      )}
     </div>
   );
 };
