@@ -125,17 +125,84 @@ export function noteNameToMidi(noteName: string): number {
 }
 
 /**
+ * Parse result from structured JSON response
+ */
+export interface ParsedOCRResult {
+  notes: ExtractedNote[];
+  keySignature?: string;
+  timeSignature: { numerator: number; denominator: number };
+  chordSymbols?: string[];
+}
+
+/**
  * Parse the LLM response to extract structured note data
  * @exported for testing
  */
 export function parseNotesFromResponse(response: string): ExtractedNote[] {
-  const notes: ExtractedNote[] = [];
+  const result = parseFullResponse(response);
+  return result.notes;
+}
 
-  // Try to find JSON in the response
-  const jsonMatch = response.match(/\[[\s\S]*\]/);
-  if (jsonMatch) {
+/**
+ * Parse the full response including metadata
+ * @exported for testing
+ */
+export function parseFullResponse(response: string): ParsedOCRResult {
+  const notes: ExtractedNote[] = [];
+  let keySignature: string | undefined;
+  let timeSignature = { numerator: 4, denominator: 4 };
+  let chordSymbols: string[] | undefined;
+
+  // Try to find JSON object in the response (new format)
+  const objectMatch = response.match(/\{[\s\S]*\}/);
+  if (objectMatch) {
     try {
-      const parsed = JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(objectMatch[0]);
+
+      // Extract metadata
+      if (parsed.key_signature) {
+        keySignature = parsed.key_signature;
+      }
+      if (parsed.time_signature) {
+        const tsMatch = parsed.time_signature.match(/(\d+)\/(\d+)/);
+        if (tsMatch) {
+          timeSignature = {
+            numerator: parseInt(tsMatch[1]),
+            denominator: parseInt(tsMatch[2]),
+          };
+        }
+      }
+      if (parsed.chord_symbols && Array.isArray(parsed.chord_symbols)) {
+        chordSymbols = parsed.chord_symbols;
+      }
+
+      // Extract notes from nested array
+      const notesArray = parsed.notes || parsed;
+      if (Array.isArray(notesArray)) {
+        for (const item of notesArray) {
+          if (item.note || item.noteName) {
+            const noteName = item.note || item.noteName;
+            notes.push({
+              noteName,
+              midi: noteNameToMidi(noteName),
+              beat: item.beat || 1,
+              measure: item.measure || 1,
+              duration: item.duration || 'quarter',
+            });
+          }
+        }
+        return { notes, keySignature, timeSignature, chordSymbols };
+      }
+    } catch {
+      // JSON parsing failed, try array format
+    }
+  }
+
+  // Try to find JSON array in the response (old format)
+  const arrayMatch = response.match(/\[[\s\S]*\]/);
+  if (arrayMatch) {
+    try {
+      const parsed = JSON.parse(arrayMatch[0]);
       if (Array.isArray(parsed)) {
         for (const item of parsed) {
           if (item.note || item.noteName) {
@@ -149,7 +216,7 @@ export function parseNotesFromResponse(response: string): ExtractedNote[] {
             });
           }
         }
-        return notes;
+        return { notes, keySignature, timeSignature, chordSymbols };
       }
     } catch {
       // JSON parsing failed, try text parsing
@@ -180,7 +247,7 @@ export function parseNotesFromResponse(response: string): ExtractedNote[] {
     }
   }
 
-  return notes;
+  return { notes, keySignature, timeSignature, chordSymbols };
 }
 
 /**
@@ -208,27 +275,39 @@ export function detectMediaType(imageData: string): 'image/jpeg' | 'image/png' |
  * Analyze a frame image for sheet music notation
  */
 export async function analyzeSheetMusic(imageBase64: string): Promise<SheetMusicAnalysis> {
-  const prompt = `Analyze this image of sheet music. I need you to extract all the musical notes you can see.
+  const prompt = `You are analyzing a video frame from a piano tutorial. The image shows:
+1. A piano keyboard (top)
+2. Hands playing the piano (middle)
+3. Sheet music notation (bottom)
 
-For each note, tell me:
-1. The note name with octave (e.g., C4, F#5, Bb3)
-2. The beat position (1, 2, 3, or 4 for 4/4 time)
-3. The measure number
-4. The duration (quarter, half, whole, eighth, sixteenth)
+Focus ONLY on the sheet music at the bottom of the image. Extract every note you can see on the musical staff.
+
+IMPORTANT: Do your best to identify notes even if the image quality isn't perfect. Make reasonable guesses based on:
+- Note position on the staff lines/spaces
+- Key signature (count sharps/flats)
+- Chord symbols above the staff (D, A, Bm, G, etc.)
+
+For each note on the staff, provide:
+- note: The note name with octave (C4 = middle C, use standard octave numbering)
+- beat: Position in the measure (1, 2, 3, 4)
+- measure: Which measure number (start from 1 for what's visible)
+- duration: quarter, half, whole, eighth, sixteenth
 
 Also identify:
-- Time signature (e.g., 4/4, 3/4)
-- Key signature if visible
-- Tempo marking if visible
+- key_signature: e.g., "D major" or "2 sharps"
+- time_signature: e.g., "4/4"
+- chord_symbols: Array of chord names visible above the staff
 
-Please respond with a JSON array of notes like:
-[
-  {"note": "C4", "beat": 1, "measure": 1, "duration": "quarter"},
-  {"note": "E4", "beat": 2, "measure": 1, "duration": "quarter"},
-  ...
-]
-
-If you cannot see clear sheet music notation, describe what you see and list any notes you can identify.`;
+Respond with ONLY valid JSON, no explanation:
+{
+  "key_signature": "...",
+  "time_signature": "...",
+  "chord_symbols": ["D", "A", "Bm", "G"],
+  "notes": [
+    {"note": "F#4", "beat": 1, "measure": 1, "duration": "quarter"},
+    ...
+  ]
+}`;
 
   try {
     const client = getClient();
@@ -269,23 +348,18 @@ If you cannot see clear sheet music notation, describe what you see and list any
 
     console.log('[SheetMusicOCR] Raw response:', rawResponse);
 
-    const notes = parseNotesFromResponse(rawResponse);
+    const parsed = parseFullResponse(rawResponse);
 
-    // Try to extract time signature
-    const timeMatch = rawResponse.match(/(\d)\/(\d)/);
-    const timeSignature = timeMatch
-      ? { numerator: parseInt(timeMatch[1]), denominator: parseInt(timeMatch[2]) }
-      : { numerator: 4, denominator: 4 };
-
-    // Try to extract tempo
+    // Try to extract tempo from raw response
     const tempoMatch = rawResponse.match(/(\d{2,3})\s*(?:bpm|BPM)/);
     const tempo = tempoMatch ? parseInt(tempoMatch[1]) : undefined;
 
     return {
-      notes,
-      timeSignature,
+      notes: parsed.notes,
+      timeSignature: parsed.timeSignature,
+      keySignature: parsed.keySignature,
       tempo,
-      confidence: notes.length > 0 ? 0.8 : 0.3,
+      confidence: parsed.notes.length > 0 ? 0.8 : 0.3,
       rawResponse,
     };
   } catch (err) {

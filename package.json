@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "build-index": "node scripts/build-song-index.js"
   },
   "dependencies": {
