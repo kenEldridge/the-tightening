@@ -61,7 +61,9 @@ function getClient(): Anthropic {
     if (!apiKey) {
       throw new Error('VITE_ANTHROPIC_API_KEY not set in .env file');
     }
-    anthropicClient = new Anthropic({ apiKey });
+    // dangerouslyAllowBrowser is safe here - this is a local Electron app,
+    // not a web app where the key would be exposed to other users
+    anthropicClient = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   }
   return anthropicClient;
 }
