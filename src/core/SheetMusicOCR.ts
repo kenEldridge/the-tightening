@@ -100,8 +100,9 @@ export async function checkOCRStatus(): Promise<OCRStatus> {
 
 /**
  * Convert note name to MIDI number
+ * @exported for testing
  */
-function noteNameToMidi(noteName: string): number {
+export function noteNameToMidi(noteName: string): number {
   const noteMap: Record<string, number> = {
     'C': 0, 'C#': 1, 'Db': 1,
     'D': 2, 'D#': 3, 'Eb': 3,
@@ -125,8 +126,9 @@ function noteNameToMidi(noteName: string): number {
 
 /**
  * Parse the LLM response to extract structured note data
+ * @exported for testing
  */
-function parseNotesFromResponse(response: string): ExtractedNote[] {
+export function parseNotesFromResponse(response: string): ExtractedNote[] {
   const notes: ExtractedNote[] = [];
 
   // Try to find JSON in the response
@@ -183,8 +185,9 @@ function parseNotesFromResponse(response: string): ExtractedNote[] {
 
 /**
  * Detect media type from base64 data or data URL
+ * @exported for testing
  */
-function detectMediaType(imageData: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' {
+export function detectMediaType(imageData: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' {
   // Check for data URL prefix
   if (imageData.startsWith('data:image/png')) return 'image/png';
   if (imageData.startsWith('data:image/jpeg') || imageData.startsWith('data:image/jpg')) return 'image/jpeg';
