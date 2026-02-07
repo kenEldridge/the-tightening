@@ -17,6 +17,8 @@ export interface VisualKeyboardProps {
   pressedKeys: Set<number>;
   // Current correct note (for highlighting)
   currentCorrectNote: number | null;
+  // Upcoming notes to show with faded highlights (MIDI numbers)
+  upcomingNotes?: number[];
   // Distribution width (for visualization)
   distributionWidth: number;
   // Configuration
@@ -30,6 +32,7 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
   noteRange,
   pressedKeys,
   currentCorrectNote,
+  upcomingNotes = [],
   distributionWidth,
   config,
   width,
@@ -42,6 +45,9 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
   const acceptableRange = currentCorrectNote !== null
     ? calculateAcceptableRange(currentCorrectNote, distributionWidth)
     : null;
+
+  // Convert upcoming notes array to a set for O(1) lookup
+  const upcomingNotesSet = new Set(upcomingNotes);
 
   return (
     <svg
@@ -70,6 +76,7 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
         const isBlackKey = isBlackKeyNote(midiNote);
         const isPressed = pressedKeys.has(midiNote);
         const isCorrect = midiNote === currentCorrectNote;
+        const isUpcoming = upcomingNotesSet.has(midiNote);
         const isInRange = acceptableRange
           ? midiNote >= acceptableRange.min && midiNote <= acceptableRange.max
           : false;
@@ -91,6 +98,16 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
                 />
               )}
 
+            {/* Upcoming note highlight */}
+            {isUpcoming && !isCorrect && (
+              <UpcomingNoteGlow
+                x={x}
+                keyWidth={keyWidth}
+                height={height}
+                isBlackKey={isBlackKey}
+              />
+            )}
+
             {/* Piano key */}
             <PianoKey
               x={x}
@@ -99,6 +116,7 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
               isBlackKey={isBlackKey}
               isPressed={isPressed}
               isCorrect={isCorrect}
+              isUpcoming={isUpcoming}
               config={config}
             />
 
@@ -129,6 +147,7 @@ interface PianoKeyProps {
   isBlackKey: boolean;
   isPressed: boolean;
   isCorrect: boolean;
+  isUpcoming?: boolean;
   config: AppConfig;
 }
 
@@ -139,12 +158,18 @@ const PianoKey: React.FC<PianoKeyProps> = ({
   isBlackKey,
   isPressed,
   isCorrect,
+  isUpcoming = false,
   config,
 }) => {
   let fill = isBlackKey ? '#333' : '#ddd';
 
   if (isPressed) {
     fill = config.visual.colors.neutral;
+  }
+
+  if (isUpcoming && !isCorrect) {
+    // Subtle blue tint for upcoming notes
+    fill = isBlackKey ? '#1a3a5c' : '#b3d4fc';
   }
 
   if (isCorrect) {
@@ -176,8 +201,8 @@ const PianoKey: React.FC<PianoKeyProps> = ({
         width={width - 2}
         height={keyHeight}
         fill={fill}
-        stroke={isCorrect ? config.visual.colors.correctKey : '#000'}
-        strokeWidth={isCorrect ? 2 : 1}
+        stroke={isCorrect ? config.visual.colors.correctKey : isUpcoming ? '#2196F3' : '#000'}
+        strokeWidth={isCorrect ? 2 : isUpcoming ? 1.5 : 1}
         rx={radius}
       />
       {/* Key highlight (3D effect) */}
@@ -192,6 +217,35 @@ const PianoKey: React.FC<PianoKeyProps> = ({
         />
       )}
     </g>
+  );
+};
+
+interface UpcomingNoteGlowProps {
+  x: number;
+  keyWidth: number;
+  height: number;
+  isBlackKey: boolean;
+}
+
+const UpcomingNoteGlow: React.FC<UpcomingNoteGlowProps> = ({
+  x,
+  keyWidth,
+  height,
+  isBlackKey,
+}) => {
+  const keyHeight = isBlackKey ? height * 0.6 : height - 25;
+
+  return (
+    <rect
+      x={x + 1}
+      y={0}
+      width={keyWidth - 2}
+      height={keyHeight}
+      fill="#2196F3"
+      opacity={0.2}
+      pointerEvents="none"
+      rx={4}
+    />
   );
 };
 

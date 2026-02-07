@@ -7,6 +7,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { MelodyNote } from '../utils/midiParser';
+import { ScrollingSheetMusic } from './ScrollingSheetMusic';
 
 interface PracticeFrameDisplayProps {
   notes: MelodyNote[];
@@ -333,104 +334,122 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
       <div style={{
         flex: 1,
         display: 'flex',
-        gap: '15px',
+        flexDirection: 'column',
+        gap: '10px',
         padding: '15px',
         overflow: 'hidden',
       }}>
-        {/* Large frame display */}
+        {/* Top row: Video frame + notes timeline */}
         <div style={{
-          flex: 2,
-          backgroundColor: '#000',
-          borderRadius: '8px',
-          overflow: 'hidden',
+          flex: 1,
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          {currentFrame ? (
-            <img
-              src={currentFrame}
-              alt="Piano hand position"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-              }}
-            />
-          ) : (
-            <div style={{ color: '#666', textAlign: 'center' }}>
-              <p style={{ margin: 0, fontSize: '18px' }}>Press Play to start</p>
-            </div>
-          )}
-        </div>
-
-        {/* Notes timeline */}
-        <div style={{
-          width: '250px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px',
+          gap: '15px',
           overflow: 'hidden',
         }}>
-          <h3 style={{ margin: 0, color: '#888', fontSize: '14px' }}>
-            Notes ({notes.length} total)
-          </h3>
-
+          {/* Large frame display */}
           <div style={{
-            flex: 1,
-            overflowY: 'auto',
+            flex: 2,
+            backgroundColor: '#000',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {currentFrame ? (
+              <img
+                src={currentFrame}
+                alt="Piano hand position"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                }}
+              />
+            ) : (
+              <div style={{ color: '#666', textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: '18px' }}>Press Play to start</p>
+              </div>
+            )}
+          </div>
+
+          {/* Notes timeline */}
+          <div style={{
+            width: '250px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
+            gap: '10px',
+            overflow: 'hidden',
           }}>
-            {notes.map((note, i) => {
-              const isCurrent = currentTime >= note.time && currentTime < note.time + note.duration;
-              const isPast = currentTime >= note.time + note.duration;
-              const isUpcoming = note.time > currentTime && note.time <= currentTime + 2;
+            <h3 style={{ margin: 0, color: '#888', fontSize: '14px' }}>
+              Notes ({notes.length} total)
+            </h3>
 
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 10px',
-                    backgroundColor: isCurrent ? '#4CAF50' : isPast ? '#1a1a1a' : isUpcoming ? '#333' : '#222',
-                    borderRadius: '4px',
-                    opacity: isPast ? 0.5 : 1,
-                  }}
-                >
-                  <span style={{
-                    fontFamily: 'monospace',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    color: isCurrent ? '#fff' : '#ccc',
-                    width: '40px',
-                  }}>
-                    {note.name}
-                  </span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: isCurrent ? 'rgba(255,255,255,0.8)' : '#666',
-                  }}>
-                    {note.time.toFixed(1)}s
-                  </span>
-                  {isCurrent && (
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+            }}>
+              {notes.map((note, i) => {
+                const isCurrent = currentTime >= note.time && currentTime < note.time + note.duration;
+                const isPast = currentTime >= note.time + note.duration;
+                const isUpcoming = note.time > currentTime && note.time <= currentTime + 2;
+
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 10px',
+                      backgroundColor: isCurrent ? '#4CAF50' : isPast ? '#1a1a1a' : isUpcoming ? '#333' : '#222',
+                      borderRadius: '4px',
+                      opacity: isPast ? 0.5 : 1,
+                    }}
+                  >
                     <span style={{
-                      marginLeft: 'auto',
-                      fontSize: '11px',
-                      color: '#fff',
+                      fontFamily: 'monospace',
+                      fontSize: '16px',
                       fontWeight: 'bold',
+                      color: isCurrent ? '#fff' : '#ccc',
+                      width: '40px',
                     }}>
-                      NOW
+                      {note.name}
                     </span>
-                  )}
-                </div>
-              );
-            })}
+                    <span style={{
+                      fontSize: '12px',
+                      color: isCurrent ? 'rgba(255,255,255,0.8)' : '#666',
+                    }}>
+                      {note.time.toFixed(1)}s
+                    </span>
+                    {isCurrent && (
+                      <span style={{
+                        marginLeft: 'auto',
+                        fontSize: '11px',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                      }}>
+                        NOW
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {/* Scrolling sheet music */}
+        <ScrollingSheetMusic
+          notes={notes}
+          currentTime={currentTime}
+          width={width - 30} // Account for padding
+          height={80}
+          visibleWindow={6}
+        />
       </div>
 
       {/* Comparison stats bar */}

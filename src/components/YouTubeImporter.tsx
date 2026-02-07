@@ -7,7 +7,9 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { getVideoAnalyzer, type DetectedNoteEvent, type AnalysisProgress } from '../core/VideoAnalyzer';
-import { checkOCRStatus, analyzeMultipleFrames, type OCRStatus, type SheetMusicAnalysis } from '../core/SheetMusicOCR';
+import { checkOCRStatus, analyzeMultipleFrames, type OCRStatus, type SheetMusicAnalysis, type ExtractedNote } from '../core/SheetMusicOCR';
+import { saveSegment, loadSegments, deleteSegment, type SavedSegment } from '../utils/segmentStorage';
+import { inferTempo, countMeasures, convertOcrNotesToMelody } from '../utils/timingConverter';
 
 interface VideoInfo {
   title: string;
@@ -71,6 +73,19 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
   const [isLooping, setIsLooping] = useState(false);
   const [youtubeTime, setYoutubeTime] = useState(0);
 
+  // Saved segments state
+  const [savedSegments, setSavedSegments] = useState<SavedSegment[]>([]);
+  const [segmentName, setSegmentName] = useState<string>('');
+  const [showSavedSegments, setShowSavedSegments] = useState(false);
+
+  // OCR results for saving
+  const [lastOcrResult, setLastOcrResult] = useState<{
+    notes: ExtractedNote[];
+    timeSignature: { numerator: number; denominator: number };
+    keySignature?: string;
+    tempo?: number;
+  } | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyzerRef = useRef(getVideoAnalyzer());
   const youtubePlayerRef = useRef<any>(null);
@@ -114,6 +129,18 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     });
   }, []);
 
+  // Load saved segments when video ID changes
+  useEffect(() => {
+    const videoId = url ? getVideoId(url) : null;
+    if (videoId) {
+      const segments = loadSegments(videoId);
+      setSavedSegments(segments);
+      console.log('[YouTubeImporter] Loaded saved segments:', segments.length);
+    } else {
+      setSavedSegments([]);
+    }
+  }, [url, getVideoId]);
+
   // Analyze sheet music from frames using Claude Vision
   const analyzeSheetMusicFromFrames = useCallback(async () => {
     if (!ocrStatus?.available || extractedFrames.size === 0) {
@@ -131,6 +158,14 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       setOcrProgress(`Found ${result.notes.length} notes (${(result.confidence * 100).toFixed(0)}% confidence)`);
 
       if (result.notes.length > 0) {
+        // Store OCR result for saving
+        setLastOcrResult({
+          notes: result.notes,
+          timeSignature: result.timeSignature,
+          keySignature: result.keySignature,
+          tempo: result.tempo,
+        });
+
         // Convert OCR notes to DetectedNoteEvent format
         // We need to estimate timing based on tempo and beat positions
         const tempo = result.tempo || 120;
@@ -414,7 +449,141 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
   const clearSelection = useCallback(() => {
     setSelectionStart(null);
     setSelectionEnd(null);
+    setLastOcrResult(null);
   }, []);
+
+  // Adjust selection time with fine-tuning buttons
+  const adjustTime = useCallback((type: 'start' | 'end', delta: number) => {
+    if (type === 'start' && selectionStart !== null) {
+      const newStart = Math.max(0, selectionStart + delta);
+      if (selectionEnd === null || newStart < selectionEnd) {
+        setSelectionStart(newStart);
+      }
+    } else if (type === 'end' && selectionEnd !== null) {
+      const newEnd = selectionEnd + delta;
+      if (selectionStart === null || newEnd > selectionStart) {
+        setSelectionEnd(newEnd);
+      }
+    }
+  }, [selectionStart, selectionEnd]);
+
+  // Save current segment
+  const handleSaveSegment = useCallback(() => {
+    const videoId = url ? getVideoId(url) : null;
+    if (!videoId || selectionStart === null || selectionEnd === null) {
+      console.log('[YouTubeImporter] Cannot save - missing data');
+      return;
+    }
+
+    // Calculate tempo from segment duration and OCR data
+    let tempo = 120;
+    let ocrNotes: ExtractedNote[] = [];
+    let timeSignature = { numerator: 4, denominator: 4 };
+    let keySignature: string | undefined;
+    let measureCount = 0;
+
+    if (lastOcrResult && lastOcrResult.notes.length > 0) {
+      ocrNotes = lastOcrResult.notes;
+      timeSignature = lastOcrResult.timeSignature;
+      keySignature = lastOcrResult.keySignature;
+      measureCount = countMeasures(ocrNotes);
+
+      // Infer tempo from segment duration and detected measures
+      const segmentDuration = selectionEnd - selectionStart;
+      tempo = inferTempo(segmentDuration, measureCount, timeSignature.numerator);
+    }
+
+    const segment: SavedSegment = {
+      videoId,
+      name: segmentName || `Segment ${savedSegments.length + 1}`,
+      startTime: selectionStart,
+      endTime: selectionEnd,
+      ocrNotes,
+      timeSignature,
+      keySignature,
+      tempo,
+      savedAt: new Date().toISOString(),
+      measureCount,
+    };
+
+    saveSegment(segment);
+
+    // Refresh saved segments list
+    setSavedSegments(loadSegments(videoId));
+    setSegmentName('');
+
+    console.log('[YouTubeImporter] Saved segment:', segment.name);
+  }, [url, getVideoId, selectionStart, selectionEnd, lastOcrResult, segmentName, savedSegments.length]);
+
+  // Load a saved segment
+  const handleLoadSegment = useCallback((segment: SavedSegment) => {
+    console.log('[YouTubeImporter] Loading segment:', segment.name);
+
+    // Set selection times
+    setSelectionStart(segment.startTime);
+    setSelectionEnd(segment.endTime);
+
+    // Restore OCR data
+    if (segment.ocrNotes.length > 0) {
+      setLastOcrResult({
+        notes: segment.ocrNotes,
+        timeSignature: segment.timeSignature,
+        keySignature: segment.keySignature,
+        tempo: segment.tempo,
+      });
+
+      // Convert to DetectedNoteEvents and set
+      const tempo = segment.tempo;
+      const beatsPerSecond = tempo / 60;
+      const secondsPerBeat = 1 / beatsPerSecond;
+
+      const ocrNotes: DetectedNoteEvent[] = segment.ocrNotes.map((note) => {
+        const measureOffset = (note.measure - 1) * segment.timeSignature.numerator * secondsPerBeat;
+        const beatOffset = (note.beat - 1) * secondsPerBeat;
+        const startTime = measureOffset + beatOffset;
+
+        const durationMap: Record<string, number> = {
+          'whole': 4,
+          'half': 2,
+          'quarter': 1,
+          'eighth': 0.5,
+          'sixteenth': 0.25,
+        };
+        const durationBeats = durationMap[note.duration] || 1;
+        const durationSeconds = durationBeats * secondsPerBeat;
+
+        return {
+          midi: note.midi,
+          noteName: note.noteName,
+          startTime: segment.startTime + startTime,
+          endTime: segment.startTime + startTime + durationSeconds,
+          duration: durationSeconds,
+          clarity: 0.8,
+          velocity: 0.8,
+        };
+      });
+
+      setExtractedNotes(ocrNotes);
+    }
+
+    // Seek YouTube player to segment start
+    if (youtubePlayerRef.current?.seekTo) {
+      youtubePlayerRef.current.seekTo(segment.startTime);
+    }
+
+    setShowSavedSegments(false);
+  }, []);
+
+  // Delete a saved segment
+  const handleDeleteSegment = useCallback((index: number) => {
+    const videoId = url ? getVideoId(url) : null;
+    if (!videoId) return;
+
+    if (confirm('Delete this saved segment?')) {
+      deleteSegment(videoId, index);
+      setSavedSegments(loadSegments(videoId));
+    }
+  }, [url, getVideoId]);
 
   // Get notes within selection
   const getSelectedNotes = useCallback((): DetectedNoteEvent[] => {
@@ -904,6 +1073,88 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
           borderRadius: '8px',
           padding: '15px',
         }}>
+          {/* Saved Segments Toggle */}
+          {savedSegments.length > 0 && (
+            <div style={{ marginBottom: '10px' }}>
+              <button
+                onClick={() => setShowSavedSegments(!showSavedSegments)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid #FF9800',
+                  backgroundColor: showSavedSegments ? '#FF9800' : 'transparent',
+                  color: showSavedSegments ? '#000' : '#FF9800',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                }}
+              >
+                {showSavedSegments ? 'Hide' : 'Show'} Saved Segments ({savedSegments.length})
+              </button>
+            </div>
+          )}
+
+          {/* Saved Segments List */}
+          {showSavedSegments && savedSegments.length > 0 && (
+            <div style={{
+              marginBottom: '15px',
+              padding: '10px',
+              backgroundColor: '#222',
+              borderRadius: '8px',
+              border: '1px solid #FF9800',
+              maxHeight: '200px',
+              overflowY: 'auto',
+            }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#FF9800', fontSize: '14px' }}>
+                Saved Segments
+              </h4>
+              {savedSegments.map((segment, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 8px',
+                    marginBottom: '4px',
+                    backgroundColor: '#333',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleLoadSegment(segment)}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold' }}>
+                      {segment.name}
+                    </div>
+                    <div style={{ color: '#888', fontSize: '11px' }}>
+                      {segment.startTime.toFixed(1)}s - {segment.endTime.toFixed(1)}s
+                      {' '}({segment.ocrNotes.length} notes, {segment.tempo.toFixed(0)} BPM)
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSegment(index);
+                    }}
+                    style={{
+                      padding: '2px 6px',
+                      borderRadius: '2px',
+                      border: 'none',
+                      backgroundColor: '#B71C1C',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      fontSize: '10px',
+                    }}
+                  >
+                    X
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <h3 style={{ margin: '0 0 15px 0', color: '#fff' }}>Detected Notes</h3>
 
           {status.status === 'complete' && extractedNotes.length > 0 ? (
@@ -1053,15 +1304,217 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
                       )}
                     </div>
 
-                    {/* Selection Info */}
+                    {/* Selection Info with Fine-tune Controls */}
                     {selectionStart !== null && (
-                      <div style={{ marginTop: '8px', color: '#ccc', fontSize: '12px' }}>
-                        Selection: {selectionStart.toFixed(1)}s
-                        {selectionEnd !== null && ` - ${selectionEnd.toFixed(1)}s (${(selectionEnd - selectionStart).toFixed(1)}s)`}
-                        {selectionEnd !== null && (
-                          <span style={{ color: '#4CAF50', marginLeft: '10px' }}>
-                            {getSelectedNotes().length} notes
+                      <div style={{ marginTop: '8px' }}>
+                        {/* Fine-tune Start Time */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                          <span style={{ color: '#888', fontSize: '12px', width: '40px' }}>Start:</span>
+                          <button
+                            onClick={() => adjustTime('start', -0.5)}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '2px',
+                              border: 'none',
+                              backgroundColor: '#444',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                          >
+                            -0.5
+                          </button>
+                          <button
+                            onClick={() => adjustTime('start', -0.1)}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '2px',
+                              border: 'none',
+                              backgroundColor: '#444',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                          >
+                            -0.1
+                          </button>
+                          <span style={{
+                            color: '#4CAF50',
+                            fontSize: '14px',
+                            fontFamily: 'monospace',
+                            fontWeight: 'bold',
+                            width: '60px',
+                            textAlign: 'center',
+                          }}>
+                            {selectionStart.toFixed(2)}s
                           </span>
+                          <button
+                            onClick={() => adjustTime('start', 0.1)}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '2px',
+                              border: 'none',
+                              backgroundColor: '#444',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                          >
+                            +0.1
+                          </button>
+                          <button
+                            onClick={() => adjustTime('start', 0.5)}
+                            style={{
+                              padding: '2px 6px',
+                              borderRadius: '2px',
+                              border: 'none',
+                              backgroundColor: '#444',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              fontSize: '11px',
+                            }}
+                          >
+                            +0.5
+                          </button>
+                        </div>
+
+                        {/* Fine-tune End Time */}
+                        {selectionEnd !== null && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                            <span style={{ color: '#888', fontSize: '12px', width: '40px' }}>End:</span>
+                            <button
+                              onClick={() => adjustTime('end', -0.5)}
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: '2px',
+                                border: 'none',
+                                backgroundColor: '#444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              -0.5
+                            </button>
+                            <button
+                              onClick={() => adjustTime('end', -0.1)}
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: '2px',
+                                border: 'none',
+                                backgroundColor: '#444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              -0.1
+                            </button>
+                            <span style={{
+                              color: '#4CAF50',
+                              fontSize: '14px',
+                              fontFamily: 'monospace',
+                              fontWeight: 'bold',
+                              width: '60px',
+                              textAlign: 'center',
+                            }}>
+                              {selectionEnd.toFixed(2)}s
+                            </span>
+                            <button
+                              onClick={() => adjustTime('end', 0.1)}
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: '2px',
+                                border: 'none',
+                                backgroundColor: '#444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              +0.1
+                            </button>
+                            <button
+                              onClick={() => adjustTime('end', 0.5)}
+                              style={{
+                                padding: '2px 6px',
+                                borderRadius: '2px',
+                                border: 'none',
+                                backgroundColor: '#444',
+                                color: '#fff',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                              }}
+                            >
+                              +0.5
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Duration and note count */}
+                        <div style={{ color: '#ccc', fontSize: '12px', marginTop: '4px' }}>
+                          Duration: {selectionEnd !== null ? (selectionEnd - selectionStart).toFixed(1) : '?'}s
+                          {selectionEnd !== null && (
+                            <span style={{ color: '#4CAF50', marginLeft: '10px' }}>
+                              {getSelectedNotes().length} notes
+                            </span>
+                          )}
+                          {lastOcrResult && lastOcrResult.notes.length > 0 && (
+                            <span style={{ color: '#9C27B0', marginLeft: '10px' }}>
+                              {countMeasures(lastOcrResult.notes)} measures
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Save Segment UI */}
+                        {selectionEnd !== null && lastOcrResult && lastOcrResult.notes.length > 0 && (
+                          <div style={{
+                            marginTop: '10px',
+                            padding: '8px',
+                            backgroundColor: '#1a1a1a',
+                            borderRadius: '4px',
+                            border: '1px solid #333',
+                          }}>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <input
+                                type="text"
+                                value={segmentName}
+                                onChange={(e) => setSegmentName(e.target.value)}
+                                placeholder={`Segment ${savedSegments.length + 1}`}
+                                style={{
+                                  flex: 1,
+                                  padding: '4px 8px',
+                                  borderRadius: '4px',
+                                  border: '1px solid #444',
+                                  backgroundColor: '#333',
+                                  color: '#fff',
+                                  fontSize: '12px',
+                                }}
+                              />
+                              <button
+                                onClick={handleSaveSegment}
+                                style={{
+                                  padding: '4px 12px',
+                                  borderRadius: '4px',
+                                  border: 'none',
+                                  backgroundColor: '#FF9800',
+                                  color: '#fff',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold',
+                                }}
+                              >
+                                Save
+                              </button>
+                            </div>
+                            <div style={{ color: '#888', fontSize: '10px', marginTop: '4px' }}>
+                              Tempo: {(() => {
+                                const measureCount = countMeasures(lastOcrResult.notes);
+                                const segmentDuration = selectionEnd - selectionStart;
+                                return inferTempo(segmentDuration, measureCount, lastOcrResult.timeSignature.numerator).toFixed(0);
+                              })()} BPM (inferred)
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
