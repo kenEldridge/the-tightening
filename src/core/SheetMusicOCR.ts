@@ -11,8 +11,10 @@
  * This module uses AI vision to read the notation directly from video frames.
  *
  * ## Setup
- * Set ANTHROPIC_API_KEY environment variable:
- *   export ANTHROPIC_API_KEY=sk-ant-...
+ * Create a .env file in the project root with:
+ *   VITE_ANTHROPIC_API_KEY=sk-ant-api03-...
+ *
+ * Get your API key at https://console.anthropic.com/
  *
  * ## How It Works
  * 1. Extracts sample frames from the video (beginning, middle, end)
@@ -45,12 +47,21 @@ export interface OCRStatus {
   error?: string;
 }
 
-// Initialize client - will use ANTHROPIC_API_KEY from environment
+// Get API key from Vite environment
+function getApiKey(): string | undefined {
+  return import.meta.env.VITE_ANTHROPIC_API_KEY;
+}
+
+// Initialize client with API key from .env
 let anthropicClient: Anthropic | null = null;
 
 function getClient(): Anthropic {
   if (!anthropicClient) {
-    anthropicClient = new Anthropic();
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('VITE_ANTHROPIC_API_KEY not set in .env file');
+    }
+    anthropicClient = new Anthropic({ apiKey });
   }
   return anthropicClient;
 }
@@ -59,12 +70,12 @@ function getClient(): Anthropic {
  * Check if Anthropic API is configured
  */
 export async function checkOCRStatus(): Promise<OCRStatus> {
-  const apiKey = typeof process !== 'undefined' && process.env?.ANTHROPIC_API_KEY;
+  const apiKey = getApiKey();
 
   if (!apiKey) {
     return {
       available: false,
-      error: 'ANTHROPIC_API_KEY not set. Export it in your environment.',
+      error: 'Create .env file with VITE_ANTHROPIC_API_KEY=sk-ant-...',
     };
   }
 
