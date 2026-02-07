@@ -1,8 +1,8 @@
 /**
- * Sheet Music OCR using Ollama vision models
+ * Sheet Music OCR using Claude Vision API
  *
  * Analyzes video frames containing sheet music to extract notes.
- * Uses llava or similar vision-language models via Ollama API.
+ * Uses Claude's vision capabilities via the Anthropic API.
  *
  * ## Why This Exists
  * Audio-based pitch detection (pitchy) is unreliable for extracting notes
@@ -10,29 +10,18 @@
  * Many tutorial videos show sheet music, which is a much more reliable source.
  * This module uses AI vision to read the notation directly from video frames.
  *
- * ## Default: Azure-hosted Ollama
- * By default, this uses an Azure Container Instance running Ollama with llava.
- * Cost: ~$0.20/hour when running, $0 when stopped.
- *
- * To manage the Azure container:
- *   az container start -g ollama-ocr -n ollama-server   # Start
- *   az container stop -g ollama-ocr -n ollama-server    # Stop (saves money!)
- *
- * ## Alternative: Local Ollama
- * Set OLLAMA_API_URL environment variable to use a local instance:
- *   export OLLAMA_API_URL=http://localhost:11434
- *
- * ### Local Setup (requires 8GB+ RAM)
- * 1. Install Ollama: https://ollama.com/download
- * 2. Pull model: ollama pull llava
- * 3. Set env var: export OLLAMA_API_URL=http://localhost:11434
+ * ## Setup
+ * Set ANTHROPIC_API_KEY environment variable:
+ *   export ANTHROPIC_API_KEY=sk-ant-...
  *
  * ## How It Works
  * 1. Extracts sample frames from the video (beginning, middle, end)
- * 2. Sends each frame to llava with a prompt asking to identify notes
+ * 2. Sends each frame to Claude with a prompt asking to identify notes
  * 3. Parses the response to extract note names, beats, measures
  * 4. Converts to MIDI note numbers and timing information
  */
+
+import Anthropic from '@anthropic-ai/sdk';
 
 export interface ExtractedNote {
   noteName: string;  // e.g., "C4", "F#5"
@@ -51,57 +40,47 @@ export interface SheetMusicAnalysis {
   rawResponse: string;
 }
 
-export interface OllamaStatus {
+export interface OCRStatus {
   available: boolean;
-  model: string | null;
   error?: string;
 }
 
-const DEFAULT_OLLAMA_URL = 'http://172.27.224.1:11434';
+// Initialize client - will use ANTHROPIC_API_KEY from environment
+let anthropicClient: Anthropic | null = null;
 
-const OLLAMA_API = typeof process !== 'undefined' && process.env?.OLLAMA_API_URL
-  ? process.env.OLLAMA_API_URL
-  : DEFAULT_OLLAMA_URL;
+function getClient(): Anthropic {
+  if (!anthropicClient) {
+    anthropicClient = new Anthropic();
+  }
+  return anthropicClient;
+}
 
 /**
- * Check if Ollama is running and has a vision model available
+ * Check if Anthropic API is configured
  */
-export async function checkOllamaStatus(): Promise<OllamaStatus> {
-  try {
-    // Check if Ollama is running
-    const versionRes = await fetch(`${OLLAMA_API}/api/version`);
-    if (!versionRes.ok) {
-      return { available: false, model: null, error: 'Ollama not responding' };
-    }
+export async function checkOCRStatus(): Promise<OCRStatus> {
+  const apiKey = typeof process !== 'undefined' && process.env?.ANTHROPIC_API_KEY;
 
-    // Check for vision models
-    const modelsRes = await fetch(`${OLLAMA_API}/api/tags`);
-    if (!modelsRes.ok) {
-      return { available: false, model: null, error: 'Cannot list models' };
-    }
-
-    const { models } = await modelsRes.json();
-
-    // Look for vision-capable models (llava, bakllava, etc.)
-    const visionModels = ['llava', 'bakllava', 'llava-llama3', 'llava:latest'];
-    const availableVisionModel = models?.find((m: { name: string }) =>
-      visionModels.some(vm => m.name.toLowerCase().includes(vm))
-    );
-
-    if (availableVisionModel) {
-      return { available: true, model: availableVisionModel.name };
-    }
-
+  if (!apiKey) {
     return {
       available: false,
-      model: null,
-      error: 'No vision model found. Run: ollama pull llava'
+      error: 'ANTHROPIC_API_KEY not set. Export it in your environment.',
     };
+  }
+
+  try {
+    // Quick test call to verify API key works
+    const client = getClient();
+    await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 10,
+      messages: [{ role: 'user', content: 'Hi' }],
+    });
+    return { available: true };
   } catch (err) {
     return {
       available: false,
-      model: null,
-      error: `Cannot connect to Ollama: ${err}`
+      error: `API error: ${err}`,
     };
   }
 }
@@ -190,12 +169,29 @@ function parseNotesFromResponse(response: string): ExtractedNote[] {
 }
 
 /**
+ * Detect media type from base64 data or data URL
+ */
+function detectMediaType(imageData: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' {
+  // Check for data URL prefix
+  if (imageData.startsWith('data:image/png')) return 'image/png';
+  if (imageData.startsWith('data:image/jpeg') || imageData.startsWith('data:image/jpg')) return 'image/jpeg';
+  if (imageData.startsWith('data:image/gif')) return 'image/gif';
+  if (imageData.startsWith('data:image/webp')) return 'image/webp';
+
+  // Check magic bytes in base64
+  if (imageData.startsWith('/9j/')) return 'image/jpeg';
+  if (imageData.startsWith('iVBOR')) return 'image/png';
+  if (imageData.startsWith('R0lGO')) return 'image/gif';
+  if (imageData.startsWith('UklGR')) return 'image/webp';
+
+  // Default to JPEG
+  return 'image/jpeg';
+}
+
+/**
  * Analyze a frame image for sheet music notation
  */
-export async function analyzeSheetMusic(
-  imageBase64: string,
-  model: string = 'llava'
-): Promise<SheetMusicAnalysis> {
+export async function analyzeSheetMusic(imageBase64: string): Promise<SheetMusicAnalysis> {
   const prompt = `Analyze this image of sheet music. I need you to extract all the musical notes you can see.
 
 For each note, tell me:
@@ -219,23 +215,41 @@ Please respond with a JSON array of notes like:
 If you cannot see clear sheet music notation, describe what you see and list any notes you can identify.`;
 
   try {
-    const response = await fetch(`${OLLAMA_API}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        prompt,
-        images: [imageBase64],
-        stream: false,
-      }),
+    const client = getClient();
+    const mediaType = detectMediaType(imageBase64);
+
+    // Strip data URL prefix if present
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: base64Data,
+              },
+            },
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        },
+      ],
     });
 
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status}`);
-    }
-
-    const result = await response.json();
-    const rawResponse = result.response || '';
+    // Extract text from response
+    const rawResponse = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map(block => block.text)
+      .join('\n');
 
     console.log('[SheetMusicOCR] Raw response:', rawResponse);
 
@@ -255,7 +269,7 @@ If you cannot see clear sheet music notation, describe what you see and list any
       notes,
       timeSignature,
       tempo,
-      confidence: notes.length > 0 ? 0.7 : 0.3,
+      confidence: notes.length > 0 ? 0.8 : 0.3,
       rawResponse,
     };
   } catch (err) {
@@ -273,8 +287,7 @@ If you cannot see clear sheet music notation, describe what you see and list any
  * Analyze multiple frames and combine results
  */
 export async function analyzeMultipleFrames(
-  frames: Map<number, string>,
-  model: string = 'llava'
+  frames: Map<number, string>
 ): Promise<SheetMusicAnalysis> {
   // Take a sample of frames (beginning, middle, end)
   const timestamps = Array.from(frames.keys()).sort((a, b) => a - b);
@@ -307,11 +320,7 @@ export async function analyzeMultipleFrames(
     const imageDataUrl = frames.get(ts);
     if (!imageDataUrl) continue;
 
-    // Extract base64 from data URL
-    const base64Match = imageDataUrl.match(/base64,(.+)/);
-    if (!base64Match) continue;
-
-    const result = await analyzeSheetMusic(base64Match[1], model);
+    const result = await analyzeSheetMusic(imageDataUrl);
 
     if (result.notes.length > 0) {
       allNotes.push(...result.notes);
@@ -333,7 +342,7 @@ export async function analyzeMultipleFrames(
     notes: uniqueNotes,
     timeSignature: bestTimeSignature,
     tempo: bestTempo,
-    confidence: uniqueNotes.length > 0 ? 0.7 : 0.3,
+    confidence: uniqueNotes.length > 0 ? 0.8 : 0.3,
     rawResponse: `Analyzed ${sampleTimestamps.length} frames, found ${uniqueNotes.length} unique notes`,
   };
 }

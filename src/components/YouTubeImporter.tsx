@@ -7,7 +7,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { getVideoAnalyzer, type DetectedNoteEvent, type AnalysisProgress } from '../core/VideoAnalyzer';
-import { checkOllamaStatus, analyzeMultipleFrames, type OllamaStatus, type SheetMusicAnalysis } from '../core/SheetMusicOCR';
+import { checkOCRStatus, analyzeMultipleFrames, type OCRStatus, type SheetMusicAnalysis } from '../core/SheetMusicOCR';
 
 interface VideoInfo {
   title: string;
@@ -61,7 +61,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
   const [frameExtractionProgress, setFrameExtractionProgress] = useState<string>('');
 
   // Sheet music OCR state
-  const [ollamaStatus, setOllamaStatus] = useState<OllamaStatus | null>(null);
+  const [ocrStatus, setOcrStatus] = useState<OCRStatus | null>(null);
   const [isAnalyzingSheetMusic, setIsAnalyzingSheetMusic] = useState(false);
   const [ocrProgress, setOcrProgress] = useState<string>('');
 
@@ -106,26 +106,26 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     }
   }, []);
 
-  // Check Ollama status on mount
+  // Check OCR status on mount
   useEffect(() => {
-    checkOllamaStatus().then(status => {
-      console.log('[YouTubeImporter] Ollama status:', status);
-      setOllamaStatus(status);
+    checkOCRStatus().then(status => {
+      console.log('[YouTubeImporter] OCR status:', status);
+      setOcrStatus(status);
     });
   }, []);
 
-  // Analyze sheet music from frames using Ollama
+  // Analyze sheet music from frames using Claude Vision
   const analyzeSheetMusicFromFrames = useCallback(async () => {
-    if (!ollamaStatus?.available || extractedFrames.size === 0) {
-      console.log('[YouTubeImporter] Cannot analyze - Ollama not available or no frames');
+    if (!ocrStatus?.available || extractedFrames.size === 0) {
+      console.log('[YouTubeImporter] Cannot analyze - OCR not available or no frames');
       return;
     }
 
     setIsAnalyzingSheetMusic(true);
-    setOcrProgress('Analyzing sheet music with AI vision...');
+    setOcrProgress('Analyzing sheet music with Claude Vision...');
 
     try {
-      const result = await analyzeMultipleFrames(extractedFrames, ollamaStatus.model || 'llava');
+      const result = await analyzeMultipleFrames(extractedFrames);
 
       console.log('[YouTubeImporter] Sheet music analysis result:', result);
       setOcrProgress(`Found ${result.notes.length} notes (${(result.confidence * 100).toFixed(0)}% confidence)`);
@@ -175,7 +175,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     } finally {
       setIsAnalyzingSheetMusic(false);
     }
-  }, [ollamaStatus, extractedFrames, selectionStart]);
+  }, [ocrStatus, extractedFrames, selectionStart]);
 
   // Extract video ID from URL for embedding
   const getVideoId = useCallback((youtubeUrl: string): string | null => {
@@ -1109,11 +1109,11 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
                         {/* Sheet Music OCR Button */}
                         {extractedFrames.size > 0 && (
                           <div style={{ marginTop: '10px' }}>
-                            {ollamaStatus === null ? (
+                            {ocrStatus === null ? (
                               <div style={{ color: '#888', fontSize: '12px' }}>
                                 Checking AI vision availability...
                               </div>
-                            ) : ollamaStatus.available ? (
+                            ) : ocrStatus.available ? (
                               <>
                                 <button
                                   onClick={analyzeSheetMusicFromFrames}
@@ -1140,7 +1140,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
                               </>
                             ) : (
                               <div style={{ color: '#FF9800', fontSize: '12px' }}>
-                                AI Vision: {ollamaStatus.error}
+                                AI Vision: {ocrStatus.error}
                               </div>
                             )}
                           </div>
