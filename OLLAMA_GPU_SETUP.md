@@ -58,7 +58,7 @@ Downloads ~4.7GB to D:\ollama\models. First load takes 30-60 seconds from HDD, t
 ### Phase 6: Configure Windows Firewall
 
 ```powershell
-New-NetFirewallRule -DisplayName "Ollama" -Direction Inbound -Port 11434 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "Ollama" -Direction Inbound -LocalPort 11434 -Protocol TCP -Action Allow
 ```
 
 ### Phase 7: Get This PC's IP Address

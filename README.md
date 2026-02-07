@@ -86,23 +86,49 @@ npm run dev
 
 ### Optional: Sheet Music OCR Setup
 
-For AI-powered sheet music reading (when videos show notation):
+The app can use AI vision to read sheet music notation from video frames. This is more reliable than audio pitch detection when tutorial videos show notation. It requires **Ollama** running locally with a vision model.
+
+**Requirements:** 8GB+ RAM (the llava model uses ~4.7GB)
+
+#### Windows (Recommended)
+
+1. Download Ollama from [ollama.com/download/windows](https://ollama.com/download/windows)
+2. Run the installer — Ollama starts automatically as a background service
+3. Open **PowerShell** and pull the vision model:
+   ```powershell
+   ollama pull llava
+   ```
+4. Wait for the ~4.7GB download to complete
+5. Verify it's working:
+   ```powershell
+   ollama list
+   ```
+   You should see `llava:latest` in the output.
+
+Ollama runs at `http://localhost:11434` — the app connects to it automatically.
+
+#### macOS
+
+1. Download from [ollama.com/download/mac](https://ollama.com/download/mac)
+2. Install and open — it runs in the menu bar
+3. In Terminal:
+   ```bash
+   ollama pull llava
+   ```
+
+#### Linux
 
 ```bash
-# Windows (recommended - needs 8GB+ RAM)
-# Download from https://ollama.com/download/windows
-# Then in PowerShell:
-ollama pull llava
-
-# macOS
-# Download from https://ollama.com/download/mac
-ollama pull llava
-
-# Linux
 curl -fsSL https://ollama.com/install.sh | sh
-ollama serve &
+ollama serve &   # Start the server (runs on port 11434)
 ollama pull llava
 ```
+
+#### Troubleshooting
+
+- **"Cannot connect to Ollama"** — Make sure Ollama is running. On Windows, check the system tray. On Linux, run `ollama serve`.
+- **Low RAM?** Use a smaller model variant: `ollama pull llava:7b-v1.5-q4_0` (~4GB instead of ~4.7GB)
+- **Remote machine?** Set `OLLAMA_HOST=http://<ip>:11434` as an environment variable before starting the app
 
 ---
 

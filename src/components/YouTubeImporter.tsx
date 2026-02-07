@@ -424,51 +424,41 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     );
   }, [extractedNotes, selectionStart, selectionEnd]);
 
-  // Download video and extract frames at note timestamps
+  // Download video and extract frames for the selected segment (or full video)
   const extractVideoFrames = useCallback(async () => {
     console.log('[YouTubeImporter] extractVideoFrames called!', {
       hasUrl: !!url,
       noteCount: extractedNotes.length,
+      selectionStart,
+      selectionEnd,
       hasElectronAPI: !!window.electronAPI,
-      hasGetVideoPath: !!window.electronAPI?.getVideoPath,
-      hasDownloadVideo: !!window.electronAPI?.youtubeDownloadVideo,
-      hasExtractFrames: !!window.electronAPI?.extractFrames,
-      hasReadImageFile: !!window.electronAPI?.readImageFile,
     });
 
-    if (!url || extractedNotes.length === 0 || !window.electronAPI) {
+    if (!url || !window.electronAPI) {
       console.error('[YouTubeImporter] Cannot extract frames - missing requirements');
-      setFrameExtractionProgress('Error: Missing URL or notes');
+      setFrameExtractionProgress('Error: Missing URL');
       return;
     }
 
-    // Check if the IPC methods exist
     if (!window.electronAPI.youtubeDownloadVideo) {
-      console.error('[YouTubeImporter] youtubeDownloadVideo not available - rebuild required');
       setFrameExtractionProgress('Error: Rebuild app to enable frame extraction');
       return;
     }
 
     setIsExtractingFrames(true);
     setFrameExtractionProgress('Downloading video...');
-    console.log('[YouTubeImporter] Starting video download...');
 
     try {
-      // First check if video already downloaded
       let videoFilePath = null;
       if (window.electronAPI.getVideoPath) {
         videoFilePath = await window.electronAPI.getVideoPath(url);
-        console.log('[YouTubeImporter] Cached video path:', videoFilePath);
       }
 
       if (!videoFilePath) {
-        console.log('[YouTubeImporter] Video not cached, downloading...');
         videoFilePath = await window.electronAPI.youtubeDownloadVideo(url);
-        console.log('[YouTubeImporter] Video downloaded:', videoFilePath);
       }
 
       if (!videoFilePath) {
-        console.error('[YouTubeImporter] Failed to download video');
         setFrameExtractionProgress('Failed to download video');
         setIsExtractingFrames(false);
         return;
@@ -477,14 +467,25 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       setVideoPath(videoFilePath);
       setFrameExtractionProgress('Extracting frames...');
 
-      // Get unique timestamps (one frame per note, at the start of each note)
-      // Limit to reasonable number to avoid overwhelming ffmpeg
-      const maxFrames = 50;
-      const timestamps = [...new Set(
-        extractedNotes
-          .slice(0, maxFrames)
-          .map(note => Math.round(note.startTime * 100) / 100) // Round to 2 decimal places
-      )];
+      // Use selection range if available, otherwise use note timestamps
+      let timestamps: number[];
+      if (selectionStart !== null && selectionEnd !== null) {
+        // Generate evenly-spaced timestamps at ~2fps for the selected segment
+        const frameInterval = 0.5;
+        timestamps = [];
+        for (let t = selectionStart; t <= selectionEnd; t += frameInterval) {
+          timestamps.push(Math.round(t * 100) / 100);
+        }
+        console.log('[YouTubeImporter] Using selection range', { start: selectionStart, end: selectionEnd, frameCount: timestamps.length });
+      } else {
+        // Fallback: use note timestamps spread across the full set
+        const maxFrames = 50;
+        timestamps = [...new Set(
+          extractedNotes
+            .slice(0, maxFrames)
+            .map(note => Math.round(note.startTime * 100) / 100)
+        )];
+      }
 
       console.log('[YouTubeImporter] Extracting frames', { count: timestamps.length, videoPath: videoFilePath, timestamps: timestamps.slice(0, 5) });
 
@@ -524,7 +525,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     }
 
     setIsExtractingFrames(false);
-  }, [url, extractedNotes]);
+  }, [url, extractedNotes, selectionStart, selectionEnd]);
 
   // Find frame for a given timestamp (finds closest frame)
   const getFrameForTimestamp = useCallback((timestamp: number): string | null => {

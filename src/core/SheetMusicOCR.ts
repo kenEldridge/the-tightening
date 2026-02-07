@@ -57,14 +57,11 @@ export interface OllamaStatus {
   error?: string;
 }
 
-// Azure Container Instance with Ollama + llava
-// Stop when not in use: az container stop -g ollama-ocr -n ollama-server
-const AZURE_OLLAMA_URL = 'http://52.150.54.24:11434';
+const DEFAULT_OLLAMA_URL = 'http://172.27.224.1:11434';
 
-// Use environment variable override or default to Azure
 const OLLAMA_API = typeof process !== 'undefined' && process.env?.OLLAMA_API_URL
   ? process.env.OLLAMA_API_URL
-  : AZURE_OLLAMA_URL;
+  : DEFAULT_OLLAMA_URL;
 
 /**
  * Check if Ollama is running and has a vision model available
