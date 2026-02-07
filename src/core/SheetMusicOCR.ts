@@ -1,8 +1,8 @@
 /**
- * Sheet Music OCR using local Ollama vision models
+ * Sheet Music OCR using Ollama vision models
  *
  * Analyzes video frames containing sheet music to extract notes.
- * Uses llava or similar vision-language models running locally.
+ * Uses llava or similar vision-language models via Ollama API.
  *
  * ## Why This Exists
  * Audio-based pitch detection (pitchy) is unreliable for extracting notes
@@ -10,30 +10,22 @@
  * Many tutorial videos show sheet music, which is a much more reliable source.
  * This module uses AI vision to read the notation directly from video frames.
  *
- * ## Setup Instructions
+ * ## Default: Azure-hosted Ollama
+ * By default, this uses an Azure Container Instance running Ollama with llava.
+ * Cost: ~$0.20/hour when running, $0 when stopped.
  *
- * ### Option 1: Windows (Recommended - more RAM available)
- * 1. Download Ollama from https://ollama.com/download/windows
- * 2. Install and run it (runs as a system service)
- * 3. Open PowerShell and run: `ollama pull llava`
- * 4. Wait for the ~4.7GB download to complete
- * 5. The model will be available at http://localhost:11434
+ * To manage the Azure container:
+ *   az container start -g ollama-ocr -n ollama-server   # Start
+ *   az container stop -g ollama-ocr -n ollama-server    # Stop (saves money!)
  *
- * ### Option 2: Linux/WSL (requires 8GB+ RAM)
- * 1. curl -fsSL https://ollama.com/install.sh | sh
- * 2. ollama serve  (start the server)
- * 3. ollama pull llava
+ * ## Alternative: Local Ollama
+ * Set OLLAMA_API_URL environment variable to use a local instance:
+ *   export OLLAMA_API_URL=http://localhost:11434
  *
- * ### Option 3: macOS
- * 1. Download from https://ollama.com/download/mac
- * 2. Install and run
- * 3. ollama pull llava
- *
- * ## Memory Requirements
- * - llava (default): ~4.7GB RAM
- * - llava:7b-v1.5-q4_0 (smaller): ~4GB RAM
- * - If you have <8GB RAM, run Ollama on a different machine and
- *   set OLLAMA_HOST environment variable
+ * ### Local Setup (requires 8GB+ RAM)
+ * 1. Install Ollama: https://ollama.com/download
+ * 2. Pull model: ollama pull llava
+ * 3. Set env var: export OLLAMA_API_URL=http://localhost:11434
  *
  * ## How It Works
  * 1. Extracts sample frames from the video (beginning, middle, end)
@@ -65,7 +57,14 @@ export interface OllamaStatus {
   error?: string;
 }
 
-const OLLAMA_API = 'http://localhost:11434';
+// Azure Container Instance with Ollama + llava
+// Stop when not in use: az container stop -g ollama-ocr -n ollama-server
+const AZURE_OLLAMA_URL = 'http://52.150.54.24:11434';
+
+// Use environment variable override or default to Azure
+const OLLAMA_API = typeof process !== 'undefined' && process.env?.OLLAMA_API_URL
+  ? process.env.OLLAMA_API_URL
+  : AZURE_OLLAMA_URL;
 
 /**
  * Check if Ollama is running and has a vision model available
