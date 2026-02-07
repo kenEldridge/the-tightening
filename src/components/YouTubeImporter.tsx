@@ -424,15 +424,20 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     );
   }, [extractedNotes, selectionStart, selectionEnd]);
 
-  // Download video and extract frames for the selected segment (or full video)
+  // Download video and extract frames for the selected segment only
   const extractVideoFrames = useCallback(async () => {
     console.log('[YouTubeImporter] extractVideoFrames called!', {
       hasUrl: !!url,
-      noteCount: extractedNotes.length,
       selectionStart,
       selectionEnd,
       hasElectronAPI: !!window.electronAPI,
     });
+
+    // Require a selection before extracting frames
+    if (selectionStart === null || selectionEnd === null) {
+      setFrameExtractionProgress('Select a passage first (Mark Start & End)');
+      return;
+    }
 
     if (!url || !window.electronAPI) {
       console.error('[YouTubeImporter] Cannot extract frames - missing requirements');
@@ -465,29 +470,19 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       }
 
       setVideoPath(videoFilePath);
-      setFrameExtractionProgress('Extracting frames...');
+      setFrameExtractionProgress('Extracting frames for selection...');
 
-      // Use selection range if available, otherwise use note timestamps
-      let timestamps: number[];
-      if (selectionStart !== null && selectionEnd !== null) {
-        // Generate evenly-spaced timestamps at ~2fps for the selected segment
-        const frameInterval = 0.5;
-        timestamps = [];
-        for (let t = selectionStart; t <= selectionEnd; t += frameInterval) {
-          timestamps.push(Math.round(t * 100) / 100);
-        }
-        console.log('[YouTubeImporter] Using selection range', { start: selectionStart, end: selectionEnd, frameCount: timestamps.length });
-      } else {
-        // Fallback: use note timestamps spread across the full set
-        const maxFrames = 50;
-        timestamps = [...new Set(
-          extractedNotes
-            .slice(0, maxFrames)
-            .map(note => Math.round(note.startTime * 100) / 100)
-        )];
+      // Generate evenly-spaced timestamps at ~2fps for the selected segment
+      const frameInterval = 0.5;
+      const timestamps: number[] = [];
+      for (let t = selectionStart; t <= selectionEnd; t += frameInterval) {
+        timestamps.push(Math.round(t * 100) / 100);
       }
-
-      console.log('[YouTubeImporter] Extracting frames', { count: timestamps.length, videoPath: videoFilePath, timestamps: timestamps.slice(0, 5) });
+      console.log('[YouTubeImporter] Extracting frames for selection', {
+        start: selectionStart,
+        end: selectionEnd,
+        frameCount: timestamps.length
+      });
 
       if (!window.electronAPI.extractFrames) {
         console.error('[YouTubeImporter] extractFrames not available');
@@ -501,7 +496,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       const framePaths = await window.electronAPI.extractFrames(videoFilePath, timestamps);
       console.log('[YouTubeImporter] Frame paths received:', framePaths?.length || 0);
 
-      // Load frames as data URLs
+      // Load frames as data URLs and cache in state
       const frameMap = new Map<number, string>();
       for (let i = 0; i < timestamps.length && i < framePaths.length; i++) {
         const framePath = framePaths[i];
@@ -515,7 +510,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       }
 
       setExtractedFrames(frameMap);
-      setFrameExtractionProgress(`Extracted ${frameMap.size} frames`);
+      setFrameExtractionProgress(`Cached ${frameMap.size} frames for selection`);
       console.log('[YouTubeImporter] Frame extraction complete', { frameCount: frameMap.size });
 
     } catch (err) {
@@ -525,7 +520,7 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
     }
 
     setIsExtractingFrames(false);
-  }, [url, extractedNotes, selectionStart, selectionEnd]);
+  }, [url, selectionStart, selectionEnd]);
 
   // Find frame for a given timestamp (finds closest frame)
   const getFrameForTimestamp = useCallback((timestamp: number): string | null => {
@@ -923,22 +918,22 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     onClick={extractVideoFrames}
-                    disabled={isExtractingFrames || extractedNotes.length === 0}
+                    disabled={isExtractingFrames || selectionStart === null || selectionEnd === null}
                     style={{
                       padding: '10px 20px',
                       borderRadius: '4px',
                       border: 'none',
-                      backgroundColor: isExtractingFrames ? '#666' : '#fff',
-                      color: isExtractingFrames ? '#aaa' : '#9C27B0',
-                      cursor: isExtractingFrames ? 'not-allowed' : 'pointer',
+                      backgroundColor: (isExtractingFrames || selectionStart === null || selectionEnd === null) ? '#666' : '#fff',
+                      color: (isExtractingFrames || selectionStart === null || selectionEnd === null) ? '#aaa' : '#9C27B0',
+                      cursor: (isExtractingFrames || selectionStart === null || selectionEnd === null) ? 'not-allowed' : 'pointer',
                       fontSize: '14px',
                       fontWeight: 'bold',
                     }}
                   >
-                    {isExtractingFrames ? 'Extracting...' : extractedFrames.size > 0 ? 'Re-extract Frames' : 'Extract Video Frames'}
+                    {isExtractingFrames ? 'Extracting...' : extractedFrames.size > 0 ? 'Re-extract Frames' : 'Extract Frames'}
                   </button>
                   <span style={{ color: '#fff', fontSize: '12px' }}>
-                    {frameExtractionProgress || 'Get hand position screenshots'}
+                    {frameExtractionProgress || (selectionStart === null || selectionEnd === null ? 'Select passage first' : 'Extract frames for selection')}
                   </span>
                 </div>
                 {extractedFrames.size > 0 && (
