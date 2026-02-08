@@ -35,6 +35,9 @@ declare global {
       youtubeDownloadVideo: (url: string) => Promise<string | null>;
       extractFrames: (videoPath: string, timestamps: number[]) => Promise<string[]>;
       getVideoPath: (url: string) => Promise<string | null>;
+      // Debug screenshots
+      debugScreenshot: (label?: string) => Promise<string | null>;
+      debugScreenshotReset: () => Promise<boolean>;
     };
   }
 }

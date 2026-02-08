@@ -133,6 +133,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Read image file as base64 data URL
   readImageFile: (filePath: string) => ipcRenderer.invoke('read-image-file', filePath),
+
+  // ============================================
+  // Debug Screenshot API
+  // ============================================
+
+  // Capture a screenshot with optional label
+  debugScreenshot: (label?: string) => ipcRenderer.invoke('debug-screenshot', label),
+
+  // Reset screenshot counter and clear old captures
+  debugScreenshotReset: () => ipcRenderer.invoke('debug-screenshot-reset'),
 });
 
 originalConsole.log('[Preload] MIDI bridge initialized');

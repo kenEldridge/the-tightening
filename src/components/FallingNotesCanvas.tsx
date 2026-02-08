@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, memo } from 'react';
 import type { MelodyNote, SongSegment } from '../utils/midiParser';
 import type { AppConfig } from '../config/AppConfig';
+import type { NoteComparisonResult, NoteMatchType } from '../core/ComparisonEngine';
 
 export interface FallingNote {
   note: MelodyNote;

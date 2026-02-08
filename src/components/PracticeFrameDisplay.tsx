@@ -447,8 +447,8 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
           notes={notes}
           currentTime={currentTime}
           width={width - 30} // Account for padding
-          height={80}
-          visibleWindow={6}
+          height={120}
+          visibleWindow={8}
         />
       </div>
 

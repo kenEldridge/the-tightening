@@ -74,8 +74,8 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
         return null;
       }
 
-      // Calculate note width based on duration
-      const noteWidth = Math.max(30, note.duration * pixelsPerSecond * 0.8);
+      // Calculate note width based on duration (smaller for less crowding)
+      const noteWidth = Math.max(20, note.duration * pixelsPerSecond * 0.6);
 
       // Opacity based on distance from center
       let opacity = 1;
@@ -248,22 +248,22 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
                 <div
                   key={index}
                   style={{
-                    padding: '4px 12px',
+                    padding: isChord ? '2px 6px' : '4px 10px',
                     backgroundColor: isThisCurrent
                       ? '#4CAF50'
                       : isPast
                       ? '#333'
                       : '#2196F3',
-                    borderRadius: '4px',
-                    fontSize: isThisCurrent ? '18px' : '14px',
+                    borderRadius: '3px',
+                    fontSize: isThisCurrent ? '14px' : isChord ? '11px' : '12px',
                     fontWeight: isThisCurrent ? 'bold' : 'normal',
                     fontFamily: 'monospace',
                     color: '#fff',
                     whiteSpace: 'nowrap',
                     boxShadow: isThisCurrent
-                      ? '0 0 10px rgba(76, 175, 80, 0.5)'
+                      ? '0 0 8px rgba(76, 175, 80, 0.5)'
                       : 'none',
-                    minWidth: isChord ? '50px' : noteWidth,
+                    minWidth: isChord ? '36px' : '44px',
                     textAlign: 'center',
                   }}
                 >

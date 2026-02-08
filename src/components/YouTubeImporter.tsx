@@ -91,6 +91,21 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
   const youtubePlayerRef = useRef<any>(null);
   const youtubeIntervalRef = useRef<number | null>(null);
 
+  // Extract video ID from URL for embedding
+  // IMPORTANT: This must be defined BEFORE any useEffect that references it
+  const getVideoId = useCallback((youtubeUrl: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/shorts\/([^&\n?#]+)/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = youtubeUrl.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  }, []);
+
   // Listen for extraction progress from main process
   useEffect(() => {
     if (window.electronAPI) {
@@ -211,20 +226,6 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
       setIsAnalyzingSheetMusic(false);
     }
   }, [ocrStatus, extractedFrames, selectionStart]);
-
-  // Extract video ID from URL for embedding
-  const getVideoId = useCallback((youtubeUrl: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-      /youtube\.com\/shorts\/([^&\n?#]+)/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = youtubeUrl.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  }, []);
 
   // Load YouTube IFrame API and create player
   useEffect(() => {

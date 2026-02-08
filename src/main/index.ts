@@ -131,8 +131,10 @@ const createWindow = () => {
 
   // and load the index.html of the app.
   if (process.env.NODE_ENV !== 'production') {
-    loggers.main.debug('Loading dev server', { url: 'http://localhost:5173' });
-    mainWindow.loadURL('http://localhost:5173');
+    const testMode = process.env.TEST_MODE;
+    const url = testMode ? `http://localhost:5173/?test=${testMode}` : 'http://localhost:5173';
+    loggers.main.debug('Loading dev server', { url, testMode });
+    mainWindow.loadURL(url);
     // DevTools disabled - Claude reads logs from file instead
     // User can open manually with F12 if needed
   } else {
@@ -342,6 +344,54 @@ ipcMain.handle('extract-frames', async (_event, videoPath: string, timestamps: n
 ipcMain.handle('get-video-path', async (_event, url: string) => {
   const extractor = getYouTubeExtractor();
   return extractor.getVideoPath(url);
+});
+
+// ============================================
+// Debug Screenshot IPC Handler
+// ============================================
+
+let screenshotCounter = 0;
+const screenshotDir = path.join(app.getPath('userData'), '..', '..', 'projects', 'the-tightening', 'visuals_for_claude', 'captures');
+
+ipcMain.handle('debug-screenshot', async (_event, label?: string) => {
+  try {
+    // Ensure directory exists
+    if (!fs.existsSync(screenshotDir)) {
+      fs.mkdirSync(screenshotDir, { recursive: true });
+    }
+
+    // Capture the window
+    if (!mainWindow) return null;
+
+    const image = await mainWindow.webContents.capturePage();
+    const filename = `capture_${screenshotCounter.toString().padStart(4, '0')}_${label || 'frame'}.png`;
+    const filepath = path.join(screenshotDir, filename);
+
+    fs.writeFileSync(filepath, image.toPNG());
+    screenshotCounter++;
+
+    loggers.main.info('[Screenshot] Captured', { filename, label });
+    return filepath;
+  } catch (err) {
+    loggers.main.error('[Screenshot] Failed', { error: (err as Error).message });
+    return null;
+  }
+});
+
+// Reset screenshot counter
+ipcMain.handle('debug-screenshot-reset', async () => {
+  screenshotCounter = 0;
+  // Clear old captures
+  if (fs.existsSync(screenshotDir)) {
+    const files = fs.readdirSync(screenshotDir);
+    for (const file of files) {
+      if (file.endsWith('.png')) {
+        fs.unlinkSync(path.join(screenshotDir, file));
+      }
+    }
+  }
+  loggers.main.info('[Screenshot] Reset counter and cleared old captures');
+  return true;
 });
 
 // Read image file as base64 (for displaying frames)

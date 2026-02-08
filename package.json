@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:capture": "concurrently \"vite\" \"powershell -ExecutionPolicy Bypass -File scripts/capture-screenshots.ps1\"",
+    "dev:test": "set TEST_MODE=practice&& vite",
+    "dev:test:capture": "concurrently \"set TEST_MODE=practice&& vite\" \"powershell -ExecutionPolicy Bypass -File scripts/capture-screenshots.ps1\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint .",

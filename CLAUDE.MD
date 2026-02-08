@@ -4,9 +4,9 @@
 
 **"The Tightening"** is an innovative Electron-based desktop application that teaches piano through a revolutionary adaptive key mapping approach. Unlike traditional learning tools, this app lets you play ANY key initially and gradually guides you to the correct keys through audio feedback and probabilistic distribution tightening.
 
-## Current Status (Nov 29, 2024)
+## Current Status (Feb 8, 2026)
 
-**Phase 1 COMPLETE + Enhancements**
+**Phase 1 COMPLETE + YouTube Practice Mode**
 
 ### Working Features
 - Professional piano sound via **smplr SplendidGrandPiano**
@@ -24,6 +24,19 @@
 - **Responsive layout** - fills available screen space
 - **Smart song search** - 51K+ MIDI files with aggressive deduplication
 - Song library: **33K unique songs** (51K files with variants grouped)
+
+### YouTube Practice Mode (NEW)
+- **Import from YouTube** - Paste any piano tutorial URL
+- **Claude Vision OCR** - Reads sheet music directly from video frames
+- **Frame extraction** - Syncs hand position video with notes
+- **Scrolling note display** - Horizontal timeline with NOW marker
+- **Visual keyboard sync** - Highlights current notes during playback
+- **Test mode** - `npm run dev:test` loads cached data for rapid iteration
+
+### Debug Infrastructure (NEW)
+- **Screenshot capture** - IPC-based capture at key moments
+- **Log monitoring** - All renderer logs written to `main.log`
+- **Cached OCR** - Results stored per video/segment for reuse
 
 ### The Core Innovation
 
@@ -93,7 +106,17 @@ the-tightening/
 │   │   ├── PracticeControls.tsx         # UI controls + stats
 │   │   ├── LyricsDisplay.tsx            # Section lyrics display
 │   │   ├── SongSearch.tsx               # Song search with grouping
-│   │   └── TheTighteningLogo.tsx        # Logo component
+│   │   ├── TheTighteningLogo.tsx        # Logo component
+│   │   ├── YouTubeImporter.tsx          # YouTube video import + OCR
+│   │   ├── PracticeFrameDisplay.tsx     # Video frame + notes playback
+│   │   └── ScrollingSheetMusic.tsx      # Horizontal scrolling notes
+│   ├── core/
+│   │   ├── SheetMusicOCR.ts             # Claude Vision API for reading notation
+│   │   ├── VideoAnalyzer.ts             # Audio pitch detection (backup)
+│   │   └── MicrophoneInput.ts           # Mic input for pitch detection
+│   ├── test/
+│   │   ├── TestPracticeMode.tsx         # Standalone test with cached data
+│   │   └── fixtures/testSegment.ts      # Test data configuration
 │   ├── utils/
 │   │   ├── midiParser.ts                # MIDI file parsing
 │   │   └── logger.ts                    # Logging utility
@@ -334,8 +357,38 @@ The app uses a responsive flexbox layout:
 - Need to know: Did they hit notes? Miss notes? Press extra keys?
 - Enables better feedback and analysis
 
+## YouTube Practice Mode
+
+### How It Works
+1. **Import**: Paste YouTube tutorial URL (e.g., piano tutorials with sheet music)
+2. **Download**: yt-dlp extracts video + audio
+3. **Frame Extraction**: FFmpeg captures frames at note timestamps
+4. **OCR Analysis**: Claude Vision reads sheet music from frames
+5. **Practice**: Scrolling notes synced to video frames and audio
+
+### Test Mode
+Run `npm run dev:test` to bypass YouTube and use cached data:
+- Loads from `extracted-audio/cache/{videoId}.json`
+- Uses frames from `extracted-audio/frames/{videoId}/`
+- OCR results cached per segment: `{videoId}_ocr_{start}_{end}`
+
+### Screenshot Debugging
+The app can capture screenshots at key moments via IPC:
+```typescript
+window.electronAPI.debugScreenshot('label')  // Capture with label
+window.electronAPI.debugScreenshotReset()    // Clear old captures
+```
+Captures saved to: `visuals_for_claude/captures/`
+
+### Sheet Music OCR
+Uses Claude Vision API (requires `VITE_ANTHROPIC_API_KEY` in `.env`):
+- Analyzes 3 sample frames (beginning, middle, end)
+- Extracts: notes, key signature, time signature, chords
+- Converts to timed MelodyNote format using tempo inference
+
 ## Future Ideas
 
+- **MIDI keyboard integration** with YouTube practice
 - More songs with lyrics
 - Hand separation (left/right)
 - Sight-reading mode
