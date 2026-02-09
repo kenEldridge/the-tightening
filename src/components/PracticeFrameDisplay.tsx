@@ -9,6 +9,13 @@ import React, { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffe
 import type { MelodyNote } from '../utils/midiParser';
 import { ScrollingSheetMusic } from './ScrollingSheetMusic';
 
+// Simple stats for MIDI tracking (keyboard makes its own sound)
+export interface SimpleStats {
+  hits: number;
+  misses: number;
+  extras: number;
+}
+
 interface PracticeFrameDisplayProps {
   notes: MelodyNote[];
   frames: Map<number, string> | null;  // relative timestamp -> dataUrl
@@ -23,6 +30,17 @@ interface PracticeFrameDisplayProps {
   onMicToggle?: () => void;
   lastDetectedNote?: { midi: number; noteName: string; clarity: number } | null;
   comparisonStats?: { accuracy: number; hits: number; misses: number; extras: number } | null;
+  // MIDI feedback props - keyboard makes its own sound, we just track performance
+  midiPressedKeys?: Set<number>;  // Keys currently pressed on MIDI keyboard
+  midiStats?: SimpleStats | null;  // Simple hits/misses/extras
+  // Wait mode - parent can control pause/resume
+  waitMode?: boolean;
+  onWaitModeChange?: (enabled: boolean) => void;
+  isWaiting?: boolean;
+  waitingForNotes?: Set<number>;  // MIDI notes we're waiting for (chord support)
+  playedNotes?: Set<number>;  // Notes already played in this chord
+  pauseRef?: React.MutableRefObject<(() => void) | null>;  // Parent sets this to get pause function
+  resumeRef?: React.MutableRefObject<(() => void) | null>;  // Parent sets this to get resume function
 }
 
 export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
@@ -38,6 +56,15 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
   onMicToggle,
   lastDetectedNote,
   comparisonStats,
+  midiPressedKeys,
+  midiStats,
+  waitMode = false,
+  onWaitModeChange,
+  isWaiting = false,
+  waitingForNotes,
+  playedNotes,
+  pauseRef,
+  resumeRef,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // Time relative to segment start
@@ -139,6 +166,28 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
       onPlayStateChange?.(true);
     }
   }, [audioStartTime, isPlaying, onTimeUpdate, onPlayStateChange]);
+
+  // Pause playback (for wait mode)
+  const pause = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.pause();
+    setIsPlaying(false);
+    onPlayStateChange?.(false);
+  }, [onPlayStateChange]);
+
+  // Resume playback (for wait mode)
+  const resume = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.play().catch(err => console.error('Resume failed:', err));
+    setIsPlaying(true);
+    onPlayStateChange?.(true);
+  }, [onPlayStateChange]);
+
+  // Expose pause/resume to parent via refs
+  useEffect(() => {
+    if (pauseRef) pauseRef.current = pause;
+    if (resumeRef) resumeRef.current = resume;
+  }, [pause, resume, pauseRef, resumeRef]);
 
   // Find current frame
   const currentFrame = useMemo(() => {
@@ -267,6 +316,41 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
         >
           {loopEnabled ? 'Loop ON' : 'Loop OFF'}
         </button>
+
+        {/* Wait mode toggle */}
+        {onWaitModeChange && (
+          <button
+            onClick={() => onWaitModeChange(!waitMode)}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: waitMode ? '#FF9800' : '#555',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+            title={waitMode ? 'Wait mode ON - video pauses until you play correct note' : 'Wait mode OFF - video plays continuously'}
+          >
+            {waitMode ? 'WAIT ON' : 'WAIT OFF'}
+          </button>
+        )}
+
+        {/* Waiting indicator */}
+        {isWaiting && waitingForNotes && waitingForNotes.size > 0 && (
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: '#FF9800',
+            borderRadius: '4px',
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: '14px',
+          }}>
+            {waitingForNotes.size === 1
+              ? 'Play note...'
+              : `Chord: ${playedNotes?.size || 0}/${waitingForNotes.size}`}
+          </div>
+        )}
 
         {/* Mic toggle */}
         {onMicToggle && (
@@ -468,7 +552,7 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
         />
       </div>
 
-      {/* Comparison stats bar */}
+      {/* Comparison stats bar (microphone mode) */}
       {micEnabled && comparisonStats && (
         <div style={{
           display: 'flex',
@@ -491,6 +575,34 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
           <span style={{ color: '#4CAF50' }}>Hits: {comparisonStats.hits}</span>
           <span style={{ color: '#F44336' }}>Misses: {comparisonStats.misses}</span>
           <span style={{ color: '#FF9800' }}>Extras: {comparisonStats.extras}</span>
+        </div>
+      )}
+
+      {/* MIDI stats bar - keyboard makes its own sound, we just track performance */}
+      {midiStats && (midiStats.hits > 0 || midiStats.misses > 0 || midiStats.extras > 0) && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          padding: '10px 15px',
+          backgroundColor: '#222',
+          borderTop: '1px solid #333',
+          fontSize: '14px',
+        }}>
+          <span style={{ color: '#888' }}>MIDI:</span>
+          <span style={{ color: '#4CAF50' }}>Hits: {midiStats.hits}</span>
+          <span style={{ color: '#F44336' }}>Misses: {midiStats.misses}</span>
+          <span style={{ color: '#FF9800' }}>Extras: {midiStats.extras}</span>
+          {(midiStats.hits + midiStats.misses) > 0 && (
+            <span style={{
+              color: midiStats.hits / (midiStats.hits + midiStats.misses) >= 0.8 ? '#4CAF50' :
+                     midiStats.hits / (midiStats.hits + midiStats.misses) >= 0.5 ? '#FFC107' : '#F44336',
+              fontWeight: 'bold',
+              fontSize: '18px',
+            }}>
+              {((midiStats.hits / (midiStats.hits + midiStats.misses)) * 100).toFixed(0)}%
+            </span>
+          )}
         </div>
       )}
     </div>

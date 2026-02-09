@@ -13,10 +13,12 @@ import type { AppConfig } from '../config/AppConfig';
 export interface VisualKeyboardProps {
   // MIDI note range to display
   noteRange: { min: number; max: number };
-  // Currently pressed keys (MIDI numbers)
+  // Currently pressed keys (MIDI numbers) - shown in blue
   pressedKeys: Set<number>;
-  // Current correct note (for highlighting)
+  // Current correct note (for highlighting) - shown in green
   currentCorrectNote: number | null;
+  // Multiple correct notes for chord support - shown in green
+  currentCorrectNotes?: Set<number>;
   // Upcoming notes to show with faded highlights (MIDI numbers)
   upcomingNotes?: number[];
   // Distribution width (for visualization)
@@ -32,6 +34,7 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
   noteRange,
   pressedKeys,
   currentCorrectNote,
+  currentCorrectNotes,
   upcomingNotes = [],
   distributionWidth,
   config,
@@ -75,7 +78,8 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
         const x = index * keyWidth;
         const isBlackKey = isBlackKeyNote(midiNote);
         const isPressed = pressedKeys.has(midiNote);
-        const isCorrect = midiNote === currentCorrectNote;
+        // Check both singular and plural correct notes (chord support)
+        const isCorrect = midiNote === currentCorrectNote || (currentCorrectNotes?.has(midiNote) ?? false);
         const isUpcoming = upcomingNotesSet.has(midiNote);
         const isInRange = acceptableRange
           ? midiNote >= acceptableRange.min && midiNote <= acceptableRange.max
