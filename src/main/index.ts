@@ -351,7 +351,7 @@ ipcMain.handle('get-video-path', async (_event, url: string) => {
 // ============================================
 
 let screenshotCounter = 0;
-const screenshotDir = path.join(app.getPath('userData'), '..', '..', 'projects', 'the-tightening', 'visuals_for_claude', 'captures');
+const screenshotDir = path.join(app.getPath('userData'), '..', '..', '..', 'projects', 'the-tightening', 'visuals_for_claude', 'captures');
 
 ipcMain.handle('debug-screenshot', async (_event, label?: string) => {
   try {

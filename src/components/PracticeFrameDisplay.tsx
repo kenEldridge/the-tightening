@@ -5,7 +5,7 @@
  * Shows video frames synced to the actual YouTube audio.
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
 import type { MelodyNote } from '../utils/midiParser';
 import { ScrollingSheetMusic } from './ScrollingSheetMusic';
 
@@ -45,6 +45,8 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
   const [loopEnabled, setLoopEnabled] = useState(true); // Loop by default for practice
   const loopEnabledRef = useRef(loopEnabled); // Ref for event handlers
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const notesListRef = useRef<HTMLDivElement | null>(null);
+  const currentNoteRef = useRef<HTMLDivElement | null>(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -155,6 +157,16 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
 
     return closestTime >= 0 ? frames.get(closestTime) || null : null;
   }, [frames, currentTime]);
+
+  // Auto-scroll notes list to keep current note visible
+  useLayoutEffect(() => {
+    if (currentNoteRef.current && notesListRef.current) {
+      currentNoteRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [currentTime]);
 
   // Find current and upcoming notes
   const { currentNote, upcomingNotes } = useMemo(() => {
@@ -385,13 +397,16 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
               Notes ({notes.length} total)
             </h3>
 
-            <div style={{
-              flex: 1,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-            }}>
+            <div
+              ref={notesListRef}
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+              }}
+            >
               {notes.map((note, i) => {
                 const isCurrent = currentTime >= note.time && currentTime < note.time + note.duration;
                 const isPast = currentTime >= note.time + note.duration;
@@ -400,6 +415,7 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
                 return (
                   <div
                     key={i}
+                    ref={isCurrent ? currentNoteRef : null}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

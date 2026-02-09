@@ -30,6 +30,7 @@
 - **Claude Vision OCR** - Reads sheet music directly from video frames
 - **Frame extraction** - Syncs hand position video with notes
 - **Scrolling note display** - Horizontal timeline with NOW marker
+- **Auto-scroll notes list** - Right panel keeps current notes visible
 - **Visual keyboard sync** - Highlights current notes during playback
 - **Test mode** - `npm run dev:test` loads cached data for rapid iteration
 
@@ -311,6 +312,8 @@ Claude should read this file directly for error messages.
 9. **Unclear hit point**: Notes now fall directly onto keyboard keys
 10. **Fixed layout wastes space**: Responsive flexbox layout fills screen
 11. **Excessive re-renders**: Config was being loaded 60x/second during playback - fixed with lazy initializer
+12. **Screenshot path wrong**: Was saving to `AppData/projects/` instead of `projects/` - needed 3 parent traversals not 2
+13. **Notes list scrolls off**: Current "NOW" notes would scroll off top - added auto-scroll to keep current note centered
 
 ## UI Layout
 
