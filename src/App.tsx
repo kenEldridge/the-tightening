@@ -66,15 +66,19 @@ import { MicrophoneInput, type NoteEvent, type AudioCaptureStatus } from './core
 import { ComparisonEngine, type ComparisonStats, type NoteComparisonResult } from './core/ComparisonEngine';
 
 // UI components
-import { FallingNotesCanvas } from './components/FallingNotesCanvas';
+import { ScrollingSheetMusic } from './components/ScrollingSheetMusic';
 import { VisualKeyboard } from './components/VisualKeyboard';
 import { PracticeControls } from './components/PracticeControls';
 import { TheTighteningLogo } from './components/TheTighteningLogo';
 import { LyricsDisplay } from './components/LyricsDisplay';
 import { YouTubeImporter, type PassageSelection } from './components/YouTubeImporter';
+import { YouTubeHomePage } from './components/YouTubeHomePage';
+import { HomePage } from './components/HomePage';
 import { PracticeFrameDisplay } from './components/PracticeFrameDisplay';
 import type { DetectedNoteEvent } from './core/VideoAnalyzer';
 import type { MelodyNote } from './utils/midiParser';
+import type { SavedSegment } from './utils/segmentStorage';
+import { convertOcrNotesToMelody } from './utils/timingConverter';
 
 // Data
 import { loadSong, getLrcData, SONG_LIBRARY, loadSongByPath, type SongIndexEntry } from './data/loadSongs';
@@ -136,13 +140,38 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
+  const vizAreaRef = useRef<HTMLDivElement>(null);
+  const [vizAreaHeight, setVizAreaHeight] = useState<number>(300);
+
+  // App-level view state
+  type AppView = 'home' | 'song' | 'youtube';
+  const [appView, setAppView] = useState<AppView>('home');
 
   // YouTube importer state
-  const [showYouTubeImporter, setShowYouTubeImporter] = useState<boolean>(false);
+  type YoutubeView = null | 'home' | 'import';
+  const [youtubeView, setYoutubeView] = useState<YoutubeView>(null);
+  const [youtubeResumeLoading, setYoutubeResumeLoading] = useState<boolean>(false);
   const [youtubeExtractedNotes, setYoutubeExtractedNotes] = useState<DetectedNoteEvent[]>([]);
   const [practiceFrames, setPracticeFrames] = useState<Map<number, string> | null>(null);
   const [practiceAudioUrl, setPracticeAudioUrl] = useState<string | null>(null);
   const [practiceStartTime, setPracticeStartTime] = useState<number>(0); // Segment start in full audio
+
+  // YouTube practice mode: wait mode + sync offset + MIDI stats
+  const [waitMode, setWaitModeInternal] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [syncOffset, setSyncOffset] = useState(0);
+  const [practiceStats, setPracticeStats] = useState({ hits: 0, misses: 0, extras: 0 });
+  const [isPracticeFramePlaying, setIsPracticeFramePlaying] = useState(false);
+  const isWaitingRef = useRef(false);
+  const waitingForNotesRef = useRef<Set<number>>(new Set());
+  const waitingNoteIndicesRef = useRef<Set<number>>(new Set());
+  const playedWhileWaitingRef = useRef<Set<number>>(new Set());
+  const lastWaitNoteIndexRef = useRef<number>(-1);
+  const pausePlaybackRef = useRef<(() => void) | null>(null);
+  const resumePlaybackRef = useRef<(() => void) | null>(null);
+  // Refs so MIDI handler can read these without stale closure
+  const isPracticeFrameActiveRef = useRef(false);
+  const syncOffsetRef = useRef(0);
 
   // Component instances (refs to maintain state)
   const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
@@ -402,13 +431,52 @@ function App() {
       velocity: data.velocity
     });
 
+    // Add to pressed keys
+    setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
+
+    // YouTube practice mode — wait mode + stats, no tightening/audio
+    if (isPracticeFrameActiveRef.current) {
+      if (!songData) return;
+
+      // Handle wait mode (chord support)
+      if (isWaitingRef.current && waitingForNotesRef.current.size > 0) {
+        if (waitingForNotesRef.current.has(pressedMidiKey)) {
+          playedWhileWaitingRef.current.add(pressedMidiKey);
+          const allPlayed = Array.from(waitingForNotesRef.current).every(
+            note => playedWhileWaitingRef.current.has(note)
+          );
+          if (allPlayed) {
+            const hitCount = waitingNoteIndicesRef.current.size;
+            isWaitingRef.current = false;
+            setIsWaiting(false);
+            waitingForNotesRef.current.clear();
+            waitingNoteIndicesRef.current.clear();
+            playedWhileWaitingRef.current.clear();
+            resumePlaybackRef.current?.();
+            setPracticeStats(prev => ({ ...prev, hits: prev.hits + hitCount }));
+          }
+        }
+        // Wrong note while waiting — ignore
+        return;
+      }
+
+      const time = practiceTimeRef.current - syncOffsetRef.current;
+      const activeNoteIndex = songData.notes.findIndex(
+        n => time >= n.time && time < n.time + n.duration
+      );
+      if (activeNoteIndex === -1) {
+        setPracticeStats(prev => ({ ...prev, extras: prev.extras + 1 }));
+      } else {
+        hitNoteIndicesRef.current.add(activeNoteIndex);
+        setPracticeStats(prev => ({ ...prev, hits: prev.hits + 1 }));
+      }
+      return;
+    }
+
     // Duck the melody guide when user plays (so their piano is the lead voice)
     if (melodyRef.current) {
       melodyRef.current.duck();
     }
-
-    // Add to pressed keys
-    setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
 
     // Get current correct note from song
     if (!songData || !keyMapperRef.current || !audioEngineRef.current) {
@@ -525,6 +593,83 @@ function App() {
     handleNoteOffRef.current = handleNoteOff;
   }, [handleNoteOn, handleNoteOff]);
 
+  // Keep practice mode refs in sync with state (used inside MIDI handler)
+  useEffect(() => {
+    isPracticeFrameActiveRef.current = !!(practiceFrames && practiceFrames.size > 0);
+  }, [practiceFrames]);
+
+  useEffect(() => {
+    syncOffsetRef.current = syncOffset;
+  }, [syncOffset]);
+
+  // setWaitMode wrapper — resets tracking when enabling
+  const setWaitMode = useCallback((enabled: boolean) => {
+    if (enabled) {
+      lastWaitNoteIndexRef.current = -1;
+    }
+    setWaitModeInternal(enabled);
+  }, []);
+
+  // Wait mode interval — pauses playback when a new note arrives
+  useEffect(() => {
+    if (!waitMode || !isPracticeFramePlaying || !songData) return;
+
+    const checkForWait = () => {
+      if (isWaitingRef.current) return;
+      const time = practiceTimeRef.current - syncOffsetRef.current;
+      const activeNotes: { index: number; note: typeof songData.notes[0] }[] = [];
+      songData.notes.forEach((n, i) => {
+        if (time >= n.time && time < n.time + n.duration) {
+          activeNotes.push({ index: i, note: n });
+        }
+      });
+      if (activeNotes.length === 0) return;
+      const firstNoteIndex = activeNotes[0].index;
+      if (firstNoteIndex === lastWaitNoteIndexRef.current) return;
+      lastWaitNoteIndexRef.current = firstNoteIndex;
+      waitingForNotesRef.current = new Set(activeNotes.map(({ note }) => note.midi));
+      waitingNoteIndicesRef.current = new Set(activeNotes.map(({ index }) => index));
+      playedWhileWaitingRef.current.clear();
+      isWaitingRef.current = true;
+      setIsWaiting(true);
+      pausePlaybackRef.current?.();
+    };
+
+    checkForWait();
+    const interval = setInterval(checkForWait, 50);
+    return () => clearInterval(interval);
+  }, [waitMode, isPracticeFramePlaying, songData, syncOffset]);
+
+  // Miss detection for YouTube practice mode
+  useEffect(() => {
+    if (!isPracticeFramePlaying || !songData || isWaiting) return;
+    if (!isPracticeFrameActiveRef.current) return;
+
+    const interval = setInterval(() => {
+      if (isWaiting) return;
+      const time = practiceTimeRef.current - syncOffsetRef.current;
+      const lastChecked = lastCheckedNoteIndexRef.current;
+      const hitNotes = hitNoteIndicesRef.current;
+      let missCount = 0;
+      for (let i = lastChecked + 1; i < songData.notes.length; i++) {
+        const note = songData.notes[i];
+        const noteEnd = note.time + note.duration;
+        if (noteEnd < time) {
+          if (!hitNotes.has(i)) {
+            missCount++;
+          }
+          lastCheckedNoteIndexRef.current = i;
+        } else {
+          break;
+        }
+      }
+      if (missCount > 0) {
+        setPracticeStats(prev => ({ ...prev, misses: prev.misses + missCount }));
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isPracticeFramePlaying, songData, isWaiting]);
+
   // Get current note based on playback time
   // IMPORTANT: Uses ref to avoid stale closure - always reads latest time
   const getCurrentNote = useCallback(() => {
@@ -633,17 +778,29 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Track main area width for responsive canvas sizing
+  // Track main area width for responsive sizing
   useEffect(() => {
-    const updateWidth = () => {
+    const update = () => {
       if (mainAreaRef.current) {
         setMainAreaWidth(mainAreaRef.current.clientWidth);
       }
     };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, [sidebarCollapsed]);
+
+  // Track viz area height with ResizeObserver (fires when element mounts/resizes)
+  useEffect(() => {
+    const el = vizAreaRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const h = entries[0]?.contentRect.height;
+      if (h && h > 0) setVizAreaHeight(h);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [appView]); // re-run when view changes so we catch the newly mounted element
 
   // Play/Pause handler
   const handlePlayPause = async () => {
@@ -981,6 +1138,204 @@ function App() {
     if (progressTrackerRef.current) progressTrackerRef.current.updateConfig(config);
   }, [config]);
 
+  // Helper: convert base64 to Blob URL (same pattern as TestPracticeMode)
+  const base64ToBlob = useCallback((base64: string, mimeType: string): Blob => {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+  }, []);
+
+  // Resume a saved YouTube segment without re-extracting
+  const handleResumeSession = useCallback(async (segment: SavedSegment) => {
+    setYoutubeResumeLoading(true);
+    try {
+      // 1. Audio (cached on disk - fast)
+      const audioPath = await window.electronAPI.youtubeExtractAudio(segment.videoUrl);
+      if (audioPath) {
+        const audioBase64 = await window.electronAPI.readAudioFile(audioPath);
+        if (audioBase64) {
+          const audioBlob = base64ToBlob(audioBase64, 'audio/wav');
+          setPracticeAudioUrl(URL.createObjectURL(audioBlob));
+        }
+      }
+      setPracticeStartTime(segment.startTime);
+
+      // 2. Frames from disk (best-effort, skip missing gracefully)
+      const outputDir = await window.electronAPI.youtubeGetOutputDir();
+      const frameMap = new Map<number, string>();
+      const fps = 2;
+      for (let t = segment.startTime; t <= segment.endTime; t += 1 / fps) {
+        const seconds = Math.floor(t);
+        const cs = Math.round((t - seconds) * 100);
+        const name = `frame_${seconds}_${cs.toString().padStart(2, '0')}.jpg`;
+        const dataUrl = await window.electronAPI.readImageFile(`${outputDir}/frames/${segment.videoId}/${name}`);
+        if (dataUrl) {
+          frameMap.set(t - segment.startTime, dataUrl);
+        }
+      }
+      if (frameMap.size > 0) {
+        setPracticeFrames(frameMap);
+      }
+
+      // 3. Convert OCR notes to MelodyNote[]
+      const melodyNotes: MelodyNote[] = segment.ocrNotes.length > 0
+        ? convertOcrNotesToMelody(segment.ocrNotes, {
+            beatsPerMeasure: segment.timeSignature.numerator,
+            tempo: segment.tempo,
+            segmentStartTime: 0,
+          })
+        : [];
+
+      // 4. Build SongData from saved segment
+      const duration = segment.endTime - segment.startTime;
+      const midiValues = melodyNotes.map(n => n.midi);
+      const customSongData: SongData = {
+        name: segment.videoTitle ?? segment.name ?? 'YouTube',
+        tempo: segment.tempo,
+        timeSignature: segment.timeSignature,
+        duration,
+        notes: melodyNotes,
+        segments: [],
+        range: midiValues.length > 0
+          ? { min: Math.min(...midiValues), max: Math.max(...midiValues) }
+          : { min: 48, max: 84 },
+      };
+
+      setSongData(customSongData);
+      setCurrentSongName(customSongData.name);
+      // Reset YouTube practice mode state
+      setSyncOffset(0);
+      setPracticeStats({ hits: 0, misses: 0, extras: 0 });
+      setWaitModeInternal(false);
+      setIsWaiting(false);
+      isWaitingRef.current = false;
+      lastWaitNoteIndexRef.current = -1;
+      waitingForNotesRef.current.clear();
+      waitingNoteIndicesRef.current.clear();
+      playedWhileWaitingRef.current.clear();
+      hitNoteIndicesRef.current.clear();
+      lastCheckedNoteIndexRef.current = -1;
+      setYoutubeView(null);
+      setAppView('song'); // Enter practice UI
+    } catch (err) {
+      console.error('[App] Failed to resume session:', err);
+    } finally {
+      setYoutubeResumeLoading(false);
+    }
+  }, [base64ToBlob]);
+
+  // Home page view
+  if (appView === 'home') {
+    return (
+      <HomePage
+        onSongPractice={() => {
+          setPracticeFrames(null);
+          setPracticeAudioUrl(null);
+          setAppView('song');
+        }}
+        onYoutubePractice={() => { setYoutubeView('home'); setAppView('youtube'); }}
+        loadingStatus={loading ? audioStatus : undefined}
+      />
+    );
+  }
+
+  // YouTube views (full screen overlays)
+  if (appView === 'youtube') {
+    return (
+      <div style={{
+        display: 'flex',
+        fontFamily: 'monospace',
+        backgroundColor: '#1a1a1a',
+        color: '#eee',
+        height: '100vh',
+        overflow: 'hidden',
+      }}>
+        {youtubeView === 'home' && (
+          <YouTubeHomePage
+            onClose={() => { setYoutubeView(null); setAppView('home'); }}
+            onNewVideo={() => setYoutubeView('import')}
+            onResume={handleResumeSession}
+            resumeLoading={youtubeResumeLoading}
+          />
+        )}
+        {youtubeView === 'import' && (
+          <YouTubeImporter
+            onNotesExtracted={(notes, videoInfo) => {
+              console.log('[App] YouTube notes extracted', { count: notes.length, videoTitle: videoInfo.title });
+              setYoutubeExtractedNotes(notes);
+            }}
+            onPassageSelected={(passage, videoInfo) => {
+              console.log('[App] YouTube passage selected', {
+                start: passage.startTime,
+                end: passage.endTime,
+                noteCount: passage.notes.length,
+                frameCount: passage.frames?.size || 0,
+                hasFrames: !!passage.frames,
+                frameType: passage.frames ? typeof passage.frames : 'undefined',
+                isMap: passage.frames instanceof Map,
+                videoTitle: videoInfo.title,
+              });
+
+              // Convert DetectedNoteEvent[] to MelodyNote[] for use as practice target
+              const melodyNotes: MelodyNote[] = passage.notes.map((note) => ({
+                midi: note.midi,
+                name: note.noteName,
+                time: note.startTime - passage.startTime,
+                duration: note.duration,
+                velocity: 80,
+              }));
+
+              if (melodyNotes.length === 0) {
+                console.error('[App] No notes in passage!');
+                return;
+              }
+
+              if (passage.frames && passage.frames.size > 0) {
+                setPracticeFrames(passage.frames);
+                console.log('[App] Stored', passage.frames.size, 'frames for practice');
+              } else {
+                setPracticeFrames(null);
+              }
+
+              if (passage.audioBlobUrl) {
+                setPracticeAudioUrl(passage.audioBlobUrl);
+                setPracticeStartTime(passage.startTime);
+                console.log('[App] Stored audio for practice', { startTime: passage.startTime });
+              } else {
+                setPracticeAudioUrl(null);
+              }
+
+              const customSongData: SongData = {
+                name: `${videoInfo.title} (Passage)`,
+                tempo: 120,
+                timeSignature: { numerator: 4, denominator: 4 },
+                duration: passage.endTime - passage.startTime,
+                notes: melodyNotes,
+                segments: [],
+                range: {
+                  min: Math.min(...melodyNotes.map(n => n.midi)),
+                  max: Math.max(...melodyNotes.map(n => n.midi)),
+                },
+              };
+
+              setSongData(customSongData);
+              setCurrentSongName(customSongData.name);
+              setYoutubeView(null);
+              setAppView('song');
+
+              console.log('[App] Custom song loaded from YouTube passage', customSongData);
+            }}
+            onClose={() => setYoutubeView('home')}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Song practice view
   if (loading || !songData) {
     return (
       <div style={{ padding: '20px', fontFamily: 'monospace', textAlign: 'center' }}>
@@ -1033,9 +1388,26 @@ function App() {
             {songData.name} | {inputMode === 'midi' ? midiStatus : `Mic: ${micStatus}`} | {audioStatus}
           </span>
 
-          {/* YouTube Import button */}
+          {/* Home button */}
           <button
-            onClick={() => setShowYouTubeImporter(true)}
+            onClick={() => { handleStop(); setAppView('home'); }}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#333',
+              color: '#aaa',
+              border: '1px solid #555',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+            title="Back to home"
+          >
+            ← Home
+          </button>
+
+          {/* YouTube Practice button */}
+          <button
+            onClick={() => { setYoutubeView('home'); setAppView('youtube'); }}
             style={{
               padding: '6px 12px',
               backgroundColor: '#FF0000',
@@ -1045,27 +1417,71 @@ function App() {
               cursor: 'pointer',
               fontSize: '12px',
             }}
-            title="Import notes from YouTube tutorial video"
+            title="YouTube practice sessions"
           >
             YouTube
           </button>
 
         </div>
 
-        {/* Practice visualization - show frames if available, otherwise falling notes */}
-        <div style={{ flex: 1, minHeight: '200px', marginBottom: '0' }}>
+        {/* Practice visualization - frames if YouTube session, otherwise scrolling notes */}
+        <div ref={vizAreaRef} style={{ flex: 1, minHeight: '150px', overflow: 'hidden' }}>
           {practiceFrames && practiceFrames.size > 0 ? (
+            <>
+              {/* Sync offset + stats controls for YouTube practice */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, backgroundColor: '#333', padding: '4px 8px', borderRadius: 4 }}>
+                  <span style={{ color: '#888', fontSize: 12 }}>Sync:</span>
+                  <button onClick={() => setSyncOffset(v => v - 0.1)} style={{ width: 26, height: 26, backgroundColor: '#555', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>-</button>
+                  <span style={{ color: '#fff', fontSize: 13, fontFamily: 'monospace', minWidth: 48, textAlign: 'center' }}>
+                    {syncOffset >= 0 ? '+' : ''}{syncOffset.toFixed(1)}s
+                  </span>
+                  <button onClick={() => setSyncOffset(v => v + 0.1)} style={{ width: 26, height: 26, backgroundColor: '#555', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>+</button>
+                  <button onClick={() => setSyncOffset(0)} style={{ padding: '2px 6px', backgroundColor: '#555', color: '#888', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}>Reset</button>
+                </div>
+                <span style={{ color: '#4a4', fontSize: 12 }}>H:{practiceStats.hits}</span>
+                <span style={{ color: '#a44', fontSize: 12 }}>M:{practiceStats.misses}</span>
+                <span style={{ color: '#88a', fontSize: 12 }}>E:{practiceStats.extras}</span>
+                <button
+                  onClick={() => {
+                    setPracticeStats({ hits: 0, misses: 0, extras: 0 });
+                    hitNoteIndicesRef.current.clear();
+                    lastCheckedNoteIndexRef.current = -1;
+                    lastWaitNoteIndexRef.current = -1;
+                    waitingForNotesRef.current.clear();
+                    waitingNoteIndicesRef.current.clear();
+                    playedWhileWaitingRef.current.clear();
+                    isWaitingRef.current = false;
+                    setIsWaiting(false);
+                  }}
+                  style={{ padding: '2px 8px', backgroundColor: '#444', color: '#888', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+                >
+                  Reset stats
+                </button>
+              </div>
             <PracticeFrameDisplay
               notes={songData.notes}
               frames={practiceFrames}
               audioBlobUrl={practiceAudioUrl}
               audioStartTime={practiceStartTime}
               width={mainAreaWidth - 30}
-              height={Math.max(300, window.innerHeight - 450)}
+              height={Math.max(150, vizAreaHeight - 40)}
               onTimeUpdate={(time) => {
                 practiceTimeRef.current = time;
               }}
               onPlayStateChange={(playing) => {
+                setIsPracticeFramePlaying(playing);
+                if (!playing) {
+                  // Reset wait state when stopped
+                  isWaitingRef.current = false;
+                  setIsWaiting(false);
+                  waitingForNotesRef.current.clear();
+                  waitingNoteIndicesRef.current.clear();
+                  playedWhileWaitingRef.current.clear();
+                  lastWaitNoteIndexRef.current = -1;
+                  hitNoteIndicesRef.current.clear();
+                  lastCheckedNoteIndexRef.current = -1;
+                }
                 if (playing) {
                   // Start comparison session for practice mode
                   if (comparisonEngineRef.current && inputMode === 'microphone') {
@@ -1092,19 +1508,25 @@ function App() {
               onMicToggle={toggleInputMode}
               lastDetectedNote={lastDetectedNote}
               comparisonStats={comparisonStats}
+              midiPressedKeys={pressedKeys}
+              midiStats={practiceStats}
+              waitMode={waitMode}
+              onWaitModeChange={setWaitMode}
+              isWaiting={isWaiting}
+              waitingForNotes={waitingForNotesRef.current}
+              playedNotes={playedWhileWaitingRef.current}
+              pauseRef={pausePlaybackRef}
+              resumeRef={resumePlaybackRef}
+              syncOffset={syncOffset}
             />
+            </>
           ) : (
-            <FallingNotesCanvas
+            <ScrollingSheetMusic
               notes={songData.notes}
               currentTime={currentTime}
-              distributionWidth={currentDistribution}
-              noteRange={noteRange}
-              config={config}
               width={mainAreaWidth - 30}
-              height={Math.max(300, window.innerHeight - 450)}
-              lookAhead={3}
-              segments={songData.segments}
-              currentSegment={currentSegment}
+              height={Math.max(150, vizAreaHeight)}
+              visibleWindow={8}
             />
           )}
         </div>
@@ -1195,80 +1617,6 @@ function App() {
         )}
       </div>
 
-      {/* YouTube Importer Modal */}
-      {showYouTubeImporter && (
-        <YouTubeImporter
-          onNotesExtracted={(notes, videoInfo) => {
-            console.log('[App] YouTube notes extracted', { count: notes.length, videoTitle: videoInfo.title });
-            setYoutubeExtractedNotes(notes);
-          }}
-          onPassageSelected={(passage, videoInfo) => {
-            console.log('[App] YouTube passage selected', {
-              start: passage.startTime,
-              end: passage.endTime,
-              noteCount: passage.notes.length,
-              frameCount: passage.frames?.size || 0,
-              hasFrames: !!passage.frames,
-              frameType: passage.frames ? typeof passage.frames : 'undefined',
-              isMap: passage.frames instanceof Map,
-              videoTitle: videoInfo.title,
-            });
-
-            // Convert DetectedNoteEvent[] to MelodyNote[] for use as practice target
-            const melodyNotes: MelodyNote[] = passage.notes.map((note) => ({
-              midi: note.midi,
-              name: note.noteName,
-              time: note.startTime - passage.startTime, // Normalize to start at 0
-              duration: note.duration,
-              velocity: 80, // Default velocity since we don't have this from audio
-            }));
-
-            if (melodyNotes.length === 0) {
-              console.error('[App] No notes in passage!');
-              return;
-            }
-
-            // Store frames for practice visualization
-            if (passage.frames && passage.frames.size > 0) {
-              setPracticeFrames(passage.frames);
-              console.log('[App] Stored', passage.frames.size, 'frames for practice');
-            } else {
-              setPracticeFrames(null);
-            }
-
-            // Store audio for practice playback
-            if (passage.audioBlobUrl) {
-              setPracticeAudioUrl(passage.audioBlobUrl);
-              setPracticeStartTime(passage.startTime);
-              console.log('[App] Stored audio for practice', { startTime: passage.startTime });
-            } else {
-              setPracticeAudioUrl(null);
-            }
-
-            // Create a custom song data from the passage (matching SongData interface)
-            const customSongData: SongData = {
-              name: `${videoInfo.title} (Passage)`,
-              tempo: 120, // Default tempo
-              timeSignature: { numerator: 4, denominator: 4 },
-              duration: passage.endTime - passage.startTime,
-              notes: melodyNotes,
-              segments: [],
-              range: {
-                min: Math.min(...melodyNotes.map(n => n.midi)),
-                max: Math.max(...melodyNotes.map(n => n.midi)),
-              },
-            };
-
-            // Load this as the current song
-            setSongData(customSongData);
-            setCurrentSongName(customSongData.name);
-            setShowYouTubeImporter(false);
-
-            console.log('[App] Custom song loaded from YouTube passage', customSongData);
-          }}
-          onClose={() => setShowYouTubeImporter(false)}
-        />
-      )}
     </div>
   );
 }

@@ -47,12 +47,25 @@ export function TestPracticeMode() {
   const [stats, setStats] = useState<SimpleStats>({ hits: 0, misses: 0, extras: 0 });
 
   // Wait mode - video pauses until correct note is played
-  const [waitMode, setWaitMode] = useState(false);
+  const [waitMode, setWaitModeInternal] = useState(false);
   const [isWaiting, setIsWaiting] = useState(false);
+  const isWaitingRef = useRef(false); // Ref version to avoid stale closures in intervals
+
+  // Wrapper to reset tracking when wait mode is enabled
+  const setWaitMode = useCallback((enabled: boolean) => {
+    if (enabled) {
+      // Reset so we can catch notes from current position
+      lastWaitNoteIndexRef.current = -1;
+    }
+    setWaitModeInternal(enabled);
+  }, []);
   const waitingForNotesRef = useRef<Set<number>>(new Set()); // MIDI notes we're waiting for (chord)
   const waitingNoteIndicesRef = useRef<Set<number>>(new Set()); // Indices of notes we're waiting for
   const playedWhileWaitingRef = useRef<Set<number>>(new Set()); // Notes played so far while waiting
   const lastWaitNoteIndexRef = useRef<number>(-1); // Track which note we last paused for
+
+  // Sync offset - adjusts note timing relative to video (positive = notes come earlier)
+  const [syncOffset, setSyncOffset] = useState(0);
 
   const config = loadConfig();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -89,6 +102,10 @@ export function TestPracticeMode() {
 
   // Handle time updates - also update practiceTimeRef for MIDI matching
   const handleTimeUpdate = useCallback((time: number) => {
+    // Detect loop (time jumped backward by more than 1s) - reset wait tracking
+    if (time < practiceTimeRef.current - 1) {
+      lastWaitNoteIndexRef.current = -1;
+    }
     setCurrentTime(time);
     practiceTimeRef.current = time;
   }, []);
@@ -133,6 +150,7 @@ export function TestPracticeMode() {
           const hitCount = waitingNoteIndicesRef.current.size;
 
           // Reset waiting state
+          isWaitingRef.current = false;
           setIsWaiting(false);
           waitingForNotesRef.current.clear();
           waitingNoteIndicesRef.current.clear();
@@ -153,7 +171,7 @@ export function TestPracticeMode() {
       }
     }
 
-    const time = practiceTimeRef.current;
+    const time = practiceTimeRef.current - syncOffset; // Apply sync offset
 
     // Find currently ACTIVE note
     const activeNoteIndex = notes.findIndex((n) => {
@@ -183,7 +201,7 @@ export function TestPracticeMode() {
     });
 
     setStats(prev => ({ ...prev, hits: prev.hits + 1 }));
-  }, [notes, isWaiting]);
+  }, [notes, isWaiting, syncOffset]);
 
   // MIDI note off handler
   const handleNoteOff = useCallback((data: { note: number }) => {
@@ -272,7 +290,7 @@ export function TestPracticeMode() {
       // Double-check we're not waiting (state might have changed)
       if (isWaiting) return;
 
-      const time = practiceTimeRef.current;
+      const time = practiceTimeRef.current - syncOffset; // Apply sync offset
       const lastChecked = lastCheckedNoteIndexRef.current;
       const hitNotes = hitNoteIndicesRef.current;
       let missCount = 0;
@@ -308,51 +326,67 @@ export function TestPracticeMode() {
     }, 100); // Check every 100ms
 
     return () => clearInterval(interval);
-  }, [isPlaying, notes, isWaiting]);
+  }, [isPlaying, notes, isWaiting, syncOffset]);
 
-  // Wait mode - pause when entering a note's window (handles chords)
+  // Wait mode - use interval to check for notes (more reliable than effect on currentTime)
   useEffect(() => {
-    if (!waitMode || !isPlaying || isWaiting || notes.length === 0) return;
+    if (!waitMode || !isPlaying || notes.length === 0) return;
 
-    const time = practiceTimeRef.current;
+    const checkForWait = () => {
+      // Use ref to avoid stale closure (isWaiting state would be stale inside interval)
+      if (isWaitingRef.current) return;
 
-    // Find ALL notes currently active (handles chords)
-    const activeNotes: { index: number; note: typeof notes[0] }[] = [];
-    notes.forEach((n, i) => {
-      const noteStart = n.time;
-      const noteEnd = n.time + n.duration;
-      if (time >= noteStart && time < noteEnd) {
-        activeNotes.push({ index: i, note: n });
-      }
-    });
+      const time = practiceTimeRef.current - syncOffset;
 
-    if (activeNotes.length === 0) return;
+      // Find ALL notes currently active (handles chords)
+      const activeNotes: { index: number; note: typeof notes[0] }[] = [];
+      notes.forEach((n, i) => {
+        const noteStart = n.time;
+        const noteEnd = n.time + n.duration;
+        if (time >= noteStart && time < noteEnd) {
+          activeNotes.push({ index: i, note: n });
+        }
+      });
 
-    // Check if we've already processed this group (use first note's index as reference)
-    const firstNoteIndex = activeNotes[0].index;
-    if (firstNoteIndex === lastWaitNoteIndexRef.current) return;
+      if (activeNotes.length === 0) return;
 
-    // Filter to notes that haven't been hit yet
-    const unhitNotes = activeNotes.filter(({ index }) => !hitNoteIndicesRef.current.has(index));
+      // Check if we've already processed this group
+      const firstNoteIndex = activeNotes[0].index;
+      if (firstNoteIndex === lastWaitNoteIndexRef.current) return;
 
-    if (unhitNotes.length > 0) {
+      // Pause for every new note group (don't skip notes the user happened to hit
+      // during free playback - that would cause wait mode to stop working)
       console.log('[TestMode] Wait mode: Pausing for chord', {
-        noteCount: unhitNotes.length,
-        notes: unhitNotes.map(({ note }) => ({ midi: note.midi, name: note.name })),
-        time: time.toFixed(2)
+        noteCount: activeNotes.length,
+        notes: activeNotes.map(({ note }) => ({ midi: note.midi, name: note.name })),
+        time: time.toFixed(2),
+        pauseRefSet: !!pausePlaybackRef.current
       });
 
       lastWaitNoteIndexRef.current = firstNoteIndex;
 
       // Set up waiting for all chord notes
-      waitingForNotesRef.current = new Set(unhitNotes.map(({ note }) => note.midi));
-      waitingNoteIndicesRef.current = new Set(unhitNotes.map(({ index }) => index));
+      waitingForNotesRef.current = new Set(activeNotes.map(({ note }) => note.midi));
+      waitingNoteIndicesRef.current = new Set(activeNotes.map(({ index }) => index));
       playedWhileWaitingRef.current.clear();
 
+      isWaitingRef.current = true; // Set ref immediately (before React re-render)
       setIsWaiting(true);
-      pausePlaybackRef.current?.();
-    }
-  }, [waitMode, isPlaying, isWaiting, currentTime, notes]);
+
+      // Pause the audio
+      if (pausePlaybackRef.current) {
+        pausePlaybackRef.current();
+      } else {
+        console.error('[TestMode] pausePlaybackRef not set!');
+      }
+    };
+
+    // Check immediately and then on interval
+    checkForWait();
+    const interval = setInterval(checkForWait, 50); // Check every 50ms
+
+    return () => clearInterval(interval);
+  }, [waitMode, isPlaying, notes, syncOffset]); // isWaiting removed - using isWaitingRef instead
 
   // Reset hit tracking when playback restarts
   useEffect(() => {
@@ -360,6 +394,12 @@ export function TestPracticeMode() {
       // Reset tracking when stopped
       hitNoteIndicesRef.current.clear();
       lastCheckedNoteIndexRef.current = -1;
+      lastWaitNoteIndexRef.current = -1;
+      isWaitingRef.current = false;
+      setIsWaiting(false);
+      waitingForNotesRef.current.clear();
+      waitingNoteIndicesRef.current.clear();
+      playedWhileWaitingRef.current.clear();
     }
   }, [isPlaying]);
 
@@ -513,9 +553,14 @@ export function TestPracticeMode() {
       }
     : { min: 48, max: 72 };
 
+  // Apply sync offset to note timing (offset shifts when notes should appear)
+  // Positive offset = notes appear earlier in the video (user pressed too late before)
+  // Negative offset = notes appear later (user pressed too early before)
+  const adjustedTime = currentTime - syncOffset;
+
   // Find current note(s) for keyboard highlighting (expected notes from score)
   const currentNotes = notes.filter(
-    n => currentTime >= n.time && currentTime < n.time + n.duration
+    n => adjustedTime >= n.time && adjustedTime < n.time + n.duration
   );
   const currentNoteMidi = currentNotes.length > 0 ? currentNotes[0].midi : null;
   const expectedKeys = new Set(currentNotes.map(n => n.midi));
@@ -582,7 +627,32 @@ export function TestPracticeMode() {
             {notes.length} notes | {frames.size} frames | t={currentTime.toFixed(1)}s | {isPlaying ? 'PLAYING' : 'PAUSED'} | {midiStatus}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Sync offset controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, backgroundColor: '#333', padding: '4px 8px', borderRadius: 4 }}>
+            <span style={{ color: '#888', fontSize: 12 }}>Sync:</span>
+            <button
+              onClick={() => setSyncOffset(prev => prev - 0.1)}
+              style={{ width: 28, height: 28, backgroundColor: '#555', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 16 }}
+            >
+              -
+            </button>
+            <span style={{ color: '#fff', fontSize: 14, fontFamily: 'monospace', minWidth: 50, textAlign: 'center' }}>
+              {syncOffset >= 0 ? '+' : ''}{syncOffset.toFixed(1)}s
+            </span>
+            <button
+              onClick={() => setSyncOffset(prev => prev + 0.1)}
+              style={{ width: 28, height: 28, backgroundColor: '#555', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 16 }}
+            >
+              +
+            </button>
+            <button
+              onClick={() => setSyncOffset(0)}
+              style={{ padding: '4px 8px', backgroundColor: '#555', color: '#888', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+            >
+              Reset
+            </button>
+          </div>
           <button
             onClick={() => captureScreenshot('manual')}
             style={{ padding: '8px 16px', backgroundColor: '#2196F3', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
@@ -605,6 +675,7 @@ export function TestPracticeMode() {
               waitingForNotesRef.current.clear();
               waitingNoteIndicesRef.current.clear();
               playedWhileWaitingRef.current.clear();
+              isWaitingRef.current = false;
               setIsWaiting(false);
             }}
             style={{ padding: '8px 16px', backgroundColor: '#FF5722', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
@@ -614,15 +685,15 @@ export function TestPracticeMode() {
         </div>
       </div>
 
-      {/* Practice Display */}
-      <div style={{ flex: 1, minHeight: 300 }}>
+      {/* Practice Display - give it most of the vertical space */}
+      <div style={{ flex: 1, minHeight: 450 }}>
         <PracticeFrameDisplay
           notes={notes}
           frames={frames}
           audioBlobUrl={audioUrl}
           audioStartTime={TEST_SEGMENT.startTime}
           width={width}
-          height={Math.max(300, window.innerHeight - 350)}
+          height={Math.max(450, window.innerHeight - 280)}
           onTimeUpdate={handleTimeUpdate}
           onPlayStateChange={handlePlayStateChange}
           micEnabled={false}
@@ -640,11 +711,12 @@ export function TestPracticeMode() {
           playedNotes={playedWhileWaitingRef.current}
           pauseRef={pausePlaybackRef}
           resumeRef={resumePlaybackRef}
+          syncOffset={syncOffset}
         />
       </div>
 
       {/* Keyboard - Green = expected chord, Blue = MIDI pressed */}
-      <div style={{ flexShrink: 0, marginTop: 10 }}>
+      <div style={{ flexShrink: 0, marginTop: 8 }}>
         <VisualKeyboard
           noteRange={noteRange}
           pressedKeys={midiPressedKeys}
@@ -653,7 +725,7 @@ export function TestPracticeMode() {
           distributionWidth={12}
           config={config}
           width={width}
-          height={150}
+          height={100}
         />
       </div>
     </div>

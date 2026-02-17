@@ -41,6 +41,8 @@ interface PracticeFrameDisplayProps {
   playedNotes?: Set<number>;  // Notes already played in this chord
   pauseRef?: React.MutableRefObject<(() => void) | null>;  // Parent sets this to get pause function
   resumeRef?: React.MutableRefObject<(() => void) | null>;  // Parent sets this to get resume function
+  // Sync offset - adjusts note timing relative to video
+  syncOffset?: number;
 }
 
 export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
@@ -65,6 +67,7 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
   playedNotes,
   pauseRef,
   resumeRef,
+  syncOffset = 0,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0); // Time relative to segment start
@@ -217,18 +220,19 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
     }
   }, [currentTime]);
 
-  // Find current and upcoming notes
+  // Find current and upcoming notes (apply sync offset)
+  const adjustedTime = currentTime - syncOffset;
   const { currentNote, upcomingNotes } = useMemo(() => {
     const current = notes.find(
-      n => currentTime >= n.time && currentTime < n.time + n.duration
+      n => adjustedTime >= n.time && adjustedTime < n.time + n.duration
     );
 
     const upcoming = notes.filter(
-      n => n.time > currentTime && n.time <= currentTime + 3
+      n => n.time > adjustedTime && n.time <= adjustedTime + 3
     ).slice(0, 5);
 
     return { currentNote: current, upcomingNotes: upcoming };
-  }, [notes, currentTime]);
+  }, [notes, adjustedTime]);
 
   if (!frames || frames.size === 0) {
     return (
@@ -435,30 +439,32 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
         padding: '15px',
         overflow: 'hidden',
       }}>
-        {/* Top row: Video frame + notes timeline */}
+        {/* Top row: Video frame (full width, big) */}
         <div style={{
           flex: 1,
           display: 'flex',
           gap: '15px',
           overflow: 'hidden',
+          minHeight: '400px',
         }}>
-          {/* Large frame display */}
+          {/* Large frame display - takes most of the space */}
           <div style={{
-            flex: 2,
+            flex: 1,
             backgroundColor: '#000',
             borderRadius: '8px',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            minHeight: '400px',
           }}>
             {currentFrame ? (
               <img
                 src={currentFrame}
                 alt="Piano hand position"
                 style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'contain',
                 }}
               />
@@ -469,16 +475,16 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
             )}
           </div>
 
-          {/* Notes timeline */}
+          {/* Compact notes sidebar */}
           <div style={{
-            width: '250px',
+            width: '180px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
+            gap: '8px',
             overflow: 'hidden',
           }}>
-            <h3 style={{ margin: 0, color: '#888', fontSize: '14px' }}>
-              Notes ({notes.length} total)
+            <h3 style={{ margin: 0, color: '#888', fontSize: '12px' }}>
+              Notes ({notes.length})
             </h3>
 
             <div
@@ -488,13 +494,13 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
                 overflowY: 'auto',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '4px',
+                gap: '3px',
               }}
             >
               {notes.map((note, i) => {
-                const isCurrent = currentTime >= note.time && currentTime < note.time + note.duration;
-                const isPast = currentTime >= note.time + note.duration;
-                const isUpcoming = note.time > currentTime && note.time <= currentTime + 2;
+                const isCurrent = adjustedTime >= note.time && adjustedTime < note.time + note.duration;
+                const isPast = adjustedTime >= note.time + note.duration;
+                const isUpcoming = note.time > adjustedTime && note.time <= adjustedTime + 2;
 
                 return (
                   <div
@@ -503,24 +509,24 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 10px',
+                      gap: '6px',
+                      padding: '4px 8px',
                       backgroundColor: isCurrent ? '#4CAF50' : isPast ? '#1a1a1a' : isUpcoming ? '#333' : '#222',
-                      borderRadius: '4px',
-                      opacity: isPast ? 0.5 : 1,
+                      borderRadius: '3px',
+                      opacity: isPast ? 0.4 : 1,
                     }}
                   >
                     <span style={{
                       fontFamily: 'monospace',
-                      fontSize: '16px',
+                      fontSize: '13px',
                       fontWeight: 'bold',
                       color: isCurrent ? '#fff' : '#ccc',
-                      width: '40px',
+                      width: '36px',
                     }}>
                       {note.name}
                     </span>
                     <span style={{
-                      fontSize: '12px',
+                      fontSize: '10px',
                       color: isCurrent ? 'rgba(255,255,255,0.8)' : '#666',
                     }}>
                       {note.time.toFixed(1)}s
@@ -528,7 +534,7 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
                     {isCurrent && (
                       <span style={{
                         marginLeft: 'auto',
-                        fontSize: '11px',
+                        fontSize: '9px',
                         color: '#fff',
                         fontWeight: 'bold',
                       }}>
@@ -542,13 +548,14 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
           </div>
         </div>
 
-        {/* Scrolling sheet music */}
+        {/* Scrolling sheet music - compact */}
         <ScrollingSheetMusic
           notes={notes}
           currentTime={currentTime}
           width={width - 30} // Account for padding
-          height={120}
+          height={70}
           visibleWindow={8}
+          syncOffset={syncOffset}
         />
       </div>
 

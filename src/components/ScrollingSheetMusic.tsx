@@ -23,6 +23,8 @@ export interface ScrollingSheetMusicProps {
   height?: number;
   /** Seconds of music visible at once */
   visibleWindow?: number;
+  /** Sync offset - adjusts note timing relative to video */
+  syncOffset?: number;
 }
 
 export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
@@ -31,8 +33,12 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
   width,
   height = 80,
   visibleWindow = 6, // 3 seconds past + 3 seconds ahead
+  syncOffset = 0,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Apply sync offset to get adjusted time for note comparisons
+  const adjustedTime = currentTime - syncOffset;
 
   // Calculate pixels per second for scrolling
   const pixelsPerSecond = width / visibleWindow;
@@ -42,32 +48,32 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
   const currentNoteIndex = useMemo(() => {
     for (let i = 0; i < notes.length; i++) {
       const note = notes[i];
-      if (currentTime >= note.time && currentTime < note.time + note.duration) {
+      if (adjustedTime >= note.time && adjustedTime < note.time + note.duration) {
         return i;
       }
     }
     // If not on a note, find the next upcoming note
     for (let i = 0; i < notes.length; i++) {
-      if (notes[i].time > currentTime) {
+      if (notes[i].time > adjustedTime) {
         return i - 1; // Previous note (or -1 if before first)
       }
     }
     return notes.length - 1;
-  }, [notes, currentTime]);
+  }, [notes, adjustedTime]);
 
   // Render notes with position and style
   const renderedNotes = useMemo(() => {
     return notes.map((note, index) => {
       // Calculate X position relative to current time
-      const timeDiff = note.time - currentTime;
+      const timeDiff = note.time - adjustedTime;
       const x = centerX + timeDiff * pixelsPerSecond;
 
       // Determine note state
       const isCurrentNote = index === currentNoteIndex &&
-        currentTime >= note.time &&
-        currentTime < note.time + note.duration;
-      const isPast = note.time + note.duration <= currentTime;
-      const isUpcoming = note.time > currentTime;
+        adjustedTime >= note.time &&
+        adjustedTime < note.time + note.duration;
+      const isPast = note.time + note.duration <= adjustedTime;
+      const isUpcoming = note.time > adjustedTime;
 
       // Skip notes too far outside the visible area
       if (x < -100 || x > width + 100) {
@@ -97,7 +103,7 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
         opacity,
       };
     }).filter(Boolean);
-  }, [notes, currentTime, currentNoteIndex, centerX, pixelsPerSecond, visibleWindow, width]);
+  }, [notes, adjustedTime, currentNoteIndex, centerX, pixelsPerSecond, visibleWindow, width]);
 
   // Group notes by approximate time for chord display
   const noteGroups = useMemo(() => {
@@ -199,7 +205,7 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
           color: '#666',
         }}
       >
-        {Math.max(0, currentTime - visibleWindow / 2).toFixed(1)}s
+        {Math.max(0, adjustedTime - visibleWindow / 2).toFixed(1)}s
       </div>
       <div
         style={{
@@ -210,7 +216,7 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
           color: '#666',
         }}
       >
-        {(currentTime + visibleWindow / 2).toFixed(1)}s
+        {(adjustedTime + visibleWindow / 2).toFixed(1)}s
       </div>
 
       {/* Render note groups */}

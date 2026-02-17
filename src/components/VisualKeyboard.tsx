@@ -87,10 +87,8 @@ export const VisualKeyboard: React.FC<VisualKeyboardProps> = memo(({
 
         return (
           <g key={midiNote}>
-            {/* Distribution visualization (Option C) */}
-            {(config.visual.distributionMode === 'C' || config.visual.distributionMode === 'B') &&
-              isInRange &&
-              acceptableRange && (
+            {/* Distribution glow on keyboard */}
+            {isInRange && acceptableRange && (
                 <DistributionGlow
                   x={x}
                   keyWidth={keyWidth}

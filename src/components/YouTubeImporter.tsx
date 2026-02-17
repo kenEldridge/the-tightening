@@ -496,6 +496,8 @@ export const YouTubeImporter: React.FC<YouTubeImporterProps> = ({
 
     const segment: SavedSegment = {
       videoId,
+      videoUrl: url,
+      videoTitle: videoInfo?.title,
       name: segmentName || `Segment ${savedSegments.length + 1}`,
       startTime: selectionStart,
       endTime: selectionEnd,

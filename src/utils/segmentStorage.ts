@@ -10,6 +10,10 @@ import type { ExtractedNote } from '../core/SheetMusicOCR';
 export interface SavedSegment {
   /** YouTube video ID */
   videoId: string;
+  /** Full YouTube URL (e.g. https://www.youtube.com/watch?v=xxxx) */
+  videoUrl: string;
+  /** Video title for display */
+  videoTitle?: string;
   /** Optional user-given name for the segment */
   name?: string;
   /** Start time in the video (seconds) */
@@ -129,6 +133,21 @@ export function deleteSegment(videoId: string, index: number): boolean {
 }
 
 /**
+ * Delete a segment by its savedAt timestamp (unique identifier for segments)
+ */
+export function deleteSegmentBySavedAt(videoId: string, savedAt: string): boolean {
+  const segments = loadSegments(videoId);
+  const index = segments.findIndex(s => s.savedAt === savedAt);
+
+  if (index === -1) {
+    console.error('[segmentStorage] Segment not found:', { videoId, savedAt });
+    return false;
+  }
+
+  return deleteSegment(videoId, index);
+}
+
+/**
  * Update a segment at a specific index
  */
 export function updateSegment(
@@ -192,6 +211,43 @@ export function getAllVideoIds(): string[] {
   }
 
   return videoIds;
+}
+
+/**
+ * Get all saved videos with their segments, grouped by video ID.
+ * Sorted by most recently used (based on latest savedAt timestamp).
+ */
+export function getAllSavedVideos(): Array<{
+  videoId: string;
+  videoTitle?: string;
+  videoUrl: string;
+  segments: SavedSegment[];
+}> {
+  const videoIds = getAllVideoIds();
+  const result = videoIds
+    .map(videoId => {
+      const segments = loadSegments(videoId);
+      if (segments.length === 0) return null;
+      // Use metadata from first segment that has it
+      const withTitle = segments.find(s => s.videoTitle);
+      const withUrl = segments.find(s => s.videoUrl);
+      return {
+        videoId,
+        videoTitle: withTitle?.videoTitle,
+        videoUrl: withUrl?.videoUrl ?? '',
+        segments,
+      };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+
+  // Sort by most recently saved segment
+  result.sort((a, b) => {
+    const aLatest = Math.max(...a.segments.map(s => new Date(s.savedAt).getTime()));
+    const bLatest = Math.max(...b.segments.map(s => new Date(s.savedAt).getTime()));
+    return bLatest - aLatest;
+  });
+
+  return result;
 }
 
 /**

@@ -3,7 +3,7 @@
  *
  * Shows the current section name and lyrics based on playback time.
  * Supports both section-based lyrics and line-by-line LRC display.
- * Positioned between falling notes and piano keyboard.
+ * Positioned between the note display and piano keyboard.
  */
 
 import React, { useMemo } from 'react';

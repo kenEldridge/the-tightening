@@ -117,12 +117,6 @@ export interface AppConfig {
   // VISUAL SETTINGS
   // ============================================
   visual: {
-    // Distribution visualization mode
-    distributionMode: 'A' | 'B' | 'C';
-    // A = falling notes show width
-    // B = keyboard shows gradient
-    // C = both
-
     // Color scheme
     colors: {
       correctKey: string; // Default: '#4CAF50' (green)
@@ -130,9 +124,6 @@ export interface AppConfig {
       neutral: string; // Default: '#2196F3' (blue)
       distribution: string; // Default: '#FFC107' (amber)
     };
-
-    // Animation settings
-    fallingNoteSpeed: number; // pixels per frame, Default: 2
 
     // Visual keyboard settings
     keyboard: {
@@ -205,14 +196,12 @@ export const defaultConfig: AppConfig = {
   },
 
   visual: {
-    distributionMode: 'C', // Both falling notes and keyboard
     colors: {
       correctKey: '#4CAF50',
       wrongKey: '#F44336',
       neutral: '#2196F3',
       distribution: '#FFC107',
     },
-    fallingNoteSpeed: 2,
     keyboard: {
       rangePadding: 3,
     },
