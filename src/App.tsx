@@ -80,6 +80,7 @@ import type { DetectedNoteEvent } from './core/VideoAnalyzer';
 import type { MelodyNote } from './utils/midiParser';
 import type { SavedSegment } from './utils/segmentStorage';
 import { convertOcrNotesToMelody } from './utils/timingConverter';
+import { debugCapture } from './utils/debug';
 
 // Data
 import { loadSong, getLrcData, SONG_LIBRARY, loadSongByPath, type SongIndexEntry } from './data/loadSongs';
@@ -141,6 +142,8 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
+  const vizContainerRef = useRef<HTMLDivElement>(null);
+  const [vizHeight, setVizHeight] = useState<number>(500);
 
   // App-level view state
   type AppView = 'home' | 'song' | 'youtube';
@@ -252,6 +255,7 @@ function App() {
 
         setLoading(false);
         console.info('Application initialization complete');
+        setTimeout(() => debugCapture('startup'), 500);
       } catch (err) {
         const error = err as Error;
         console.error('Initialization error', {
@@ -704,11 +708,37 @@ function App() {
     return note;
   }, [songData]); // Note: removed currentTime dependency - using ref instead
 
-  // Update current correct note for visualization
+  // Update current correct note for visualization (song practice only)
   useEffect(() => {
+    if (isPracticeFrameActiveRef.current) return; // YouTube mode manages its own
     const note = getCurrentNote();
     setCurrentCorrectNote(note ? note.midi : null);
   }, [getCurrentNote]);
+
+  // YouTube mode: update keyboard highlight based on playback time
+  // (only active notes glow green; waiting notes glow via isWaiting effect)
+  const lastDebugCaptureTime = useRef(-999);
+  const onYoutubeTimeUpdate = useCallback((time: number) => {
+    practiceTimeRef.current = time;
+    if (!isWaitingRef.current && songData) {
+      const adj = time - syncOffsetRef.current;
+      const active = songData.notes.find(n => adj >= n.time && adj < n.time + n.duration);
+      setCurrentCorrectNote(active ? active.midi : null);
+    }
+    // Periodic capture every 3s during practice
+    if (time - lastDebugCaptureTime.current >= 3) {
+      lastDebugCaptureTime.current = time;
+      debugCapture(`t${Math.floor(time)}s`);
+    }
+  }, [songData]);
+
+  // YouTube mode: update keyboard highlight when wait mode activates
+  useEffect(() => {
+    if (!isPracticeFrameActiveRef.current) return;
+    if (isWaiting && waitingForNotesRef.current.size > 0) {
+      setCurrentCorrectNote(Array.from(waitingForNotesRef.current)[0]);
+    }
+  }, [isWaiting]);
 
   // Playback time update loop
   // NOTE: Using setInterval polling (16ms lag) for simplicity
@@ -791,6 +821,22 @@ function App() {
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, [sidebarCollapsed]);
+
+  // Track visualization container height for proper sizing
+  useEffect(() => {
+    const el = vizContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      setVizHeight(entries[0].contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [appView]);
+
+  // Capture screenshot on page changes
+  useEffect(() => {
+    setTimeout(() => debugCapture(`view_${appView}`), 300);
+  }, [appView]);
 
 
   // Play/Pause handler
@@ -1362,7 +1408,7 @@ function App() {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          padding: '15px',
+          padding: '8px',
           overflow: 'hidden',
         }}
       >
@@ -1371,10 +1417,10 @@ function App() {
           display: 'flex',
           alignItems: 'center',
           gap: '20px',
-          marginBottom: '10px',
+          marginBottom: '6px',
           flexShrink: 0,
         }}>
-          <TheTighteningLogo width={200} />
+          <TheTighteningLogo width={100} />
           <span style={{ color: '#888', fontSize: '12px' }}>
             {songData.name} | {inputMode === 'midi' ? midiStatus : `Mic: ${micStatus}`} | {audioStatus}
           </span>
@@ -1416,7 +1462,7 @@ function App() {
         </div>
 
         {/* Practice visualization - frames if YouTube session, otherwise scrolling notes */}
-        <div style={{ flex: 1, minHeight: '150px', overflow: 'hidden' }}>
+        <div ref={vizContainerRef} style={{ flex: 1, minHeight: '150px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {practiceFrames && practiceFrames.size > 0 ? (
             <>
               {/* Sync offset + stats controls for YouTube practice */}
@@ -1456,14 +1502,13 @@ function App() {
               audioBlobUrl={practiceAudioUrl}
               audioStartTime={practiceStartTime}
               width={mainAreaWidth - 30}
-              height={Math.max(300, window.innerHeight - 200)}
-              onTimeUpdate={(time) => {
-                practiceTimeRef.current = time;
-              }}
+              height={Math.max(200, vizHeight - 46)}
+              onTimeUpdate={onYoutubeTimeUpdate}
               onPlayStateChange={(playing) => {
                 setIsPracticeFramePlaying(playing);
-                if (!playing) {
-                  // Reset wait state when stopped
+                debugCapture(playing ? 'practice_play' : 'practice_stop');
+                if (!playing && !isWaitingRef.current) {
+                  // Only reset on user-initiated stop, not wait-mode pause
                   isWaitingRef.current = false;
                   setIsWaiting(false);
                   waitingForNotesRef.current.clear();
@@ -1516,7 +1561,7 @@ function App() {
               notes={songData.notes}
               currentTime={currentTime}
               width={mainAreaWidth - 30}
-              height={Math.max(150, window.innerHeight - 450)}
+              height={Math.max(80, vizHeight)}
               visibleWindow={8}
             />
           )}

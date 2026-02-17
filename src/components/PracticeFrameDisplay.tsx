@@ -2,10 +2,18 @@
  * Practice Frame Display
  *
  * Self-contained YouTube practice component with its own audio playback.
- * Shows video frames synced to the actual YouTube audio.
+ *
+ * Layout: scrolling sheet music fills the full area; video frame floats as a
+ * small picture-in-picture overlay in the bottom-right corner. The scroll is
+ * the primary information surface — the keyboard glow and note pills are what
+ * the user actually reads while practicing.
+ *
+ * Wait mode: parent calls pauseRef/resumeRef to halt/continue audio. While
+ * waiting, the target note(s) are highlighted orange in the scroll and a
+ * prominent "▶ C4" banner appears in the scroll header.
  */
 
-import React, { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { MelodyNote } from '../utils/midiParser';
 import { ScrollingSheetMusic } from './ScrollingSheetMusic';
 
@@ -75,8 +83,6 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
   const [loopEnabled, setLoopEnabled] = useState(true); // Loop by default for practice
   const loopEnabledRef = useRef(loopEnabled); // Ref for event handlers
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const notesListRef = useRef<HTMLDivElement | null>(null);
-  const currentNoteRef = useRef<HTMLDivElement | null>(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -210,29 +216,14 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
     return closestTime >= 0 ? frames.get(closestTime) || null : null;
   }, [frames, currentTime]);
 
-  // Auto-scroll notes list to keep current note visible
-  useLayoutEffect(() => {
-    if (currentNoteRef.current && notesListRef.current) {
-      currentNoteRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
-  }, [currentTime]);
-
-  // Find current and upcoming notes (apply sync offset)
+  // Find current note (apply sync offset)
   const adjustedTime = currentTime - syncOffset;
-  const { currentNote, upcomingNotes } = useMemo(() => {
-    const current = notes.find(
+  const currentNote = useMemo(() => {
+    return notes.find(
       n => adjustedTime >= n.time && adjustedTime < n.time + n.duration
     );
-
-    const upcoming = notes.filter(
-      n => n.time > adjustedTime && n.time <= adjustedTime + 3
-    ).slice(0, 5);
-
-    return { currentNote: current, upcomingNotes: upcoming };
   }, [notes, adjustedTime]);
+
 
   if (!frames || frames.size === 0) {
     return (
@@ -430,133 +421,41 @@ export const PracticeFrameDisplay: React.FC<PracticeFrameDisplayProps> = ({
         )}
       </div>
 
-      {/* Main content */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        padding: '15px',
-        overflow: 'hidden',
-      }}>
-        {/* Top row: Video frame (full width, big) */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          gap: '15px',
-          overflow: 'hidden',
-          minHeight: '400px',
-        }}>
-          {/* Large frame display - takes most of the space */}
-          <div style={{
-            flex: 1,
-            backgroundColor: '#000',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '400px',
-          }}>
-            {currentFrame ? (
-              <img
-                src={currentFrame}
-                alt="Piano hand position"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                }}
-              />
-            ) : (
-              <div style={{ color: '#666', textAlign: 'center' }}>
-                <p style={{ margin: 0, fontSize: '18px' }}>Press Play to start</p>
-              </div>
-            )}
-          </div>
-
-          {/* Compact notes sidebar */}
-          <div style={{
-            width: '180px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            overflow: 'hidden',
-          }}>
-            <h3 style={{ margin: 0, color: '#888', fontSize: '12px' }}>
-              Notes ({notes.length})
-            </h3>
-
-            <div
-              ref={notesListRef}
-              style={{
-                flex: 1,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '3px',
-              }}
-            >
-              {notes.map((note, i) => {
-                const isCurrent = adjustedTime >= note.time && adjustedTime < note.time + note.duration;
-                const isPast = adjustedTime >= note.time + note.duration;
-                const isUpcoming = note.time > adjustedTime && note.time <= adjustedTime + 2;
-
-                return (
-                  <div
-                    key={i}
-                    ref={isCurrent ? currentNoteRef : null}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '4px 8px',
-                      backgroundColor: isCurrent ? '#4CAF50' : isPast ? '#1a1a1a' : isUpcoming ? '#333' : '#222',
-                      borderRadius: '3px',
-                      opacity: isPast ? 0.4 : 1,
-                    }}
-                  >
-                    <span style={{
-                      fontFamily: 'monospace',
-                      fontSize: '13px',
-                      fontWeight: 'bold',
-                      color: isCurrent ? '#fff' : '#ccc',
-                      width: '36px',
-                    }}>
-                      {note.name}
-                    </span>
-                    <span style={{
-                      fontSize: '10px',
-                      color: isCurrent ? 'rgba(255,255,255,0.8)' : '#666',
-                    }}>
-                      {note.time.toFixed(1)}s
-                    </span>
-                    {isCurrent && (
-                      <span style={{
-                        marginLeft: 'auto',
-                        fontSize: '9px',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                      }}>
-                        NOW
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Scrolling sheet music - compact */}
+      {/* Main content: scroll fills everything, video floats as PiP */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        {/* Horizontal scroll — full width and height */}
         <ScrollingSheetMusic
           notes={notes}
           currentTime={currentTime}
-          width={width - 30} // Account for padding
-          height={70}
-          visibleWindow={8}
+          width={width}
+          height={height - 62}
+          visibleWindow={6}
           syncOffset={syncOffset}
+          waitingForNotes={waitingForNotes}
         />
+
+        {/* Video PiP — small overlay in bottom-right corner */}
+        {currentFrame && (
+          <div style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 8,
+            width: 260,
+            height: 180,
+            backgroundColor: '#000',
+            borderRadius: '6px',
+            overflow: 'hidden',
+            border: '1px solid #444',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+            zIndex: 10,
+          }}>
+            <img
+              src={currentFrame}
+              alt="Piano hand position"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Comparison stats bar (microphone mode) */}

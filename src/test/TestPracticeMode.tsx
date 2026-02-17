@@ -21,6 +21,7 @@ import type { MelodyNote } from '../utils/midiParser';
 import { loadConfig } from '../config/AppConfig';
 import { analyzeMultipleFrames, checkOCRStatus, type SheetMusicAnalysis } from '../core/SheetMusicOCR';
 import { convertOcrNotesToMelody, countMeasures, inferTempo } from '../utils/timingConverter';
+import { debugCapture } from '../utils/debug';
 
 // Simple performance stats (no tightening algorithm needed)
 export interface SimpleStats {
@@ -70,7 +71,6 @@ export function TestPracticeMode() {
   const config = loadConfig();
   const containerRef = useRef<HTMLDivElement>(null);
   const lastScreenshotTime = useRef(0);
-  const screenshotEnabled = useRef(true);
 
   // Track current playback time for MIDI note matching
   const practiceTimeRef = useRef<number>(0);
@@ -83,22 +83,11 @@ export function TestPracticeMode() {
   const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
   const handleNoteOffRef = useRef<((data: { note: number }) => void) | null>(null);
 
-  // Screenshot helper - captures at key moments
-  const captureScreenshot = useCallback(async (label: string) => {
-    if (!screenshotEnabled.current || !window.electronAPI?.debugScreenshot) return;
-    try {
-      await window.electronAPI.debugScreenshot(label);
-    } catch (err) {
-      console.error('[TestMode] Screenshot failed:', err);
-    }
-  }, []);
-
   // Handle play state changes
   const handlePlayStateChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
-    console.log('[TestMode] Play state:', playing);
-    captureScreenshot(playing ? 'play_start' : 'play_stop');
-  }, [captureScreenshot]);
+    debugCapture(playing ? 'play_start' : 'play_stop');
+  }, []);
 
   // Handle time updates - also update practiceTimeRef for MIDI matching
   const handleTimeUpdate = useCallback((time: number) => {
@@ -223,7 +212,7 @@ export function TestPracticeMode() {
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
-        setWidth(containerRef.current.clientWidth - 40);
+        setWidth(containerRef.current.clientWidth);
       }
     };
     updateWidth();
@@ -403,13 +392,13 @@ export function TestPracticeMode() {
     }
   }, [isPlaying]);
 
-  // Capture screenshots during playback (every 0.5 seconds)
+  // Capture screenshots during playback (every 3 seconds)
   useEffect(() => {
-    if (isPlaying && currentTime - lastScreenshotTime.current >= 0.5) {
+    if (isPlaying && currentTime - lastScreenshotTime.current >= 3) {
       lastScreenshotTime.current = currentTime;
-      captureScreenshot(`t${currentTime.toFixed(1)}`);
+      debugCapture(`t${currentTime.toFixed(0)}s`);
     }
-  }, [isPlaying, currentTime, captureScreenshot]);
+  }, [isPlaying, currentTime]);
 
   // Load cached data on mount
   useEffect(() => {
@@ -523,16 +512,8 @@ export function TestPracticeMode() {
         setLoading(false);
         console.log('[TestMode] All data loaded successfully');
 
-        // Reset and capture initial screenshot
-        if (window.electronAPI?.debugScreenshotReset) {
-          await window.electronAPI.debugScreenshotReset();
-        }
-        // Short delay to let UI render
-        setTimeout(async () => {
-          if (window.electronAPI?.debugScreenshot) {
-            await window.electronAPI.debugScreenshot('ready');
-          }
-        }, 500);
+        // Short delay to let UI render, then capture
+        setTimeout(() => debugCapture('ready'), 500);
 
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -615,12 +596,11 @@ export function TestPracticeMode() {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        padding: 20,
         overflow: 'hidden',
       }}
     >
       {/* Header */}
-      <div style={{ marginBottom: 10, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 4, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px' }}>
         <div>
           <h2 style={{ margin: 0, color: '#4CAF50' }}>Test Practice Mode + MIDI</h2>
           <p style={{ margin: '5px 0', color: '#888', fontSize: 12 }}>
@@ -653,18 +633,6 @@ export function TestPracticeMode() {
               Reset
             </button>
           </div>
-          <button
-            onClick={() => captureScreenshot('manual')}
-            style={{ padding: '8px 16px', backgroundColor: '#2196F3', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-          >
-            Screenshot
-          </button>
-          <button
-            onClick={() => { screenshotEnabled.current = !screenshotEnabled.current; }}
-            style={{ padding: '8px 16px', backgroundColor: screenshotEnabled.current ? '#4CAF50' : '#666', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
-          >
-            {screenshotEnabled.current ? 'Auto-capture ON' : 'Auto-capture OFF'}
-          </button>
           <button
             onClick={() => {
               // Reset stats

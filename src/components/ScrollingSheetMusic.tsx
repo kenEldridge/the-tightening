@@ -1,12 +1,15 @@
 /**
  * Scrolling Sheet Music Component
  *
- * Displays a horizontal scrolling notation view:
- * - Past notes (faded, on the left)
- * - Current note (highlighted in green, center)
- * - Upcoming notes (visible ahead, on the right)
+ * Horizontal scrolling notation view — time flows left to right, NOW marker
+ * is fixed at center. Past notes fade left, upcoming notes approach from right.
  *
- * Notes scroll left as time progresses, synced to video playback.
+ * Pill sizing is automatic:
+ *   height < 120px  → compact (song mode sidebar)
+ *   height ≥ 120px  → large  (YouTube practice full-area view)
+ *
+ * Wait mode: pass `waitingForNotes` (Set<midi>) to highlight target notes
+ * orange and show a "▶ C4" banner at the top.
  */
 
 import React, { useMemo, useRef, useEffect } from 'react';
@@ -25,6 +28,8 @@ export interface ScrollingSheetMusicProps {
   visibleWindow?: number;
   /** Sync offset - adjusts note timing relative to video */
   syncOffset?: number;
+  /** MIDI notes we're waiting for in wait mode (highlighted orange) */
+  waitingForNotes?: Set<number>;
 }
 
 export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
@@ -34,6 +39,7 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
   height = 80,
   visibleWindow = 6, // 3 seconds past + 3 seconds ahead
   syncOffset = 0,
+  waitingForNotes,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +49,18 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
   // Calculate pixels per second for scrolling
   const pixelsPerSecond = width / visibleWindow;
   const centerX = width / 2;
+
+  // Derive note names for the waiting banner
+  const waitingNoteNames = useMemo(() => {
+    if (!waitingForNotes || waitingForNotes.size === 0) return [];
+    const seen = new Map<number, string>();
+    for (const note of notes) {
+      if (waitingForNotes.has(note.midi) && !seen.has(note.midi)) {
+        seen.set(note.midi, note.name);
+      }
+    }
+    return Array.from(seen.values());
+  }, [notes, waitingForNotes]);
 
   // Find current note index
   const currentNoteIndex = useMemo(() => {
@@ -80,8 +98,9 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
         return null;
       }
 
-      // Calculate note width based on duration (smaller for less crowding)
-      const noteWidth = Math.max(20, note.duration * pixelsPerSecond * 0.6);
+      // Calculate note width based on duration; scale with height
+      const minPillWidth = height >= 120 ? 58 : 20;
+      const noteWidth = Math.max(minPillWidth, note.duration * pixelsPerSecond * 0.6);
 
       // Opacity based on distance from center
       let opacity = 1;
@@ -195,6 +214,31 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
         NOW
       </div>
 
+      {/* Waiting banner — shown prominently when wait mode pauses */}
+      {waitingNoteNames.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 6,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: '#FF9800',
+            color: '#fff',
+            padding: '5px 14px',
+            borderRadius: '5px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            fontFamily: 'monospace',
+            zIndex: 20,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 0 16px rgba(255, 152, 0, 0.7)',
+            letterSpacing: '0.05em',
+          }}
+        >
+          ▶ {waitingNoteNames.join(' + ')}
+        </div>
+      )}
+
       {/* Time labels */}
       <div
         style={{
@@ -230,6 +274,17 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
         // Stack notes vertically for chords
         const isChord = group.length > 1;
 
+        // Scale pill size based on available height
+        const large = height >= 120;
+        const pillPadding = large
+          ? (isChord ? '5px 10px' : '8px 16px')
+          : (isChord ? '2px 6px' : '4px 10px');
+        const pillFont = large
+          ? (isChord ? '15px' : '17px')
+          : (isChord ? '11px' : '12px');
+        const pillFontCurrent = large ? '20px' : '14px';
+        const pillMinWidth = large ? (isChord ? '48px' : '58px') : (isChord ? '36px' : '44px');
+
         return (
           <div
             key={groupIndex}
@@ -241,7 +296,7 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
+              gap: large ? '4px' : '2px',
               opacity,
               transition: 'opacity 0.1s',
             }}
@@ -249,27 +304,32 @@ export const ScrollingSheetMusic: React.FC<ScrollingSheetMusicProps> = ({
             {group.map((item) => {
               if (!item) return null;
               const { note, index, isCurrentNote: isThisCurrent } = item;
+              const isWaitingNote = !!(waitingForNotes && waitingForNotes.size > 0 && waitingForNotes.has(note.midi));
 
               return (
                 <div
                   key={index}
                   style={{
-                    padding: isChord ? '2px 6px' : '4px 10px',
-                    backgroundColor: isThisCurrent
+                    padding: pillPadding,
+                    backgroundColor: isWaitingNote
+                      ? '#FF9800'
+                      : isThisCurrent
                       ? '#4CAF50'
                       : isPast
                       ? '#333'
                       : '#2196F3',
-                    borderRadius: '3px',
-                    fontSize: isThisCurrent ? '14px' : isChord ? '11px' : '12px',
-                    fontWeight: isThisCurrent ? 'bold' : 'normal',
+                    borderRadius: '4px',
+                    fontSize: isThisCurrent || isWaitingNote ? pillFontCurrent : pillFont,
+                    fontWeight: isThisCurrent || isWaitingNote ? 'bold' : 'normal',
                     fontFamily: 'monospace',
                     color: '#fff',
                     whiteSpace: 'nowrap',
-                    boxShadow: isThisCurrent
+                    boxShadow: isWaitingNote
+                      ? '0 0 10px rgba(255, 152, 0, 0.8)'
+                      : isThisCurrent
                       ? '0 0 8px rgba(76, 175, 80, 0.5)'
                       : 'none',
-                    minWidth: isChord ? '36px' : '44px',
+                    minWidth: pillMinWidth,
                     textAlign: 'center',
                   }}
                 >
