@@ -67,6 +67,7 @@ import { ComparisonEngine, type ComparisonStats, type NoteComparisonResult } fro
 
 // UI components
 import { ScrollingSheetMusic } from './components/ScrollingSheetMusic';
+import { WebMidi } from 'webmidi';
 import { VisualKeyboard } from './components/VisualKeyboard';
 import { PracticeControls } from './components/PracticeControls';
 import { TheTighteningLogo } from './components/TheTighteningLogo';
@@ -140,8 +141,6 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
   const mainAreaRef = useRef<HTMLDivElement>(null);
   const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
-  const vizAreaRef = useRef<HTMLDivElement>(null);
-  const [vizAreaHeight, setVizAreaHeight] = useState<number>(300);
 
   // App-level view state
   type AppView = 'home' | 'song' | 'youtube';
@@ -383,42 +382,45 @@ function App() {
     }
   }, [isPlaying, inputMode, handleMicrophoneNote, practiceFrames]);
 
-  // Initialize MIDI via IPC (MIDI is handled in main process using native midi package)
+  // Initialize MIDI via WebMidi (browser API - works without native addon)
   useEffect(() => {
-    console.info('Setting up MIDI IPC listeners...');
+    console.info('[App] Initializing WebMIDI...');
 
-    // Check if electronAPI is available (running in Electron)
-    if (!window.electronAPI) {
-      console.warn('electronAPI not available - not running in Electron');
-      setMidiStatus('MIDI only available in Electron app');
-      return;
-    }
+    WebMidi.enable()
+      .then(() => {
+        console.info('[App] WebMIDI enabled, inputs:', WebMidi.inputs.map(i => i.name));
 
-    // Listen for MIDI status from main process
-    window.electronAPI.onMidiStatus((data) => {
-      console.info('MIDI status update', data);
-      setMidiStatus(data.message);
-    });
+        if (WebMidi.inputs.length === 0) {
+          setMidiStatus('No MIDI devices found');
+          return;
+        }
 
-    // Listen for note on events - call through ref to get latest handler
-    window.electronAPI.onMidiNoteOn((data) => {
-      if (handleNoteOnRef.current) {
-        handleNoteOnRef.current(data);
-      }
-    });
+        const input = WebMidi.inputs[0];
+        setMidiStatus(`Connected: ${input.name}`);
+        console.info('[App] Listening to MIDI input:', input.name);
 
-    // Listen for note off events - call through ref to get latest handler
-    window.electronAPI.onMidiNoteOff((data) => {
-      if (handleNoteOffRef.current) {
-        handleNoteOffRef.current(data);
-      }
-    });
+        input.addListener('noteon', (e) => {
+          if (handleNoteOnRef.current) {
+            handleNoteOnRef.current({
+              note: e.note.number,
+              velocity: Math.round(e.note.attack * 127),
+            });
+          }
+        });
 
-    console.debug('MIDI IPC listeners registered');
+        input.addListener('noteoff', (e) => {
+          if (handleNoteOffRef.current) {
+            handleNoteOffRef.current({ note: e.note.number });
+          }
+        });
+      })
+      .catch((err) => {
+        console.error('[App] WebMIDI failed:', err);
+        setMidiStatus(`MIDI Error: ${err.message}`);
+      });
 
     return () => {
-      // Cleanup IPC listeners on unmount
-      window.electronAPI?.removeMidiListeners();
+      WebMidi.inputs.forEach(input => input.removeListener());
     };
   }, []);
 
@@ -790,17 +792,6 @@ function App() {
     return () => window.removeEventListener('resize', update);
   }, [sidebarCollapsed]);
 
-  // Track viz area height with ResizeObserver (fires when element mounts/resizes)
-  useEffect(() => {
-    const el = vizAreaRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(entries => {
-      const h = entries[0]?.contentRect.height;
-      if (h && h > 0) setVizAreaHeight(h);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [appView]); // re-run when view changes so we catch the newly mounted element
 
   // Play/Pause handler
   const handlePlayPause = async () => {
@@ -1425,7 +1416,7 @@ function App() {
         </div>
 
         {/* Practice visualization - frames if YouTube session, otherwise scrolling notes */}
-        <div ref={vizAreaRef} style={{ flex: 1, minHeight: '150px', overflow: 'hidden' }}>
+        <div style={{ flex: 1, minHeight: '150px', overflow: 'hidden' }}>
           {practiceFrames && practiceFrames.size > 0 ? (
             <>
               {/* Sync offset + stats controls for YouTube practice */}
@@ -1465,7 +1456,7 @@ function App() {
               audioBlobUrl={practiceAudioUrl}
               audioStartTime={practiceStartTime}
               width={mainAreaWidth - 30}
-              height={Math.max(150, vizAreaHeight - 40)}
+              height={Math.max(300, window.innerHeight - 200)}
               onTimeUpdate={(time) => {
                 practiceTimeRef.current = time;
               }}
@@ -1525,13 +1516,13 @@ function App() {
               notes={songData.notes}
               currentTime={currentTime}
               width={mainAreaWidth - 30}
-              height={Math.max(150, vizAreaHeight)}
+              height={Math.max(150, window.innerHeight - 450)}
               visibleWindow={8}
             />
           )}
         </div>
 
-        {/* Visual keyboard - notes land directly on keys */}
+        {/* Visual keyboard */}
         <div style={{ flexShrink: 0 }}>
           <VisualKeyboard
             noteRange={noteRange}
@@ -1540,19 +1531,21 @@ function App() {
             distributionWidth={currentDistribution}
             config={config}
             width={mainAreaWidth - 30}
-            height={180}
+            height={practiceFrames && practiceFrames.size > 0 ? 100 : 180}
           />
         </div>
 
-        {/* Lyrics display */}
-        <div style={{ flexShrink: 0, marginTop: '10px' }}>
-          <LyricsDisplay
-            segments={songData.segments}
-            currentTime={currentTime}
-            width={mainAreaWidth - 30}
-            lrcLines={lrcLines}
-          />
-        </div>
+        {/* Lyrics — only in song practice mode */}
+        {!(practiceFrames && practiceFrames.size > 0) && (
+          <div style={{ flexShrink: 0, marginTop: '10px' }}>
+            <LyricsDisplay
+              segments={songData.segments}
+              currentTime={currentTime}
+              width={mainAreaWidth - 30}
+              lrcLines={lrcLines}
+            />
+          </div>
+        )}
       </div>
 
       {/* Collapsible sidebar */}
