@@ -161,6 +161,19 @@ export function saveProjectTimeline(
 }
 
 /**
+ * Save cached lyrics to a project
+ */
+export function saveProjectLyrics(projectId: string, lyrics: string): boolean {
+  const project = loadProject(projectId);
+  if (!project) return false;
+
+  (project as any).cachedLyrics = lyrics;
+  fs.writeFileSync(getProjectPath(projectId), JSON.stringify(project, null, 2));
+  loggers.main.info('[ProjectStorage] Saved cached lyrics', { projectId, length: lyrics.length });
+  return true;
+}
+
+/**
  * Delete a project
  */
 export function deleteProject(projectId: string): boolean {

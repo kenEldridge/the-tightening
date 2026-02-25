@@ -69,6 +69,12 @@ export interface ChordEvent {
   source: 'audio' | 'manual';
   /** MIDI voicing for practice */
   voicing: ChordVoicingData | null;
+  /** Vocal energy ratio for this bar (0-1, higher = vocals likely present) */
+  vocalEnergy?: number;
+  /** Lyrics text for this bar (optional, from lyrics fetch) */
+  lyrics?: string;
+  /** Section label e.g. "Chorus", "Verse 1" (optional) */
+  section?: string;
 }
 
 export interface ChordVoicingData {
@@ -156,6 +162,8 @@ export interface PracticeProjectLite {
   audioPath: string | null;
   /** Analysis result (null if not yet analyzed) */
   timeline: ChordTimelineArtifact | null;
+  /** Cached raw lyrics text (so re-analysis doesn't need to re-fetch) */
+  cachedLyrics?: string;
   /** When created */
   createdAt: string;
   /** When last opened */
@@ -203,6 +211,8 @@ export interface AnalysisOptions {
   tempoHint?: number;
   /** Hint for time signature (optional) */
   timeSignatureHint?: { numerator: number; denominator: number };
+  /** Hint for key (e.g. 'D', 'Am', 'Bb'). If provided, diatonic chords are boosted. */
+  keyHint?: string;
 }
 
 export interface AnalysisResult {

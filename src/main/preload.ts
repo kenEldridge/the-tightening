@@ -180,6 +180,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Set project audio path after analysis
   projectSetAudioPath: (projectId: string, audioPath: string) =>
     ipcRenderer.invoke('project-set-audio-path', projectId, audioPath),
+
+  // ============================================
+  // Lyrics API
+  // ============================================
+
+  // Save cached lyrics to project
+  projectSaveLyrics: (projectId: string, lyrics: string) =>
+    ipcRenderer.invoke('project-save-lyrics', projectId, lyrics),
+
+  // Fetch lyrics from the internet
+  fetchLyrics: (artist: string, title: string) =>
+    ipcRenderer.invoke('fetch-lyrics', artist, title),
 });
 
 originalConsole.log('[Preload] MIDI bridge initialized');

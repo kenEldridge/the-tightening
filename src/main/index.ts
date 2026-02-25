@@ -13,6 +13,7 @@ import {
   listProjects,
   setProjectAudioPath,
   saveProjectTimeline,
+  saveProjectLyrics,
   deleteProject,
 } from './projectStorage';
 import { classifyError } from './extractionErrors';
@@ -539,4 +540,61 @@ ipcMain.handle('normalize-audio-to-wav', async (_event, inputPath: string, proje
 
 ipcMain.handle('project-set-audio-path', async (_event, projectId: string, audioPath: string) => {
   return setProjectAudioPath(projectId, audioPath);
+});
+
+ipcMain.handle('project-save-lyrics', async (_event, projectId: string, lyrics: string) => {
+  return saveProjectLyrics(projectId, lyrics);
+});
+
+// ---- Lyrics Fetch ----
+
+ipcMain.handle('fetch-lyrics', async (_event, artist: string, title: string) => {
+  const { net } = await import('electron');
+
+  // Try LRCLIB first (free, no key, reliable)
+  try {
+    const params = new URLSearchParams();
+    if (artist) params.set('artist_name', artist);
+    params.set('track_name', title);
+    const url = `https://lrclib.net/api/search?${params.toString()}`;
+    loggers.main.info('[Lyrics] Trying LRCLIB', { artist, title, url });
+
+    const response = await net.fetch(url, { method: 'GET' });
+    if (response.ok) {
+      const results = await response.json() as Array<{ plainLyrics?: string; syncedLyrics?: string; artistName?: string; trackName?: string }>;
+      if (results.length > 0 && results[0].plainLyrics) {
+        const hasSynced = !!results[0].syncedLyrics;
+        loggers.main.info('[Lyrics] LRCLIB success', { length: results[0].plainLyrics.length, hasSynced });
+        return {
+          ok: true,
+          lyrics: results[0].plainLyrics,
+          syncedLyrics: results[0].syncedLyrics || undefined,
+        };
+      }
+    }
+    loggers.main.info('[Lyrics] LRCLIB: no results');
+  } catch (err) {
+    loggers.main.warn('[Lyrics] LRCLIB failed', { error: (err as Error).message });
+  }
+
+  // Fallback: lyrics.ovh
+  try {
+    const query = encodeURIComponent(artist) + '/' + encodeURIComponent(title);
+    const url = `https://api.lyrics.ovh/v1/${query}`;
+    loggers.main.info('[Lyrics] Trying lyrics.ovh', { url });
+
+    const response = await net.fetch(url, { method: 'GET' });
+    if (response.ok) {
+      const data = await response.json() as { lyrics?: string };
+      if (data.lyrics) {
+        loggers.main.info('[Lyrics] lyrics.ovh success', { length: data.lyrics.length });
+        return { ok: true, lyrics: data.lyrics };
+      }
+    }
+    loggers.main.info('[Lyrics] lyrics.ovh: no results or error', { status: response.status });
+  } catch (err) {
+    loggers.main.warn('[Lyrics] lyrics.ovh failed', { error: (err as Error).message });
+  }
+
+  return { ok: false, error: 'No lyrics found from any source' };
 });

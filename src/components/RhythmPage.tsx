@@ -9,6 +9,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { RhythmAnalyzer } from '../core/RhythmAnalyzer';
 import { createTimeline, applyEdit } from '../core/timelineEditor';
 import { buildPracticePayload, validateChordPress, createEmptyStats } from '../core/rhythmTrainer';
+import { RhythmPreviewPlayer, type PreviewMode, type HearItState } from '../core/RhythmPreviewPlayer';
+import { applyLyricsToTimeline, parseArtistTitle } from '../core/lyricsAlign';
 import type {
   PracticeProjectLite,
   ChordTimelineArtifact,
@@ -55,10 +57,14 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
   const playbackRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
   const pressedNotesRef = useRef<Set<number>>(new Set());
+  const previewPlayerRef = useRef<RhythmPreviewPlayer | null>(null);
 
-  // Load projects on mount
+  // Load projects on mount, cleanup preview player on unmount
   useEffect(() => {
     loadProjects();
+    return () => {
+      previewPlayerRef.current?.dispose();
+    };
   }, []);
 
   const loadProjects = useCallback(async () => {
@@ -194,10 +200,41 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       const analyzer = new RhythmAnalyzer();
       const result = await analyzer.analyze(project.audioPath, options || {});
 
-      const tl = createTimeline(result.beatGrid, result.chords, {
+      let tl = createTimeline(result.beatGrid, result.chords, {
         analysisVersion: result.meta.analysisVersion,
         configHash: result.meta.configHash,
       });
+
+      // Try to fetch lyrics and apply to timeline
+      setAnalysisProgress('Fetching lyrics...');
+      let rawLyrics = project.cachedLyrics || '';
+      let syncedLyrics: string | undefined;
+      try {
+        if (!rawLyrics && window.electronAPI?.fetchLyrics) {
+          const { artist, title } = parseArtistTitle(project.source.title || project.name);
+          console.log('[RhythmPage] Fetching lyrics for', { artist, title });
+          const lyricsResult = await window.electronAPI.fetchLyrics(artist, title);
+          if (lyricsResult.ok && lyricsResult.lyrics) {
+            rawLyrics = lyricsResult.lyrics;
+            syncedLyrics = lyricsResult.syncedLyrics;
+            // Cache on project so re-analysis doesn't need to re-fetch
+            project.cachedLyrics = rawLyrics;
+            window.electronAPI.projectSaveLyrics?.(project.id, rawLyrics);
+          } else {
+            console.log('[RhythmPage] No lyrics found:', lyricsResult.error);
+          }
+        }
+        if (rawLyrics) {
+          tl = applyLyricsToTimeline(tl, rawLyrics, syncedLyrics);
+          console.log('[RhythmPage] Lyrics applied', {
+            mode: syncedLyrics ? 'timed (LRC)' : 'structural',
+            lines: rawLyrics.split('\n').filter(l => l.trim()).length,
+            bars: tl.chords.filter(c => c.lyrics).length,
+          });
+        }
+      } catch (lyricsErr) {
+        console.warn('[RhythmPage] Lyrics fetch failed (non-fatal):', lyricsErr);
+      }
 
       // Save to project
       await window.electronAPI.projectSaveTimeline(project.id, tl);
@@ -244,6 +281,28 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
     if (!timeline || !currentProject) return;
 
     const updated = applyEdit(timeline, op);
+    setTimeline(updated);
+    await window.electronAPI.projectSaveTimeline(currentProject.id, updated);
+  }, [timeline, currentProject]);
+
+  const moveLyrics = useCallback(async (fromIdx: number, direction: -1 | 1) => {
+    if (!timeline || !currentProject) return;
+    const toIdx = fromIdx + direction;
+    if (toIdx < 0 || toIdx >= timeline.chords.length) return;
+
+    const updatedChords = timeline.chords.map(c => ({ ...c }));
+    const lyricsText = updatedChords[fromIdx].lyrics;
+    if (!lyricsText) return;
+
+    // Move lyrics: clear source, set target (append if target already has lyrics)
+    updatedChords[fromIdx].lyrics = undefined;
+    if (updatedChords[toIdx].lyrics) {
+      updatedChords[toIdx].lyrics += ' / ' + lyricsText;
+    } else {
+      updatedChords[toIdx].lyrics = lyricsText;
+    }
+
+    const updated = { ...timeline, chords: updatedChords };
     setTimeline(updated);
     await window.electronAPI.projectSaveTimeline(currentProject.id, updated);
   }, [timeline, currentProject]);
@@ -297,6 +356,7 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
           <button
             onClick={view === 'projects' ? onClose : () => {
               stopPractice();
+              previewPlayerRef.current?.stop();
               if (view === 'practice' || view === 'timeline') {
                 setView('timeline');
                 if (view === 'practice') return;
@@ -397,9 +457,12 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         {view === 'timeline' && timeline && (
           <TimelineView
             timeline={timeline}
+            audioPath={currentProject?.audioPath || null}
+            previewPlayerRef={previewPlayerRef}
             onEdit={applyTimelineEdit}
+            onMoveLyrics={moveLyrics}
             onPractice={startPractice}
-            onReanalyze={currentProject ? () => runAnalysis(currentProject) : undefined}
+            onReanalyze={currentProject ? (opts?: AnalysisOptions) => runAnalysis(currentProject, opts) : undefined}
           />
         )}
 
@@ -431,6 +494,18 @@ const smallBtnStyle: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'monospace',
   fontSize: '11px',
+};
+
+const arrowBtnStyle: React.CSSProperties = {
+  background: 'none',
+  border: '1px solid #444',
+  color: '#aaa',
+  padding: '0px 3px',
+  borderRadius: '2px',
+  cursor: 'pointer',
+  fontFamily: 'monospace',
+  fontSize: '9px',
+  lineHeight: '14px',
 };
 
 const btnStyle: React.CSSProperties = {
@@ -570,12 +645,72 @@ const IngestView: React.FC<{
 
 const TimelineView: React.FC<{
   timeline: ChordTimelineArtifact;
+  audioPath: string | null;
+  previewPlayerRef: React.MutableRefObject<RhythmPreviewPlayer | null>;
   onEdit: (op: TimelineEditOp) => void;
+  onMoveLyrics: (fromIdx: number, direction: -1 | 1) => void;
   onPractice: (barRange?: { start: number; end: number }) => void;
-  onReanalyze?: () => void;
-}> = ({ timeline, onEdit, onPractice, onReanalyze }) => {
+  onReanalyze?: (opts?: AnalysisOptions) => void;
+}> = ({ timeline, audioPath, previewPlayerRef, onEdit, onMoveLyrics, onPractice, onReanalyze }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSymbol, setEditSymbol] = useState('');
+  const [hearItState, setHearItState] = useState<HearItState | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Analysis hints for re-analyze
+  const [hintKey, setHintKey] = useState('');
+  const [hintTempo, setHintTempo] = useState('');
+  const [hintTimeSig, setHintTimeSig] = useState<'auto' | '3/4' | '4/4'>('auto');
+  const [showHints, setShowHints] = useState(false);
+
+  // Loop controls
+  const [loopStartBar, setLoopStartBar] = useState('');
+  const [loopEndBar, setLoopEndBar] = useState('');
+
+  // Initialize preview player and load timeline when it changes
+  useEffect(() => {
+    let cancelled = false;
+
+    const init = async () => {
+      setLoading(true);
+      try {
+        if (!previewPlayerRef.current) {
+          previewPlayerRef.current = new RhythmPreviewPlayer();
+        }
+        const player = previewPlayerRef.current;
+
+        player.onTimeUpdate((state) => {
+          if (!cancelled) setHearItState(state);
+        });
+
+        await player.loadTimeline(timeline);
+
+        if (audioPath) {
+          await player.loadSourceAudio(audioPath);
+        }
+      } catch (err) {
+        console.error('[TimelineView] Failed to init preview player', err);
+      }
+      if (!cancelled) setLoading(false);
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+      previewPlayerRef.current?.removeTimeUpdateCallback();
+    };
+  }, [timeline, audioPath, previewPlayerRef]);
+
+  // Reload timeline into player when edits change
+  useEffect(() => {
+    if (previewPlayerRef.current && timeline) {
+      previewPlayerRef.current.loadTimeline(timeline);
+    }
+  }, [timeline.edits.length]);
+
+  const player = previewPlayerRef.current;
+  const activeChordId = hearItState?.activeChordId || null;
 
   const handleSetChord = (eventId: string) => {
     if (!editSymbol.trim()) return;
@@ -584,9 +719,16 @@ const TimelineView: React.FC<{
     setEditSymbol('');
   };
 
+  const formatTime = (s: number) => {
+    const min = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '18px' }}>Chord Timeline</h2>
           <div style={{ fontSize: '11px', color: '#888', marginTop: '4px' }}>
@@ -595,7 +737,9 @@ const TimelineView: React.FC<{
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {onReanalyze && (
-            <button onClick={onReanalyze} style={smallBtnStyle}>Re-analyze</button>
+            <button onClick={() => setShowHints(!showHints)} style={smallBtnStyle}>
+              {showHints ? 'Hide Hints' : 'Re-analyze...'}
+            </button>
           )}
           <button onClick={() => onPractice()} style={primaryBtnStyle}>
             Practice All
@@ -603,10 +747,301 @@ const TimelineView: React.FC<{
         </div>
       </div>
 
+      {/* ---- Analysis Hints Panel ---- */}
+      {showHints && onReanalyze && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '8px 12px',
+          backgroundColor: '#2a2520',
+          border: '1px solid #553',
+          borderRadius: '6px',
+          marginBottom: '8px',
+          fontSize: '12px',
+          flexWrap: 'wrap',
+        }}>
+          <label style={{ color: '#aa8', whiteSpace: 'nowrap' }}>Key:</label>
+          <input
+            value={hintKey}
+            onChange={(e) => setHintKey(e.target.value)}
+            placeholder="e.g. D, Am, Bb"
+            style={{
+              width: '70px',
+              padding: '3px 6px',
+              backgroundColor: '#333',
+              border: '1px solid #555',
+              borderRadius: '3px',
+              color: '#eee',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+            }}
+          />
+          <label style={{ color: '#aa8', whiteSpace: 'nowrap' }}>Tempo:</label>
+          <input
+            value={hintTempo}
+            onChange={(e) => setHintTempo(e.target.value)}
+            placeholder="BPM"
+            style={{
+              width: '50px',
+              padding: '3px 6px',
+              backgroundColor: '#333',
+              border: '1px solid #555',
+              borderRadius: '3px',
+              color: '#eee',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+            }}
+          />
+          <label style={{ color: '#aa8', whiteSpace: 'nowrap' }}>Time Sig:</label>
+          <select
+            value={hintTimeSig}
+            onChange={(e) => setHintTimeSig(e.target.value as 'auto' | '3/4' | '4/4')}
+            style={{
+              padding: '3px 6px',
+              backgroundColor: '#333',
+              border: '1px solid #555',
+              borderRadius: '3px',
+              color: '#eee',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+            }}
+          >
+            <option value="auto">Auto</option>
+            <option value="3/4">3/4 (Waltz)</option>
+            <option value="4/4">4/4</option>
+          </select>
+          <button
+            onClick={() => {
+              const opts: AnalysisOptions = {};
+              if (hintKey.trim()) opts.keyHint = hintKey.trim();
+              if (hintTempo.trim()) {
+                const t = parseFloat(hintTempo.trim());
+                if (!isNaN(t) && t > 0) opts.tempoHint = t;
+              }
+              if (hintTimeSig !== 'auto') {
+                const num = hintTimeSig === '3/4' ? 3 : 4;
+                opts.timeSignatureHint = { numerator: num, denominator: 4 };
+              }
+              onReanalyze(opts);
+              setShowHints(false);
+            }}
+            style={{ ...primaryBtnStyle, padding: '3px 12px', fontSize: '12px' }}
+          >
+            Re-analyze
+          </button>
+          <button
+            onClick={() => { onReanalyze(); setShowHints(false); }}
+            style={{ ...smallBtnStyle }}
+          >
+            No hints
+          </button>
+        </div>
+      )}
+
+      {/* ---- Hear It Transport Bar ---- */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 12px',
+        backgroundColor: '#252525',
+        border: '1px solid #333',
+        borderRadius: '6px',
+        marginBottom: '12px',
+        fontSize: '12px',
+      }}>
+        {/* Play / Pause / Stop */}
+        <button
+          onClick={async () => {
+            if (!player) return;
+            if (hearItState?.playing) {
+              player.pause();
+            } else {
+              await player.play();
+            }
+          }}
+          disabled={loading || !player}
+          style={{ ...smallBtnStyle, fontSize: '14px', padding: '2px 10px' }}
+          title={hearItState?.playing ? 'Pause' : 'Play'}
+        >
+          {hearItState?.playing ? '⏸' : '▶'}
+        </button>
+        <button
+          onClick={() => player?.stop()}
+          disabled={!player}
+          style={{ ...smallBtnStyle, fontSize: '14px', padding: '2px 10px' }}
+          title="Stop"
+        >
+          ⏹
+        </button>
+
+        {/* Time display */}
+        <span style={{ color: '#aaa', minWidth: '80px' }}>
+          {hearItState ? `${formatTime(hearItState.currentTime)} / ${formatTime(hearItState.duration)}` : '--:-- / --:--'}
+        </span>
+
+        {/* Seek bar */}
+        <input
+          type="range"
+          min={0}
+          max={hearItState?.duration || 1}
+          step={0.1}
+          value={hearItState?.currentTime || 0}
+          onChange={(e) => player?.seekTo(parseFloat(e.target.value))}
+          style={{ flex: 1, accentColor: '#4a9', cursor: 'pointer' }}
+        />
+
+        {/* A/B mode toggle */}
+        <div style={{
+          display: 'flex',
+          border: '1px solid #444',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}>
+          <button
+            onClick={() => player?.setMode('generated')}
+            style={{
+              ...smallBtnStyle,
+              border: 'none',
+              borderRadius: 0,
+              backgroundColor: hearItState?.mode === 'generated' ? '#2a3a2a' : 'transparent',
+              color: hearItState?.mode === 'generated' ? '#4a9' : '#666',
+              fontWeight: hearItState?.mode === 'generated' ? 700 : 400,
+            }}
+          >
+            Generated
+          </button>
+          <button
+            onClick={() => player?.setMode('source')}
+            disabled={!audioPath}
+            style={{
+              ...smallBtnStyle,
+              border: 'none',
+              borderRadius: 0,
+              borderLeft: '1px solid #444',
+              backgroundColor: hearItState?.mode === 'source' ? '#3a2a20' : 'transparent',
+              color: hearItState?.mode === 'source' ? '#e8a' : '#666',
+              fontWeight: hearItState?.mode === 'source' ? 700 : 400,
+            }}
+          >
+            Source
+          </button>
+        </div>
+
+        {/* Active chord display */}
+        {hearItState?.activeChordId && (
+          <span style={{
+            padding: '2px 8px',
+            backgroundColor: '#2a3a2a',
+            border: '1px solid #4a9',
+            borderRadius: '3px',
+            color: '#4a9',
+            fontWeight: 700,
+            minWidth: '40px',
+            textAlign: 'center',
+          }}>
+            {timeline.chords.find(c => c.id === hearItState.activeChordId)?.symbol || ''}
+          </span>
+        )}
+
+        {/* Skipped chords indicator */}
+        {hearItState && hearItState.skippedChords > 0 && (
+          <span
+            style={{ color: '#e84', fontSize: '11px' }}
+            title={`${hearItState.skippedChords} chord(s) have no voicing and are silent in generated playback`}
+          >
+            {hearItState.skippedChords} skipped
+          </span>
+        )}
+      </div>
+
+      {/* ---- Loop Controls ---- */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 12px',
+        backgroundColor: '#252525',
+        border: '1px solid #333',
+        borderRadius: '6px',
+        marginBottom: '12px',
+        fontSize: '12px',
+      }}>
+        <span style={{ color: '#888' }}>Loop:</span>
+        <label style={{ color: '#aaa' }}>Start bar</label>
+        <input
+          type="number"
+          min={1}
+          max={timeline.beatGrid.barCount}
+          value={loopStartBar}
+          onChange={(e) => setLoopStartBar(e.target.value)}
+          placeholder="1"
+          style={{
+            width: '50px',
+            padding: '2px 6px',
+            backgroundColor: '#333',
+            border: '1px solid #555',
+            borderRadius: '3px',
+            color: '#eee',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+        />
+        <label style={{ color: '#aaa' }}>End bar</label>
+        <input
+          type="number"
+          min={1}
+          max={timeline.beatGrid.barCount}
+          value={loopEndBar}
+          onChange={(e) => setLoopEndBar(e.target.value)}
+          placeholder={String(timeline.beatGrid.barCount)}
+          style={{
+            width: '50px',
+            padding: '2px 6px',
+            backgroundColor: '#333',
+            border: '1px solid #555',
+            borderRadius: '3px',
+            color: '#eee',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+          }}
+        />
+        <button
+          onClick={() => {
+            const start = parseInt(loopStartBar) || 1;
+            const end = parseInt(loopEndBar) || timeline.beatGrid.barCount;
+            if (start >= 1 && end >= start && end <= timeline.beatGrid.barCount) {
+              player?.setLoopBars(start, end);
+            }
+          }}
+          disabled={!player}
+          style={{ ...primaryBtnStyle, padding: '2px 10px', fontSize: '12px' }}
+        >
+          Set Loop
+        </button>
+        <button
+          onClick={() => {
+            player?.setLoop(null);
+            setLoopStartBar('');
+            setLoopEndBar('');
+          }}
+          disabled={!player || !hearItState?.loopRange}
+          style={{ ...smallBtnStyle }}
+        >
+          Clear Loop
+        </button>
+        {hearItState?.loopRange && (
+          <span style={{ color: '#4a9', fontSize: '11px' }}>
+            Looping {formatTime(hearItState.loopRange.startTime)}–{formatTime(hearItState.loopRange.endTime)}
+          </span>
+        )}
+      </div>
+
       {/* Chord events table */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '60px 80px 80px 80px 1fr 60px 40px',
+        gridTemplateColumns: '40px 55px 60px 90px 1fr 36px 30px',
         gap: '1px',
         backgroundColor: '#333',
         border: '1px solid #333',
@@ -615,70 +1050,114 @@ const TimelineView: React.FC<{
         fontSize: '12px',
       }}>
         {/* Header */}
-        {['Bars', 'Start', 'End', 'Chord', 'Confidence', 'Source', ''].map((h, i) => (
+        {['Bar', 'Time', 'Chord', 'Section', 'Lyrics', '', ''].map((h, i) => (
           <div key={i} style={{ padding: '6px 8px', backgroundColor: '#2a2a2a', color: '#888', fontWeight: 600 }}>
             {h}
           </div>
         ))}
 
         {/* Rows */}
-        {timeline.chords.map((chord) => (
-          <React.Fragment key={chord.id}>
-            <div style={cellStyle}>{chord.barStart}–{chord.barEnd}</div>
-            <div style={cellStyle}>{chord.startTime.toFixed(1)}s</div>
-            <div style={cellStyle}>{chord.endTime.toFixed(1)}s</div>
-            <div style={{ ...cellStyle, fontWeight: 700, color: chord.source === 'manual' ? '#e8a' : '#4a9' }}>
-              {editingId === chord.id ? (
-                <input
-                  autoFocus
-                  value={editSymbol}
-                  onChange={(e) => setEditSymbol(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSetChord(chord.id);
-                    if (e.key === 'Escape') { setEditingId(null); setEditSymbol(''); }
-                  }}
-                  onBlur={() => { setEditingId(null); setEditSymbol(''); }}
-                  style={{
-                    width: '60px',
-                    backgroundColor: '#333',
-                    border: '1px solid #555',
-                    color: '#eee',
-                    fontFamily: 'monospace',
-                    fontSize: '12px',
-                    padding: '1px 4px',
-                    borderRadius: '2px',
-                  }}
-                />
-              ) : (
-                <span
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => { setEditingId(chord.id); setEditSymbol(chord.symbol); }}
-                  title="Click to edit"
-                >
-                  {chord.symbol}
-                </span>
-              )}
-            </div>
-            <div style={cellStyle}>
+        {timeline.chords.map((chord, idx) => {
+          const isActive = chord.id === activeChordId;
+          const rowBg = isActive ? '#1a2e1a' : '#222';
+          const prevSection = idx > 0 ? timeline.chords[idx - 1].section : undefined;
+          const showSection = chord.section && chord.section !== prevSection;
+
+          return (
+            <React.Fragment key={chord.id}>
+              <div style={{ ...cellStyle, backgroundColor: rowBg, color: '#888' }}>{chord.barStart}</div>
+              <div style={{ ...cellStyle, backgroundColor: rowBg, color: '#888' }}>{chord.startTime.toFixed(1)}s</div>
               <div style={{
-                width: `${Math.round(chord.confidence * 100)}%`,
-                height: '4px',
-                backgroundColor: chord.confidence > 0.7 ? '#4a9' : chord.confidence > 0.4 ? '#ea4' : '#f66',
-                borderRadius: '2px',
-              }} />
-            </div>
-            <div style={{ ...cellStyle, color: '#888' }}>{chord.source}</div>
-            <div style={cellStyle}>
-              <button
-                onClick={() => onPractice({ start: chord.barStart, end: chord.barEnd })}
-                style={{ ...smallBtnStyle, fontSize: '10px', padding: '1px 4px' }}
-                title="Practice this section"
-              >
-                ▶
-              </button>
-            </div>
-          </React.Fragment>
-        ))}
+                ...cellStyle,
+                backgroundColor: rowBg,
+                fontWeight: 700,
+                color: isActive ? '#5fb' : chord.source === 'manual' ? '#e8a' : '#4a9',
+              }}>
+                {editingId === chord.id ? (
+                  <input
+                    autoFocus
+                    value={editSymbol}
+                    onChange={(e) => setEditSymbol(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSetChord(chord.id);
+                      if (e.key === 'Escape') { setEditingId(null); setEditSymbol(''); }
+                    }}
+                    onBlur={() => { setEditingId(null); setEditSymbol(''); }}
+                    style={{
+                      width: '50px',
+                      backgroundColor: '#333',
+                      border: '1px solid #555',
+                      color: '#eee',
+                      fontFamily: 'monospace',
+                      fontSize: '12px',
+                      padding: '1px 4px',
+                      borderRadius: '2px',
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => { setEditingId(chord.id); setEditSymbol(chord.symbol); }}
+                    title="Click to edit"
+                  >
+                    {chord.symbol}
+                  </span>
+                )}
+              </div>
+              <div style={{
+                ...cellStyle,
+                backgroundColor: showSection ? '#2a2a30' : rowBg,
+                color: '#8af',
+                fontWeight: showSection ? 600 : 400,
+                fontSize: '11px',
+              }}>
+                {showSection ? chord.section : ''}
+              </div>
+              <div style={{
+                ...cellStyle,
+                backgroundColor: rowBg,
+                color: isActive ? '#eee' : '#aaa',
+                fontStyle: chord.lyrics ? 'italic' : 'normal',
+              }}>
+                {chord.lyrics || ''}
+              </div>
+              <div style={{ ...cellStyle, backgroundColor: rowBg, display: 'flex', gap: '2px', padding: '4px 2px' }}>
+                {chord.lyrics && (
+                  <>
+                    <button
+                      onClick={() => onMoveLyrics(idx, -1)}
+                      disabled={idx === 0}
+                      style={{ ...arrowBtnStyle, opacity: idx === 0 ? 0.3 : 1 }}
+                      title="Move lyrics up one bar"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => onMoveLyrics(idx, 1)}
+                      disabled={idx >= timeline.chords.length - 1}
+                      style={{ ...arrowBtnStyle, opacity: idx >= timeline.chords.length - 1 ? 0.3 : 1 }}
+                      title="Move lyrics down one bar"
+                    >
+                      ▼
+                    </button>
+                  </>
+                )}
+              </div>
+              <div style={{ ...cellStyle, backgroundColor: rowBg }}>
+                <button
+                  onClick={() => {
+                    player?.seekTo(chord.startTime);
+                    if (!hearItState?.playing) player?.play();
+                  }}
+                  style={{ ...smallBtnStyle, fontSize: '10px', padding: '1px 4px' }}
+                  title="Play from here"
+                >
+                  ▶
+                </button>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
