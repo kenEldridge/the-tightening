@@ -38,6 +38,15 @@ declare global {
       // Debug screenshots
       debugScreenshot: (label?: string) => Promise<string | null>;
       debugScreenshotReset: () => Promise<boolean>;
+      // Rhythm project API
+      projectCreateLite: (input: { name: string; sourceType: 'youtube' | 'local_file'; sourceUri: string; sourceTitle: string; sourceDuration?: number }) => Promise<any>;
+      projectLoadLite: (projectId: string) => Promise<any>;
+      projectList: () => Promise<any[]>;
+      projectDelete: (projectId: string) => Promise<boolean>;
+      projectSaveTimeline: (projectId: string, timeline: any) => Promise<boolean>;
+      projectImportLocalMedia: () => Promise<any>;
+      normalizeAudioToWav: (inputPath: string, projectId: string) => Promise<any>;
+      projectSetAudioPath: (projectId: string, audioPath: string) => Promise<boolean>;
     };
   }
 }
@@ -76,6 +85,7 @@ import { YouTubeImporter, type PassageSelection } from './components/YouTubeImpo
 import { YouTubeHomePage } from './components/YouTubeHomePage';
 import { HomePage } from './components/HomePage';
 import { PracticeFrameDisplay } from './components/PracticeFrameDisplay';
+import { RhythmPage } from './components/RhythmPage';
 import type { DetectedNoteEvent } from './core/VideoAnalyzer';
 import type { MelodyNote } from './utils/midiParser';
 import type { SavedSegment } from './utils/segmentStorage';
@@ -146,7 +156,7 @@ function App() {
   const [vizHeight, setVizHeight] = useState<number>(500);
 
   // App-level view state
-  type AppView = 'home' | 'song' | 'youtube';
+  type AppView = 'home' | 'song' | 'youtube' | 'rhythm';
   const [appView, setAppView] = useState<AppView>('home');
 
   // YouTube importer state
@@ -1274,9 +1284,15 @@ function App() {
           setAppView('song');
         }}
         onYoutubePractice={() => { setYoutubeView('home'); setAppView('youtube'); }}
+        onRhythmPractice={() => setAppView('rhythm')}
         loadingStatus={loading ? audioStatus : undefined}
       />
     );
+  }
+
+  // Rhythm trainer view
+  if (appView === 'rhythm') {
+    return <RhythmPage onClose={() => setAppView('home')} />;
   }
 
   // YouTube views (full screen overlays)

@@ -1,11 +1,21 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { createRequire } from 'module';
+import { execSync } from 'child_process';
 import { initializeLogger, loggers } from '../utils/logger';
 import log from 'electron-log';
 import { getYouTubeExtractor, type ExtractionProgress } from './YouTubeExtractor';
+import {
+  createProject,
+  loadProject,
+  listProjects,
+  setProjectAudioPath,
+  saveProjectTimeline,
+  deleteProject,
+} from './projectStorage';
+import { classifyError } from './extractionErrors';
 
 // Create require for CommonJS modules (midi is a native addon)
 const require = createRequire(import.meta.url);
@@ -408,4 +418,125 @@ ipcMain.handle('read-image-file', async (_event, filePath: string) => {
   } catch (err) {
     return null;
   }
+});
+
+// ============================================
+// Project Storage IPC Handlers (Rhythm Core)
+// ============================================
+
+ipcMain.handle('project-create-lite', async (_event, input: {
+  name: string;
+  sourceType: 'youtube' | 'local_file';
+  sourceUri: string;
+  sourceTitle: string;
+  sourceDuration?: number;
+}) => {
+  try {
+    return { ok: true, project: createProject(input) };
+  } catch (err) {
+    return { ok: false, error: classifyError(err as Error) };
+  }
+});
+
+ipcMain.handle('project-load-lite', async (_event, projectId: string) => {
+  const project = loadProject(projectId);
+  if (!project) {
+    return { ok: false, error: { code: 'file_not_found', message: 'Project not found', recoverable: false } };
+  }
+  return { ok: true, project };
+});
+
+ipcMain.handle('project-list', async () => {
+  return listProjects();
+});
+
+ipcMain.handle('project-delete', async (_event, projectId: string) => {
+  return deleteProject(projectId);
+});
+
+ipcMain.handle('project-save-timeline', async (_event, projectId: string, timeline: any) => {
+  return saveProjectTimeline(projectId, timeline);
+});
+
+// ============================================
+// Local Media Import IPC Handler
+// ============================================
+
+ipcMain.handle('project-import-local-media', async () => {
+  try {
+    const result = await dialog.showOpenDialog({
+      title: 'Import Audio or Video File',
+      filters: [
+        { name: 'Audio/Video', extensions: ['wav', 'mp3', 'flac', 'ogg', 'm4a', 'mp4', 'mkv', 'webm', 'avi'] },
+        { name: 'Audio', extensions: ['wav', 'mp3', 'flac', 'ogg', 'm4a'] },
+        { name: 'Video', extensions: ['mp4', 'mkv', 'webm', 'avi'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return { ok: false, canceled: true };
+    }
+
+    const filePath = result.filePaths[0];
+    const fileName = path.basename(filePath);
+    const ext = path.extname(filePath).toLowerCase();
+
+    return {
+      ok: true,
+      filePath,
+      fileName,
+      isVideo: ['.mp4', '.mkv', '.webm', '.avi'].includes(ext),
+    };
+  } catch (err) {
+    return { ok: false, error: classifyError(err as Error) };
+  }
+});
+
+// ============================================
+// Audio Normalization IPC Handler
+// ============================================
+
+ipcMain.handle('normalize-audio-to-wav', async (_event, inputPath: string, projectId: string) => {
+  try {
+    const outputDir = path.join(app.getPath('userData'), 'rhythm-projects', 'audio');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const outputPath = path.join(outputDir, `${projectId}.wav`);
+
+    // Skip if already normalized
+    if (fs.existsSync(outputPath)) {
+      loggers.main.info('[Normalize] Using cached normalized audio', { outputPath });
+      setProjectAudioPath(projectId, outputPath);
+      return { ok: true, audioPath: outputPath };
+    }
+
+    // Use ffmpeg to normalize to mono 44100Hz 16-bit WAV
+    const cmd = `ffmpeg -i "${inputPath}" -ac 1 -ar 44100 -sample_fmt s16 "${outputPath}" -y`;
+    loggers.main.info('[Normalize] Running ffmpeg', { inputPath, outputPath });
+    execSync(cmd, { stdio: 'pipe', timeout: 120000 });
+
+    if (!fs.existsSync(outputPath)) {
+      return { ok: false, error: classifyError(new Error('ffmpeg produced no output')) };
+    }
+
+    setProjectAudioPath(projectId, outputPath);
+    loggers.main.info('[Normalize] Audio normalized', {
+      outputPath,
+      size: fs.statSync(outputPath).size,
+    });
+
+    return { ok: true, audioPath: outputPath };
+  } catch (err) {
+    const error = err as Error;
+    loggers.main.error('[Normalize] Failed', { error: error.message });
+    return { ok: false, error: classifyError(error) };
+  }
+});
+
+ipcMain.handle('project-set-audio-path', async (_event, projectId: string, audioPath: string) => {
+  return setProjectAudioPath(projectId, audioPath);
 });

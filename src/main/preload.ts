@@ -143,6 +143,43 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Reset screenshot counter and clear old captures
   debugScreenshotReset: () => ipcRenderer.invoke('debug-screenshot-reset'),
+
+  // ============================================
+  // Rhythm Project API
+  // ============================================
+
+  // Create a new practice project
+  projectCreateLite: (input: {
+    name: string;
+    sourceType: 'youtube' | 'local_file';
+    sourceUri: string;
+    sourceTitle: string;
+    sourceDuration?: number;
+  }) => ipcRenderer.invoke('project-create-lite', input),
+
+  // Load a project by ID
+  projectLoadLite: (projectId: string) => ipcRenderer.invoke('project-load-lite', projectId),
+
+  // List all projects
+  projectList: () => ipcRenderer.invoke('project-list'),
+
+  // Delete a project
+  projectDelete: (projectId: string) => ipcRenderer.invoke('project-delete', projectId),
+
+  // Save timeline to a project
+  projectSaveTimeline: (projectId: string, timeline: any) =>
+    ipcRenderer.invoke('project-save-timeline', projectId, timeline),
+
+  // Import local audio/video file (opens file picker)
+  projectImportLocalMedia: () => ipcRenderer.invoke('project-import-local-media'),
+
+  // Normalize audio to mono WAV for analysis
+  normalizeAudioToWav: (inputPath: string, projectId: string) =>
+    ipcRenderer.invoke('normalize-audio-to-wav', inputPath, projectId),
+
+  // Set project audio path after analysis
+  projectSetAudioPath: (projectId: string, audioPath: string) =>
+    ipcRenderer.invoke('project-set-audio-path', projectId, audioPath),
 });
 
 originalConsole.log('[Preload] MIDI bridge initialized');

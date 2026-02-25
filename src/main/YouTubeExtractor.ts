@@ -10,6 +10,8 @@ import path from 'path';
 import fs from 'fs';
 import { createRequire } from 'module';
 import { loggers } from '../utils/logger';
+import { classifyError } from './extractionErrors';
+import type { ExtractionError } from '../core/rhythmTypes';
 
 // yt-dlp-wrap is CommonJS
 const require = createRequire(import.meta.url);
@@ -21,6 +23,8 @@ export interface ExtractionProgress {
   message?: string;
   outputPath?: string;
   videoInfo?: VideoInfo;
+  /** Typed error info when status === 'error' */
+  typedError?: ExtractionError;
 }
 
 export interface VideoInfo {
@@ -124,7 +128,8 @@ export class YouTubeExtractor {
       const videoInfo = await this.getVideoInfo(url);
 
       if (!videoInfo) {
-        onProgress?.({ status: 'error', message: 'Failed to get video info' });
+        const typedError = classifyError(new Error('Failed to get video info - video may be unavailable'));
+        onProgress?.({ status: 'error', message: typedError.message, typedError });
         return null;
       }
 
@@ -173,7 +178,8 @@ export class YouTubeExtractor {
           })
           .on('error', (err: Error) => {
             loggers.main.error('[YouTubeExtractor] Extraction failed', { error: err.message });
-            onProgress?.({ status: 'error', message: err.message });
+            const typedError = classifyError(err);
+            onProgress?.({ status: 'error', message: typedError.message, typedError });
             reject(err);
           })
           .on('close', () => {
@@ -182,17 +188,19 @@ export class YouTubeExtractor {
               onProgress?.({ status: 'complete', progress: 100, outputPath, videoInfo });
               resolve(outputPath);
             } else {
-              const error = 'Output file not created';
-              loggers.main.error('[YouTubeExtractor] Extraction failed', { error });
-              onProgress?.({ status: 'error', message: error });
-              reject(new Error(error));
+              const error = new Error('Output file not created');
+              const typedError = classifyError(error);
+              loggers.main.error('[YouTubeExtractor] Extraction failed', { error: error.message });
+              onProgress?.({ status: 'error', message: typedError.message, typedError });
+              reject(error);
             }
           });
       });
     } catch (err) {
       const error = err as Error;
       loggers.main.error('[YouTubeExtractor] Extraction error', { error: error.message });
-      onProgress?.({ status: 'error', message: error.message });
+      const typedError = classifyError(error);
+      onProgress?.({ status: 'error', message: typedError.message, typedError });
       return null;
     }
   }

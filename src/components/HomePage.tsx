@@ -4,12 +4,14 @@ import { TheTighteningLogo } from './TheTighteningLogo';
 interface HomePageProps {
   onSongPractice: () => void;
   onYoutubePractice: () => void;
+  onRhythmPractice?: () => void;
   loadingStatus?: string;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   onSongPractice,
   onYoutubePractice,
+  onRhythmPractice,
   loadingStatus,
 }) => {
   return (
@@ -119,6 +121,53 @@ export const HomePage: React.FC<HomePageProps> = ({
             Open →
           </div>
         </button>
+
+        {/* Rhythm Trainer card */}
+        {onRhythmPractice && (
+          <button
+            onClick={onRhythmPractice}
+            style={{
+              width: '220px',
+              padding: '32px 24px',
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              color: '#eee',
+              fontFamily: 'monospace',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              transition: 'border-color 0.15s, background-color 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#e8a';
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#3a2e20';
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#333';
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#2a2a2a';
+            }}
+          >
+            <div style={{ fontSize: '32px' }}>🎸</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#e8a' }}>
+              Rhythm Trainer
+            </div>
+            <div style={{ fontSize: '12px', color: '#888', lineHeight: '1.6' }}>
+              Auto chord detection<br />
+              Beat grid + timeline<br />
+              MIDI chord practice
+            </div>
+            <div style={{
+              marginTop: '8px',
+              fontSize: '13px',
+              color: '#e8a',
+            }}>
+              Open →
+            </div>
+          </button>
+        )}
       </div>
 
       {loadingStatus && (
