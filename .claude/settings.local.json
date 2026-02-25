@@ -88,7 +88,9 @@
       "Bash(/mnt/c/Windows/System32/taskkill.exe:*)",
       "Bash(\"/mnt/c/Program Files/nodejs/npm\" install plotly.js-dist-min)",
       "WebFetch(domain:www.youtube.com)",
-      "WebFetch(domain:aatishb.com)"
+      "WebFetch(domain:aatishb.com)",
+      "Bash(del \"C:\\\\Users\\\\eldri\\\\projects\\\\the-tightening\\\\src\\\\components\\\\FallingNotesCanvas.tsx\")",
+      "Bash(npx vite build:*)"
     ],
     "deny": [],
     "ask": []
