@@ -282,10 +282,29 @@ with the same text anchor to get the total delta.
 - `src/components/RhythmPage.tsx` — change `moveLyrics` scope to `line`, add line targetKey
 - `src/core/lyricsAlign.ts` — add line-level matching in `applyLyricCorrections`
 
+### Status: Steps 1, 2, 4 DONE. Step 3 deferred.
+
 ### Definition of Done
-1. Nudge one lyric line → reanalyze → only that line is shifted, all others unchanged.
-2. Nudge same line twice → reanalyze → line shifted by cumulative delta.
-3. Section-level shift (future UI) → reanalyze → entire section shifted correctly.
+1. ✅ Nudge one lyric line → reanalyze → only that line is shifted, all others unchanged.
+2. ✅ Nudge same line twice → reanalyze → line shifted by cumulative delta.
+3. ⬜ Section-level shift UI — needs user-facing scope chooser (deferred to Phase H).
+
+## Phase H: Correction Scope Chooser UI (TODO)
+
+The per-row arrow buttons now correctly use `line` scope. But users need a way to
+apply corrections at broader scopes (section, global, "from here down") for
+systematic drift. This should be a user choice, not hardcoded.
+
+### Proposed UI
+- When user nudges a line, show a brief scope selector: "Apply to: This line | This section | All from here"
+- "This line" = current behavior (scope: line)
+- "This section" = scope: section_occurrence, shifts all lyrics in the current section
+- "All from here" = scope: section_class or a new scope, shifts everything from this bar onward
+
+### Design TBD
+Exact interaction pattern needs user input — could be a dropdown, a modal, or
+modifier keys (e.g., Shift+arrow = section scope). Defer until line-level
+correction is validated in practice.
 
 ## Deferred Backlog
 1. MIDI live scoring completion.

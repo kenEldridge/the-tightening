@@ -51,6 +51,10 @@ declare global {
         projectId: string,
         lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number }
       ) => Promise<boolean>;
+      projectSaveHints: (
+        projectId: string,
+        hints: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number }
+      ) => Promise<boolean>;
       fetchLyrics: (artist: string, title: string) => Promise<{ ok: boolean; lyrics?: string; syncedLyrics?: string; error?: string }>;
     };
   }

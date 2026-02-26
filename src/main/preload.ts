@@ -191,6 +191,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number },
   ) => ipcRenderer.invoke('project-save-lyrics', projectId, lyricsData),
 
+  // Save analysis hints to project
+  projectSaveHints: (
+    projectId: string,
+    hints: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number },
+  ) => ipcRenderer.invoke('project-save-hints', projectId, hints),
+
   // Fetch lyrics from the internet
   fetchLyrics: (artist: string, title: string) =>
     ipcRenderer.invoke('fetch-lyrics', artist, title),

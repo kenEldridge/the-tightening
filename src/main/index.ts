@@ -14,6 +14,7 @@ import {
   setProjectAudioPath,
   saveProjectTimeline,
   saveProjectLyrics,
+  saveProjectHints,
   deleteProject,
 } from './projectStorage';
 import { classifyError } from './extractionErrors';
@@ -550,6 +551,17 @@ ipcMain.handle(
     lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number },
   ) => {
     return saveProjectLyrics(projectId, lyricsData);
+  },
+);
+
+ipcMain.handle(
+  'project-save-hints',
+  async (
+    _event,
+    projectId: string,
+    hints: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number },
+  ) => {
+    return saveProjectHints(projectId, hints);
   },
 );
 

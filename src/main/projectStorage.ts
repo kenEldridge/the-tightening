@@ -193,6 +193,24 @@ export function saveProjectLyrics(
 }
 
 /**
+ * Save analysis hints to a project (persisted across reanalyses)
+ */
+export function saveProjectHints(
+  projectId: string,
+  hints: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number },
+): boolean {
+  const project = loadProject(projectId);
+  if (!project) return false;
+
+  project.analysisHints = hints;
+  project.lastOpenedAt = new Date().toISOString();
+
+  fs.writeFileSync(getProjectPath(projectId), JSON.stringify(project, null, 2));
+  loggers.main.info('[ProjectStorage] Saved analysis hints', { projectId, hints });
+  return true;
+}
+
+/**
  * Delete a project
  */
 export function deleteProject(projectId: string): boolean {

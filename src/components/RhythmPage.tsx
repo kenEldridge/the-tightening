@@ -203,6 +203,19 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       if (typeof options?.tempoHint === 'number') analyzerOptions.tempoHint = options.tempoHint;
       if (options?.timeSignatureHint) analyzerOptions.timeSignatureHint = options.timeSignatureHint;
 
+      // Persist analysis hints on the project so they survive across reanalyses
+      if (options) {
+        const hintsToSave: PracticeProjectLite['analysisHints'] = {};
+        if (options.keyHint) hintsToSave.keyHint = options.keyHint;
+        if (typeof options.tempoHint === 'number') hintsToSave.tempoHint = options.tempoHint;
+        if (options.timeSignatureHint) {
+          hintsToSave.timeSignatureHint = `${options.timeSignatureHint.numerator}/${options.timeSignatureHint.denominator}`;
+        }
+        if (typeof options.lyricsBarOffset === 'number') hintsToSave.lyricsBarOffset = options.lyricsBarOffset;
+        project.analysisHints = hintsToSave;
+        window.electronAPI.projectSaveHints?.(project.id, hintsToSave);
+      }
+
       const requestedOffset = options?.lyricsBarOffset;
       const lyricsBarOffset = Number.isFinite(requestedOffset)
         ? Math.trunc(requestedOffset as number)
@@ -513,6 +526,7 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
             timeline={timeline}
             audioPath={currentProject?.audioPath || null}
             currentLyricsBarOffset={currentProject?.lyricsBarOffset || 0}
+            savedHints={currentProject?.analysisHints}
             previewPlayerRef={previewPlayerRef}
             onEdit={applyTimelineEdit}
             onMoveLyrics={moveLyrics}
@@ -702,22 +716,27 @@ const TimelineView: React.FC<{
   timeline: ChordTimelineArtifact;
   audioPath: string | null;
   currentLyricsBarOffset: number;
+  savedHints?: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number };
   previewPlayerRef: React.MutableRefObject<RhythmPreviewPlayer | null>;
   onEdit: (op: TimelineEditOp) => void;
   onMoveLyrics: (fromIdx: number, direction: -1 | 1) => void;
   onPractice: (barRange?: { start: number; end: number }) => void;
   onReanalyze?: (opts?: AnalysisOptions) => void;
-}> = ({ timeline, audioPath, currentLyricsBarOffset, previewPlayerRef, onEdit, onMoveLyrics, onPractice, onReanalyze }) => {
+}> = ({ timeline, audioPath, currentLyricsBarOffset, savedHints, previewPlayerRef, onEdit, onMoveLyrics, onPractice, onReanalyze }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSymbol, setEditSymbol] = useState('');
   const [hearItState, setHearItState] = useState<HearItState | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Analysis hints for re-analyze
-  const [hintKey, setHintKey] = useState('');
-  const [hintTempo, setHintTempo] = useState('');
-  const [hintTimeSig, setHintTimeSig] = useState<'auto' | '3/4' | '4/4'>('auto');
-  const [hintLyricsOffset, setHintLyricsOffset] = useState('');
+  // Analysis hints for re-analyze (initialized from persisted project hints)
+  const [hintKey, setHintKey] = useState(savedHints?.keyHint || '');
+  const [hintTempo, setHintTempo] = useState(savedHints?.tempoHint ? String(savedHints.tempoHint) : '');
+  const [hintTimeSig, setHintTimeSig] = useState<'auto' | '3/4' | '4/4'>(
+    (savedHints?.timeSignatureHint as 'auto' | '3/4' | '4/4') || 'auto'
+  );
+  const [hintLyricsOffset, setHintLyricsOffset] = useState(
+    savedHints?.lyricsBarOffset !== undefined ? String(savedHints.lyricsBarOffset) : ''
+  );
   const [showHints, setShowHints] = useState(false);
 
   // Loop controls

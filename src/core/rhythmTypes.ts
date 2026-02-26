@@ -171,6 +171,13 @@ export interface PracticeProjectLite {
   cachedSyncedLyrics?: string;
   /** Global lyrics shift in bars applied after alignment (positive = later) */
   lyricsBarOffset?: number;
+  /** Persisted analysis hints (survive across reanalyses) */
+  analysisHints?: {
+    keyHint?: string;
+    tempoHint?: number;
+    timeSignatureHint?: string; // 'auto' | '3/4' | '4/4'
+    lyricsBarOffset?: number;
+  };
   /** When created */
   createdAt: string;
   /** When last opened */
