@@ -10,7 +10,7 @@ import { RhythmAnalyzer } from '../core/RhythmAnalyzer';
 import { createTimeline, applyEdit } from '../core/timelineEditor';
 import { buildPracticePayload, validateChordPress, createEmptyStats } from '../core/rhythmTrainer';
 import { RhythmPreviewPlayer, type PreviewMode, type HearItState } from '../core/RhythmPreviewPlayer';
-import { applyLyricsToTimeline, parseArtistTitle, shiftLyricsByBars, applyLyricCorrections, generateTimelineFingerprints } from '../core/lyricsAlign';
+import { applyLyricsToTimeline, parseArtistTitle, shiftLyricsByBars, applyLyricCorrections } from '../core/lyricsAlign';
 import type {
   PracticeProjectLite,
   ChordTimelineArtifact,
@@ -338,24 +338,14 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       updatedChords[toIdx].lyrics = lyricsText;
     }
 
-    // Record as a lyric_correction edit (default scope: section_occurrence)
-    // Find the section fingerprint for this bar
-    const fingerprints = generateTimelineFingerprints(timeline.chords);
-    let targetKey = 'global';
-    let scope: import('../core/rhythmTypes').LyricCorrectionScope = 'section_occurrence';
-
-    // Find the fingerprint that covers fromIdx
-    const fpEntries = [...fingerprints.entries()].sort((a, b) => a[0] - b[0]);
-    for (let i = fpEntries.length - 1; i >= 0; i--) {
-      if (fpEntries[i][0] <= fromIdx) {
-        targetKey = fpEntries[i][1];
-        break;
-      }
-    }
+    // Record as a line-level lyric_correction edit
+    // targetKey format: line|bar<N>|txt<first40chars>
+    const textAnchor = lyricsText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().slice(0, 40);
+    const targetKey = `line|bar${fromIdx}|txt${textAnchor}`;
 
     const correctionEdit: import('../core/rhythmTypes').TimelineEdit = {
       id: `edit_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      op: { type: 'lyric_correction', scope, targetKey, deltaBars: direction },
+      op: { type: 'lyric_correction', scope: 'line' as const, targetKey, deltaBars: direction },
       timestamp: new Date().toISOString(),
     };
 
@@ -366,15 +356,9 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       modifiedAt: new Date().toISOString(),
     };
 
-    // Also track the global offset for backwards compat
-    const nextLyricsBarOffset = (currentProject.lyricsBarOffset || 0) + direction;
-
     setTimeline(updated);
-    setCurrentProject({ ...currentProject, timeline: updated, lyricsBarOffset: nextLyricsBarOffset });
+    setCurrentProject({ ...currentProject, timeline: updated });
     await window.electronAPI.projectSaveTimeline(currentProject.id, updated);
-    await window.electronAPI.projectSaveLyrics?.(currentProject.id, {
-      lyricsBarOffset: nextLyricsBarOffset,
-    });
   }, [timeline, currentProject]);
 
   // ============================================

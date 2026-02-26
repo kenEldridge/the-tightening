@@ -228,6 +228,65 @@ Definition of done:
 3. Vocal energy is used in baseline structural lyric placement.
 4. Phase A has measurable pass/fail thresholds, not qualitative-only goals.
 
+## Phase G: Fix Correction → Reanalyze Iteration (NEXT)
+
+### Problem (Observed)
+Baseline lyrics placement is now good (Phases A+B working). But when a user nudges
+a single lyric line (e.g., bar 125 → 124), then reanalyzes, the correction shifts
+the **entire section** by +1 bar instead of just that one line. Every lyric after
+bar 124 is now wrong. This defeats the purpose of scoped corrections.
+
+### Root Cause
+`moveLyrics` records a `lyric_correction` with `scope: 'section_occurrence'` and
+`deltaBars: direction`. On reanalyze, `applyLyricCorrections` finds all bars in
+that section and shifts all of them by `deltaBars`. A single-line nudge should
+not propagate to the entire section.
+
+### Design Decision: What Scope Should a Single Arrow Nudge Use?
+The arrow buttons on individual lyric rows are inherently **line-level** corrections.
+They move one specific lyric line, not an entire section. The current code incorrectly
+defaults to `section_occurrence`.
+
+### Proposed Fix
+
+#### 1. Change `moveLyrics` default scope to `line`
+The per-row arrow buttons should record `scope: 'line'` with a `targetKey` that
+identifies the specific lyric line, not the section.
+
+**Line-level targetKey format:**
+`line|bar<barNumber>|txt<first40chars>`
+
+This is simpler than the section fingerprint — it anchors to the bar number where
+the lyric originally lived plus its text content. On reanalyze, a line correction
+matches if the same text lands on the same (or nearby) bar in the new baseline.
+
+#### 2. Add line-level matching in `applyLyricCorrections`
+After baseline placement, for each `line`-scoped correction:
+- Parse the original bar number and text anchor from `targetKey`
+- Search the baseline for a chord with matching lyrics text (fuzzy: first 40 chars)
+  within ±3 bars of the original position
+- If found, shift just that one lyric line by `deltaBars`
+- If not found (lyrics text changed or bar drifted too far), log a warning and skip
+
+#### 3. Keep `section_occurrence` scope for explicit user action
+Add a separate "Shift Section" control (not the per-row arrows) that records
+`scope: 'section_occurrence'`. This is the intentional "move all lyrics in this
+verse later by 2 bars" action.
+
+#### 4. Accumulate same-line corrections
+If the user nudges the same line multiple times (bar 125→124, then 124→123),
+the corrections should accumulate. On reanalyze, sum all `line`-scoped corrections
+with the same text anchor to get the total delta.
+
+### Scope Files
+- `src/components/RhythmPage.tsx` — change `moveLyrics` scope to `line`, add line targetKey
+- `src/core/lyricsAlign.ts` — add line-level matching in `applyLyricCorrections`
+
+### Definition of Done
+1. Nudge one lyric line → reanalyze → only that line is shifted, all others unchanged.
+2. Nudge same line twice → reanalyze → line shifted by cumulative delta.
+3. Section-level shift (future UI) → reanalyze → entire section shifted correctly.
+
 ## Deferred Backlog
 1. MIDI live scoring completion.
 2. Practice transport lifecycle cleanup.

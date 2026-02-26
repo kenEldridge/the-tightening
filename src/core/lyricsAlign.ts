@@ -714,11 +714,31 @@ function resolveCorrection(
 }
 
 /**
+ * Normalize text for fuzzy matching: lowercase, strip punctuation, trim, take first 40 chars.
+ */
+function normalizeTextAnchor(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().slice(0, 40);
+}
+
+/**
+ * Parse a line-level targetKey into its components.
+ * Format: line|bar<N>|txt<text>
+ */
+function parseLineTargetKey(targetKey: string): { barNumber: number; textAnchor: string } | null {
+  const match = targetKey.match(/^line\|bar(\d+)\|txt(.*)$/);
+  if (!match) return null;
+  return { barNumber: parseInt(match[1], 10), textAnchor: match[2] };
+}
+
+/**
  * Apply lyric corrections from edit history to a timeline.
  *
- * This is called after baseline lyrics have been placed (via LRC or structural fallback).
- * It uses section fingerprints to match corrections to their targets, then shifts
- * lyrics by the resolved delta.
+ * Handles two correction types:
+ * 1. Line-level: matches a specific lyric line by text content within ±3 bars
+ *    of its original position. Multiple nudges on the same line accumulate.
+ * 2. Section/global level: shifts all lyrics in a section or the entire song.
+ *
+ * Line-level corrections take precedence (applied first, bars are marked as handled).
  */
 export function applyLyricCorrections(
   timeline: ChordTimelineArtifact,
@@ -726,65 +746,142 @@ export function applyLyricCorrections(
   const corrections = extractLyricCorrections(timeline.edits);
   if (corrections.length === 0) return timeline;
 
-  const fingerprints = generateTimelineFingerprints(timeline.chords);
-  if (fingerprints.size === 0) return timeline;
+  const lineCorrections = corrections.filter(c => c.scope === 'line');
+  const sectionCorrections = corrections.filter(c => c.scope !== 'line');
 
   const updatedChords = timeline.chords.map(c => ({ ...c }));
+  const handledBars = new Set<number>(); // bars already shifted by line corrections
+  let lineApplied = 0;
+  let lineSkipped = 0;
 
-  // Group bars by their section fingerprint
-  const sectionBars = new Map<string, number[]>();
-  for (const [barIdx, fp] of fingerprints) {
-    // Find all bars that belong to this section
-    const nextSectionStart = [...fingerprints.keys()]
-      .filter(k => k > barIdx)
-      .sort((a, b) => a - b)[0] ?? updatedChords.length;
+  // --- Line-level corrections ---
+  if (lineCorrections.length > 0) {
+    // Accumulate deltas per text anchor (multiple nudges on the same line)
+    const accumulatedDeltas = new Map<string, { textAnchor: string; originalBar: number; totalDelta: number }>();
+    for (const corr of lineCorrections) {
+      const parsed = parseLineTargetKey(corr.targetKey);
+      if (!parsed) continue;
 
-    for (let i = barIdx; i < nextSectionStart; i++) {
-      if (!sectionBars.has(fp)) sectionBars.set(fp, []);
-      sectionBars.get(fp)!.push(i);
-    }
-  }
-
-  // Apply corrections per section
-  for (const [fp, barIndices] of sectionBars) {
-    const delta = resolveCorrection(fp, corrections);
-    if (delta === 0) continue;
-
-    // Collect lyrics/sections from these bars
-    const lyricData: Array<{ lyrics?: string; section?: string; sourceIdx: number }> = [];
-    for (const idx of barIndices) {
-      if (updatedChords[idx].lyrics || updatedChords[idx].section) {
-        lyricData.push({
-          lyrics: updatedChords[idx].lyrics,
-          section: updatedChords[idx].section,
-          sourceIdx: idx,
+      const existing = accumulatedDeltas.get(parsed.textAnchor);
+      if (existing) {
+        existing.totalDelta += corr.deltaBars;
+      } else {
+        accumulatedDeltas.set(parsed.textAnchor, {
+          textAnchor: parsed.textAnchor,
+          originalBar: parsed.barNumber,
+          totalDelta: corr.deltaBars,
         });
-        updatedChords[idx].lyrics = undefined;
-        updatedChords[idx].section = undefined;
       }
     }
 
-    // Reapply at shifted positions
-    for (const data of lyricData) {
-      const targetIdx = data.sourceIdx + delta;
-      if (targetIdx >= 0 && targetIdx < updatedChords.length) {
-        if (data.lyrics) {
-          if (updatedChords[targetIdx].lyrics) {
-            updatedChords[targetIdx].lyrics += ' / ' + data.lyrics;
-          } else {
-            updatedChords[targetIdx].lyrics = data.lyrics;
+    // Apply each accumulated line correction
+    for (const [, { textAnchor, originalBar, totalDelta }] of accumulatedDeltas) {
+      if (totalDelta === 0) continue;
+
+      // Search for matching lyrics text within ±3 bars of original position
+      const searchRadius = 3;
+      let matchIdx = -1;
+      let bestDist = Infinity;
+
+      for (let i = Math.max(0, originalBar - searchRadius);
+           i <= Math.min(updatedChords.length - 1, originalBar + searchRadius);
+           i++) {
+        if (!updatedChords[i].lyrics) continue;
+        if (handledBars.has(i)) continue;
+        const normalized = normalizeTextAnchor(updatedChords[i].lyrics!);
+        if (normalized === textAnchor) {
+          const dist = Math.abs(i - originalBar);
+          if (dist < bestDist) {
+            bestDist = dist;
+            matchIdx = i;
           }
         }
-        if (data.section && !updatedChords[targetIdx].section) {
-          updatedChords[targetIdx].section = data.section;
+      }
+
+      if (matchIdx >= 0) {
+        const targetIdx = matchIdx + totalDelta;
+        if (targetIdx >= 0 && targetIdx < updatedChords.length) {
+          const lyricsText = updatedChords[matchIdx].lyrics;
+          updatedChords[matchIdx].lyrics = undefined;
+          handledBars.add(matchIdx);
+
+          if (updatedChords[targetIdx].lyrics) {
+            updatedChords[targetIdx].lyrics += ' / ' + lyricsText;
+          } else {
+            updatedChords[targetIdx].lyrics = lyricsText;
+          }
+          handledBars.add(targetIdx);
+          lineApplied++;
+        } else {
+          lineSkipped++;
+        }
+      } else {
+        console.warn('[LyricsAlign] Line correction target not found', { textAnchor, originalBar });
+        lineSkipped++;
+      }
+    }
+  }
+
+  // --- Section/global corrections ---
+  let sectionApplied = 0;
+  if (sectionCorrections.length > 0) {
+    const fingerprints = generateTimelineFingerprints(updatedChords);
+
+    // Group bars by their section fingerprint
+    const sectionBars = new Map<string, number[]>();
+    for (const [barIdx, fp] of fingerprints) {
+      const nextSectionStart = [...fingerprints.keys()]
+        .filter(k => k > barIdx)
+        .sort((a, b) => a - b)[0] ?? updatedChords.length;
+
+      for (let i = barIdx; i < nextSectionStart; i++) {
+        if (!sectionBars.has(fp)) sectionBars.set(fp, []);
+        sectionBars.get(fp)!.push(i);
+      }
+    }
+
+    for (const [fp, barIndices] of sectionBars) {
+      const delta = resolveCorrection(fp, sectionCorrections);
+      if (delta === 0) continue;
+
+      const lyricData: Array<{ lyrics?: string; section?: string; sourceIdx: number }> = [];
+      for (const idx of barIndices) {
+        if (handledBars.has(idx)) continue; // already handled by line correction
+        if (updatedChords[idx].lyrics || updatedChords[idx].section) {
+          lyricData.push({
+            lyrics: updatedChords[idx].lyrics,
+            section: updatedChords[idx].section,
+            sourceIdx: idx,
+          });
+          updatedChords[idx].lyrics = undefined;
+          updatedChords[idx].section = undefined;
+        }
+      }
+
+      for (const data of lyricData) {
+        const targetIdx = data.sourceIdx + delta;
+        if (targetIdx >= 0 && targetIdx < updatedChords.length) {
+          if (data.lyrics) {
+            if (updatedChords[targetIdx].lyrics) {
+              updatedChords[targetIdx].lyrics += ' / ' + data.lyrics;
+            } else {
+              updatedChords[targetIdx].lyrics = data.lyrics;
+            }
+          }
+          if (data.section && !updatedChords[targetIdx].section) {
+            updatedChords[targetIdx].section = data.section;
+          }
+          sectionApplied++;
         }
       }
     }
   }
 
   console.log('[LyricsAlign] Applied lyric corrections', {
-    correctionCount: corrections.length,
-    sectionsAffected: [...sectionBars.keys()].filter(fp => resolveCorrection(fp, corrections) !== 0).length,
+    total: corrections.length,
+    lineApplied,
+    lineSkipped,
+    sectionApplied,
   });
 
   return { ...timeline, chords: updatedChords };
