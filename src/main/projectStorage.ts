@@ -163,13 +163,32 @@ export function saveProjectTimeline(
 /**
  * Save cached lyrics to a project
  */
-export function saveProjectLyrics(projectId: string, lyrics: string): boolean {
+export function saveProjectLyrics(
+  projectId: string,
+  lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number },
+): boolean {
   const project = loadProject(projectId);
   if (!project) return false;
 
-  (project as any).cachedLyrics = lyrics;
+  const payload = typeof lyricsData === 'string' ? { lyrics: lyricsData } : lyricsData;
+  if (payload.lyrics !== undefined) {
+    project.cachedLyrics = payload.lyrics;
+  }
+  if (payload.syncedLyrics !== undefined) {
+    project.cachedSyncedLyrics = payload.syncedLyrics;
+  }
+  if (payload.lyricsBarOffset !== undefined && Number.isFinite(payload.lyricsBarOffset)) {
+    project.lyricsBarOffset = Math.trunc(payload.lyricsBarOffset);
+  }
+  project.lastOpenedAt = new Date().toISOString();
+
   fs.writeFileSync(getProjectPath(projectId), JSON.stringify(project, null, 2));
-  loggers.main.info('[ProjectStorage] Saved cached lyrics', { projectId, length: lyrics.length });
+  loggers.main.info('[ProjectStorage] Saved cached lyrics', {
+    projectId,
+    hasLyrics: typeof payload.lyrics === 'string',
+    hasSyncedLyrics: typeof payload.syncedLyrics === 'string',
+    lyricsBarOffset: project.lyricsBarOffset ?? 0,
+  });
   return true;
 }
 

@@ -8,7 +8,7 @@
  *    distributes lines proportionally across bars.
  */
 
-import type { ChordTimelineArtifact } from './rhythmTypes';
+import type { ChordTimelineArtifact, TimelineEdit, LyricCorrectionScope } from './rhythmTypes';
 
 // ============================================
 // LRC Timed Lyrics
@@ -75,6 +75,63 @@ function applyTimedLyrics(
   });
 
   return { ...timeline, chords: updatedChords };
+}
+
+/**
+ * Shift all lyric (and section) placements by a fixed number of bars.
+ * Positive offset moves text later in the song; negative moves earlier.
+ */
+export function shiftLyricsByBars(
+  timeline: ChordTimelineArtifact,
+  rawBarOffset: number,
+): ChordTimelineArtifact {
+  const barOffset = Number.isFinite(rawBarOffset) ? Math.trunc(rawBarOffset) : 0;
+  if (barOffset === 0) return timeline;
+
+  const sourceChords = timeline.chords;
+  const updatedChords: ChordTimelineArtifact['chords'] = sourceChords.map(c => ({
+    ...c,
+    lyrics: undefined,
+    section: undefined,
+  }));
+  let movedBars = 0;
+  let droppedBars = 0;
+
+  for (let i = 0; i < sourceChords.length; i++) {
+    const source = sourceChords[i];
+    if (!source.lyrics && !source.section) continue;
+
+    const targetIdx = i + barOffset;
+    if (targetIdx < 0 || targetIdx >= updatedChords.length) {
+      droppedBars++;
+      continue;
+    }
+
+    movedBars++;
+
+    if (source.lyrics) {
+      if (updatedChords[targetIdx].lyrics) {
+        updatedChords[targetIdx].lyrics += ' / ' + source.lyrics;
+      } else {
+        updatedChords[targetIdx].lyrics = source.lyrics;
+      }
+    }
+
+    if (source.section && !updatedChords[targetIdx].section) {
+      updatedChords[targetIdx].section = source.section;
+    }
+  }
+
+  console.log('[LyricsAlign] Shifted lyrics by bars', {
+    barOffset,
+    movedBars,
+    droppedBars,
+  });
+
+  return {
+    ...timeline,
+    chords: updatedChords,
+  };
 }
 
 // ============================================
@@ -175,35 +232,85 @@ function parseLyrics(raw: string): LyricsSection[] {
 
 /**
  * Estimate how many bars of intro before singing starts.
- * Uses a simple heuristic: look at total energy per bar.
- * The intro is the initial run of low-energy bars before energy stabilizes.
- * Falls back to a percentage estimate if energy data isn't useful.
+ *
+ * Uses vocalEnergy data when available: smooths by 3-bar median, finds the
+ * first run of 3 consecutive bars above a dynamic threshold.
+ * Falls back to song-length heuristic when vocal energy is missing or unusable.
  */
 function estimateIntroBars(chords: ChordTimelineArtifact['chords']): number {
-  // Simple approach: assume intro is ~8-15% of the song
-  // Most pop songs have 4-8 bar intros
   const totalBars = chords.length;
+  if (totalBars < 3) return 0;
 
-  // Look for a significant energy jump in the first quarter of the song
-  // using confidence as a proxy (higher confidence = clearer harmonic content = more instruments)
-  const firstQuarter = Math.floor(totalBars * 0.25);
-  let avgConfEarly = 0;
-  let avgConfLater = 0;
+  // Check if vocalEnergy data is usable (present on >50% of bars)
+  const barsWithEnergy = chords.filter(c => c.vocalEnergy !== undefined && c.vocalEnergy > 0).length;
+  const hasUsableEnergy = barsWithEnergy > totalBars * 0.5;
 
-  for (let i = 0; i < Math.min(8, totalBars); i++) {
-    avgConfEarly += chords[i].confidence;
+  if (hasUsableEnergy) {
+    // Extract raw vocal energy values
+    const rawEnergy = chords.map(c => c.vocalEnergy ?? 0);
+
+    // 3-bar median smoothing
+    const smoothed: number[] = [];
+    for (let i = 0; i < rawEnergy.length; i++) {
+      const window: number[] = [];
+      for (let j = Math.max(0, i - 1); j <= Math.min(rawEnergy.length - 1, i + 1); j++) {
+        window.push(rawEnergy[j]);
+      }
+      window.sort((a, b) => a - b);
+      smoothed.push(window[Math.floor(window.length / 2)]);
+    }
+
+    // Dynamic threshold: T = max(0.55, medianEnergy + 0.1)
+    const sortedEnergy = [...smoothed].sort((a, b) => a - b);
+    const medianEnergy = sortedEnergy[Math.floor(sortedEnergy.length / 2)];
+    const threshold = Math.max(0.55, medianEnergy + 0.1);
+
+    // Find first run of 3 consecutive bars above threshold
+    for (let i = 0; i <= smoothed.length - 3; i++) {
+      if (smoothed[i] >= threshold &&
+          smoothed[i + 1] >= threshold &&
+          smoothed[i + 2] >= threshold) {
+        // Intro ends at bar i (0-indexed), clamp to [0, 12]
+        const introBars = Math.min(12, Math.max(0, i));
+        console.log('[LyricsAlign] Vocal-energy intro detection', {
+          introBars,
+          threshold: threshold.toFixed(3),
+          medianEnergy: medianEnergy.toFixed(3),
+          firstVocalBar: i,
+        });
+        return introBars;
+      }
+    }
+
+    // No clear vocal onset found — all bars are below threshold or instrumental
+    // Fall back to length heuristic
+    console.log('[LyricsAlign] No vocal onset found via energy, falling back to heuristic');
   }
-  avgConfEarly /= Math.min(8, totalBars);
 
-  for (let i = firstQuarter; i < Math.min(firstQuarter + 8, totalBars); i++) {
-    avgConfLater += chords[i].confidence;
-  }
-  avgConfLater /= Math.min(8, totalBars - firstQuarter);
-
-  // Default: estimate 4-8 bars of intro depending on song length
+  // Fallback: song-length heuristic
   if (totalBars > 80) return 8;
   if (totalBars > 40) return 4;
   return 2;
+}
+
+/**
+ * Score bars by vocal energy for lyric placement priority.
+ * Returns an array of weights (0-1) where higher = better for lyrics.
+ * Bars with low vocal energy are de-prioritized.
+ */
+function computeBarLyricWeights(chords: ChordTimelineArtifact['chords']): number[] {
+  const hasEnergy = chords.some(c => c.vocalEnergy !== undefined && c.vocalEnergy > 0);
+  if (!hasEnergy) {
+    // No energy data — all bars equally weighted
+    return chords.map(() => 1);
+  }
+
+  const energies = chords.map(c => c.vocalEnergy ?? 0);
+  const maxEnergy = Math.max(...energies, 0.01);
+
+  // Normalize to 0-1, then apply a floor so even low-energy bars
+  // can receive lyrics if needed (just lower priority)
+  return energies.map(e => Math.max(0.2, e / maxEnergy));
 }
 
 /**
@@ -276,6 +383,9 @@ export function applyLyricsToTimeline(
     totalAllocated++;
   }
 
+  // Compute vocal energy weights for smart line placement
+  const barWeights = computeBarLyricWeights(updatedChords);
+
   // Place lyrics
   let barIdx = introBars;
 
@@ -300,14 +410,31 @@ export function applyLyricsToTimeline(
       updatedChords[barIdx].section = section.label;
     }
 
-    // Distribute lines within this section's bars
+    // Distribute lines within this section's bars, preferring high-vocal-energy bars
+    const sectionEnd = Math.min(barIdx + barsForSection, totalBars);
     const barsPerLine = Math.max(1, Math.floor(barsForSection / section.lines.length));
 
     for (let lineIdx = 0; lineIdx < section.lines.length; lineIdx++) {
-      const targetBar = barIdx + lineIdx * barsPerLine;
-      if (targetBar >= totalBars) break;
+      const nominalBar = barIdx + lineIdx * barsPerLine;
+      if (nominalBar >= sectionEnd) break;
 
-      updatedChords[targetBar].lyrics = section.lines[lineIdx];
+      // Search within a small window around nominal position for a high-energy bar
+      let bestBar = nominalBar;
+      let bestWeight = barWeights[nominalBar] ?? 0;
+      const searchRadius = Math.min(1, Math.floor(barsPerLine / 2));
+      for (let offset = -searchRadius; offset <= searchRadius; offset++) {
+        const candidate = nominalBar + offset;
+        if (candidate < barIdx || candidate >= sectionEnd) continue;
+        if (updatedChords[candidate].lyrics) continue; // already has lyrics
+        if ((barWeights[candidate] ?? 0) > bestWeight) {
+          bestWeight = barWeights[candidate] ?? 0;
+          bestBar = candidate;
+        }
+      }
+
+      if (bestBar < totalBars) {
+        updatedChords[bestBar].lyrics = section.lines[lineIdx];
+      }
     }
 
     // Advance past this section + gap
@@ -337,6 +464,330 @@ function applyLyricsFlat(
   }
 
   return { ...timeline, chords };
+}
+
+// ============================================
+// Section Fingerprinting (Phase D)
+// ============================================
+
+interface SectionSpan {
+  label: string;
+  sectionType: string;
+  startBarIdx: number;
+  endBarIdx: number;
+  firstLine: string;
+}
+
+/**
+ * Identify sections from the chord timeline (using section labels + lyric gaps).
+ * Returns section spans with their bar ranges.
+ */
+function identifySections(chords: ChordTimelineArtifact['chords']): SectionSpan[] {
+  const spans: SectionSpan[] = [];
+  let currentSection: SectionSpan | null = null;
+
+  for (let i = 0; i < chords.length; i++) {
+    const chord = chords[i];
+
+    if (chord.section) {
+      // Explicit section boundary
+      if (currentSection) {
+        currentSection.endBarIdx = i - 1;
+        spans.push(currentSection);
+      }
+      const sType = inferSectionType(chord.section);
+      currentSection = {
+        label: chord.section,
+        sectionType: sType,
+        startBarIdx: i,
+        endBarIdx: i,
+        firstLine: chord.lyrics || '',
+      };
+    } else if (!currentSection && chord.lyrics) {
+      // No section marker yet but lyrics started — create a synthetic section
+      currentSection = {
+        label: 'unknown',
+        sectionType: 'unknown',
+        startBarIdx: i,
+        endBarIdx: i,
+        firstLine: chord.lyrics,
+      };
+    }
+
+    if (currentSection) {
+      currentSection.endBarIdx = i;
+      if (!currentSection.firstLine && chord.lyrics) {
+        currentSection.firstLine = chord.lyrics;
+      }
+    }
+  }
+
+  if (currentSection) {
+    spans.push(currentSection);
+  }
+
+  // If no sections were found, try to segment by lyric time gaps
+  if (spans.length === 0) {
+    return segmentByLyricGaps(chords);
+  }
+
+  return spans;
+}
+
+/**
+ * Segment into pseudo-sections by lyric time gaps (for LRC without headers).
+ * A gap > max(8s, 2 bars) starts a new section.
+ */
+function segmentByLyricGaps(chords: ChordTimelineArtifact['chords']): SectionSpan[] {
+  const spans: SectionSpan[] = [];
+  const lyricsIndices = chords
+    .map((c, i) => c.lyrics ? i : -1)
+    .filter(i => i >= 0);
+
+  if (lyricsIndices.length === 0) return [];
+
+  // Estimate bar duration for gap threshold
+  const barDuration = chords.length >= 2
+    ? chords[1].startTime - chords[0].startTime
+    : 2;
+  const gapThresholdBars = Math.max(2, Math.ceil(8 / barDuration));
+
+  let sectionStart = lyricsIndices[0];
+  let sectionNum = 1;
+
+  for (let i = 1; i < lyricsIndices.length; i++) {
+    const gap = lyricsIndices[i] - lyricsIndices[i - 1];
+    if (gap > gapThresholdBars) {
+      // End current section, start new one
+      spans.push({
+        label: `Section ${sectionNum}`,
+        sectionType: 'unknown',
+        startBarIdx: sectionStart,
+        endBarIdx: lyricsIndices[i - 1],
+        firstLine: chords[sectionStart].lyrics || '',
+      });
+      sectionNum++;
+      sectionStart = lyricsIndices[i];
+    }
+  }
+
+  // Final section
+  spans.push({
+    label: `Section ${sectionNum}`,
+    sectionType: 'unknown',
+    startBarIdx: sectionStart,
+    endBarIdx: lyricsIndices[lyricsIndices.length - 1],
+    firstLine: chords[sectionStart].lyrics || '',
+  });
+
+  return spans;
+}
+
+/**
+ * Infer section type from a section label string.
+ */
+function inferSectionType(label: string): string {
+  const lower = label.toLowerCase();
+  if (/chorus|refrain/i.test(lower)) return 'chorus';
+  if (/verse/i.test(lower)) return 'verse';
+  if (/bridge/i.test(lower)) return 'bridge';
+  if (/intro/i.test(lower)) return 'intro';
+  if (/outro/i.test(lower)) return 'outro';
+  if (/pre-?chorus/i.test(lower)) return 'prechorus';
+  if (/interlude/i.test(lower)) return 'interlude';
+  return 'unknown';
+}
+
+/**
+ * Generate a stable fingerprint key for a section.
+ *
+ * Format: <sectionType>|occ<N>|txt<textAnchor>|p<positionBucket>
+ *
+ * This key is used as the targetKey in lyric_correction edits,
+ * enabling corrections to survive reanalysis.
+ */
+export function generateSectionFingerprint(
+  sectionType: string,
+  occurrenceIndex: number,
+  firstLine: string,
+  startBarIdx: number,
+  totalBars: number,
+): string {
+  const textAnchor = firstLine
+    ? firstLine.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().slice(0, 40)
+    : 'no_lyrics';
+  const positionBucket = totalBars > 0
+    ? Math.floor((startBarIdx / totalBars) * 10)
+    : 0;
+  return `${sectionType}|occ${occurrenceIndex}|txt${textAnchor}|p${positionBucket}`;
+}
+
+/**
+ * Generate fingerprints for all sections in a timeline.
+ * Returns a map of chord index -> fingerprint key.
+ */
+export function generateTimelineFingerprints(
+  chords: ChordTimelineArtifact['chords'],
+): Map<number, string> {
+  const sections = identifySections(chords);
+  const totalBars = chords.length;
+
+  // Count occurrences per section type
+  const occurrenceCounts = new Map<string, number>();
+  const fingerprints = new Map<number, string>();
+
+  for (const section of sections) {
+    const count = (occurrenceCounts.get(section.sectionType) || 0) + 1;
+    occurrenceCounts.set(section.sectionType, count);
+
+    const key = generateSectionFingerprint(
+      section.sectionType,
+      count,
+      section.firstLine,
+      section.startBarIdx,
+      totalBars,
+    );
+
+    fingerprints.set(section.startBarIdx, key);
+  }
+
+  return fingerprints;
+}
+
+// ============================================
+// Lyric Correction Resolution (Phase C)
+// ============================================
+
+interface ResolvedCorrection {
+  scope: LyricCorrectionScope;
+  targetKey: string;
+  deltaBars: number;
+}
+
+/**
+ * Extract lyric correction edits from the edit history.
+ */
+function extractLyricCorrections(edits: TimelineEdit[]): ResolvedCorrection[] {
+  return edits
+    .filter(e => e.op.type === 'lyric_correction')
+    .map(e => {
+      const op = e.op as { type: 'lyric_correction'; scope: LyricCorrectionScope; targetKey: string; deltaBars: number };
+      return { scope: op.scope, targetKey: op.targetKey, deltaBars: op.deltaBars };
+    });
+}
+
+/**
+ * Resolve the effective delta for a given section fingerprint,
+ * applying precedence: line > section_occurrence > section_class > global.
+ *
+ * For line scope, targetKey is the exact fingerprint.
+ * For section_occurrence, targetKey matches the fingerprint.
+ * For section_class, targetKey is just the sectionType (e.g., "chorus").
+ * For global, targetKey is "global".
+ */
+function resolveCorrection(
+  fingerprint: string,
+  corrections: ResolvedCorrection[],
+): number {
+  // Parse fingerprint parts
+  const parts = fingerprint.split('|');
+  const sectionType = parts[0] || '';
+
+  // Check in precedence order
+  // 1. Line-level (exact fingerprint match)
+  const lineMatch = corrections.find(c => c.scope === 'line' && c.targetKey === fingerprint);
+  if (lineMatch) return lineMatch.deltaBars;
+
+  // 2. Section occurrence (exact fingerprint match, different scope)
+  const occMatch = corrections.find(c => c.scope === 'section_occurrence' && c.targetKey === fingerprint);
+  if (occMatch) return occMatch.deltaBars;
+
+  // 3. Section class (matches section type)
+  const classMatch = corrections.find(c => c.scope === 'section_class' && c.targetKey === sectionType);
+  if (classMatch) return classMatch.deltaBars;
+
+  // 4. Global
+  const globalMatch = corrections.find(c => c.scope === 'global');
+  if (globalMatch) return globalMatch.deltaBars;
+
+  return 0;
+}
+
+/**
+ * Apply lyric corrections from edit history to a timeline.
+ *
+ * This is called after baseline lyrics have been placed (via LRC or structural fallback).
+ * It uses section fingerprints to match corrections to their targets, then shifts
+ * lyrics by the resolved delta.
+ */
+export function applyLyricCorrections(
+  timeline: ChordTimelineArtifact,
+): ChordTimelineArtifact {
+  const corrections = extractLyricCorrections(timeline.edits);
+  if (corrections.length === 0) return timeline;
+
+  const fingerprints = generateTimelineFingerprints(timeline.chords);
+  if (fingerprints.size === 0) return timeline;
+
+  const updatedChords = timeline.chords.map(c => ({ ...c }));
+
+  // Group bars by their section fingerprint
+  const sectionBars = new Map<string, number[]>();
+  for (const [barIdx, fp] of fingerprints) {
+    // Find all bars that belong to this section
+    const nextSectionStart = [...fingerprints.keys()]
+      .filter(k => k > barIdx)
+      .sort((a, b) => a - b)[0] ?? updatedChords.length;
+
+    for (let i = barIdx; i < nextSectionStart; i++) {
+      if (!sectionBars.has(fp)) sectionBars.set(fp, []);
+      sectionBars.get(fp)!.push(i);
+    }
+  }
+
+  // Apply corrections per section
+  for (const [fp, barIndices] of sectionBars) {
+    const delta = resolveCorrection(fp, corrections);
+    if (delta === 0) continue;
+
+    // Collect lyrics/sections from these bars
+    const lyricData: Array<{ lyrics?: string; section?: string; sourceIdx: number }> = [];
+    for (const idx of barIndices) {
+      if (updatedChords[idx].lyrics || updatedChords[idx].section) {
+        lyricData.push({
+          lyrics: updatedChords[idx].lyrics,
+          section: updatedChords[idx].section,
+          sourceIdx: idx,
+        });
+        updatedChords[idx].lyrics = undefined;
+        updatedChords[idx].section = undefined;
+      }
+    }
+
+    // Reapply at shifted positions
+    for (const data of lyricData) {
+      const targetIdx = data.sourceIdx + delta;
+      if (targetIdx >= 0 && targetIdx < updatedChords.length) {
+        if (data.lyrics) {
+          if (updatedChords[targetIdx].lyrics) {
+            updatedChords[targetIdx].lyrics += ' / ' + data.lyrics;
+          } else {
+            updatedChords[targetIdx].lyrics = data.lyrics;
+          }
+        }
+        if (data.section && !updatedChords[targetIdx].section) {
+          updatedChords[targetIdx].section = data.section;
+        }
+      }
+    }
+  }
+
+  console.log('[LyricsAlign] Applied lyric corrections', {
+    correctionCount: corrections.length,
+    sectionsAffected: [...sectionBars.keys()].filter(fp => resolveCorrection(fp, corrections) !== 0).length,
+  });
+
+  return { ...timeline, chords: updatedChords };
 }
 
 // ============================================

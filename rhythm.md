@@ -1,175 +1,234 @@
-﻿# Rhythm Plan Refresh (Grounded to Current Code, Feb 25, 2026)
+# Rhythm Plan Revision (Analyzer + Lyrics First, Feb 26, 2026)
 
 ## Summary
-Goal: lock the app around a trustable rhythm practice loop:
+Primary loop for this phase:
 
-`analyze -> hear -> correct -> practice`
+`analyze -> align lyrics -> correct -> reanalyze`
 
-Current code already ships ingestion, analyzer v2, and Hear It A/B playback.
-The biggest remaining gap is transport-driven practice with live MIDI scoring.
+This revision is code-grounded to current implementation in:
+- `src/core/RhythmAnalyzer.ts`
+- `src/core/lyricsAlign.ts`
+- `src/core/rhythmTypes.ts`
+- `src/core/timelineEditor.ts`
+- `src/main/projectStorage.ts`
 
-Long-form implementation history has been moved to:
-`docs/rhythm-notes-2026-02-25.md`
+MIDI/practice polish is deferred. Structural reliability and lyric alignment intent preservation are the active top priority.
 
-## Implementation Status (Done / Partial / Not Started)
+## Current Code Findings (Ground Truth)
+1. `buildBeatGrid(...)` currently creates a uniform grid with constant beat confidence `0.8`.
+2. Onset strength is currently energy-difference based (not full spectral flux).
+3. Dual 3/4 vs 4/4 chord-pipeline comparison already exists.
+4. `detectVocalEnergyPerBar(...)` exists and writes `ChordEvent.vocalEnergy`.
+5. `lyricsAlign.estimateIntroBars(...)` currently ignores `vocalEnergy` and uses song-length constants.
+6. `TimelineEditOp` has no lyric correction op yet (`set_chord`, `shift_boundary`, `split_event`, `merge_with_next` only).
+7. Project storage is raw JSON; old projects will be deleted and rebuilt rather than migrated.
 
-### Done
-- `PracticeProjectLite` storage and project IPC are in place.
-- In-process `RhythmAnalyzer` v3 with dual time-sig evaluation, K-S key detection, diatonic scoring, smoothing, and consolidation.
-- `RhythmPreviewPlayer` exists with generated/source modes and shared cursor.
-- Timeline view has Hear It transport, A/B toggle, seek, and active-chord highlight.
-- Lyrics fetch/cache/alignment pipeline exists.
-- Re-analysis hints exist (`keyHint`, `tempoHint`, `timeSignatureHint`).
+## Scope
+1. Analyzer structural reliability with explicit drift correction spec.
+2. Vocal-energy-informed lyric baseline placement.
+3. Scoped lyric correction model with deterministic reapply on reanalyze.
+4. Integrate lyric corrections into timeline edit history.
 
-### Partial
-- Looping exists in player API but timeline UI does not expose loop controls.
-- Core timeline edit ops exist, but timeline UI is mostly `set_chord`.
-- Practice view is not transport-driven.
-- MIDI listeners and validation are not wired into live practice flow.
-- Stats state exists but does not increment from real MIDI practice flow.
-- Analyzer trust is inconsistent on 3/4 and key detection edge cases.
+## Out of Scope (Deferred)
+1. MIDI scoring and transport-driven practice improvements.
+2. Practice UX work unrelated to analyzer and lyrics trust.
+3. New audio engine capabilities.
 
-### Not Started
-- Cross-song validation pack (Mull of Kintyre, Hey Jude, one additional song) is not formalized.
-- Unit/integration coverage for Hear It loop plus practice transport is not in place.
+## Execution Plan
 
-## Known Gaps Blocking Trust
-- No timeline UI for `Loop Start Bar`, `Loop End Bar`, `Set Loop`, `Clear Loop`.
-- No generated-playback trust indicator for skipped chords (missing voicings).
-- No transport-following practice mode.
-- No live MIDI scoring pipeline (note on/off -> chord window -> stats).
-- Time signature and key estimation need stronger reliability on non-4/4 songs.
-- Rhythm practice stats and transport lifecycle ownership are not explicit in code contracts.
+### Phase Dependencies and Parallelism
+1. Phases A and B are independent and may be implemented in parallel.
+2. Phases C and D are interdependent and should be implemented together.
+3. Phase E (external evidence) is optional and runs after C+D if pursued.
 
-## Execution Plan (Ordered Phases + Definition of Done)
+### Phase A: Beat Grid Reliability (Option B, Concrete)
+Goal: fix grid drift, not just smoothing side effects.
 
-### Phase 1A: Complete Hear It Trust Surface
 Scope files:
-- `src/components/RhythmPage.tsx`
-- `src/core/RhythmPreviewPlayer.ts`
-- `rhythm.md`
+- `src/core/RhythmAnalyzer.ts`
+- `src/core/rhythmTypes.ts`
+- `src/components/RhythmPage.tsx` (confidence surfacing only)
 
 Implementation:
-- Add timeline loop controls:
-  - `Loop Start Bar`
-  - `Loop End Bar`
-  - `Set Loop`
-  - `Clear Loop`
-- Wire controls to existing `setLoopBars(...)` and `setLoop(null)`.
-- Add UI indicator for generated-playback skipped chords (missing voicing coverage).
+1. Keep current onset strength function, but add onset-peak extraction:
+   - local maxima on `strength[]`
+   - peak threshold: `>= p75(nonzeroStrength)` per track
+2. Extract beat-correction tuning literals into named constants in `RhythmAnalyzer.ts`:
+   - `BEAT_NUDGE_WEIGHT = 0.6`
+   - `BEAT_NUDGE_MAX_SHIFT_SEC = 0.08`
+   - `BEAT_NUDGE_SEARCH_WINDOW_SEC = 0.12`
+   - keep constants centralized for future `AnalysisOptions` exposure
+3. Add onset-weighted beat correction after uniform grid creation:
+   - predicted beat time = uniform beat time
+   - search window per beat: `W = min(BEAT_NUDGE_SEARCH_WINDOW_SEC, 0.25 * beatDuration)`
+   - if strongest peak found in `[-W, +W]`, apply:
+      - `delta = peakTime - predictedTime`
+      - `nudgedTime = predictedTime + BEAT_NUDGE_WEIGHT * delta`
+      - clamp final shift to `[-BEAT_NUDGE_MAX_SHIFT_SEC, +BEAT_NUDGE_MAX_SHIFT_SEC]`
+   - if no peak found, keep predicted time unchanged
+4. Enforce monotonic beat order after nudging:
+   - minimum spacing `>= 0.35 * beatDuration`
+   - if violated, fall back to previous valid spacing
+5. Replace fixed beat confidence with per-beat confidence:
+   - onset support score (normalized local peak strength)
+   - correction magnitude penalty (larger shifts lower confidence)
+   - confidence floor for no-peak beats
+6. Keep existing dual 3/4 vs 4/4 arbitration, but expose explicit decision metrics:
+   - `score34`, `score44`, `accentPreference`, `winnerMargin`
+7. Deterministic reruns:
+   - deterministic tie-break ordering for equal scores
+   - no random sources in decision path
 
-Definition of done:
-- User can set and clear loop from timeline UI.
-- A/B mode preserves cursor while loop is active.
-- UI exposes skipped-chord count for trust transparency.
+Definition of done (pass/fail):
+1. Mull of Kintyre time signature:
+   - no-hint reruns (3 consecutive) all choose 3/4
+2. Beat grid drift:
+   - against manual bar-start fixture (first 60 bars), mean absolute bar-start error < 100 ms
+3. Determinism:
+   - same audio + same hints + same code returns identical time-signature winner and barCount on 5 reruns
 
-### Phase 1B: Transport-Driven Practice + Live MIDI Scoring
+### Phase B: Vocal-Energy-Informed Baseline Lyrics
+Goal: baseline lyric placement should use available singing/instrumental evidence before user correction rules.
+
 Scope files:
-- `src/components/RhythmPage.tsx`
-- `src/core/rhythmTrainer.ts`
+- `src/core/lyricsAlign.ts`
 - `src/core/rhythmTypes.ts`
 
 Implementation:
-- Replace manual Prev/Next practice with transport-following chord windows.
-- Start generated transport when entering practice.
-- Subscribe to `onMidiNoteOn` and `onMidiNoteOff` during practice.
-- Remove MIDI listeners on practice stop/exit/unmount.
-- Evaluate current chord window using existing `validateChordPress(...)`.
-- Increment `correct`, `late`, `wrong`, `missed`, and `total` in real time.
-- Track a per-chord resolved state so each change is counted once.
+1. Replace `estimateIntroBars(...)` constants with vocal-energy-driven intro detection:
+   - smooth `vocalEnergy` by 3-bar median
+   - find first run of 3 bars with energy above threshold `T = max(0.55, medianEnergy + 0.1)`
+   - intro ends at run start; clamp intro bars to `[0, 12]`
+2. Fallback when vocal energy is unusable:
+   - if missing on > 50% bars, revert to current length-based heuristic
+3. Structural fallback mapping uses vocalEnergy as bar weight:
+   - low-energy bars are de-prioritized for lyric line placement
+   - preserve section ordering and minimum 1-bar line spacing
+4. Keep timed lyrics (LRC) highest priority when available
 
 Definition of done:
-- Practice cursor follows playback time.
-- MIDI input updates stats in real time.
-- Practice exit reliably stops transport and cleans up listeners.
+1. On a fixture with known vocal onset, intro bar estimate matches expected onset window.
+2. Structural fallback avoids placing dense lyrics in clearly instrumental intro bars when vocalEnergy is present.
 
-### Phase 1C: Analyzer Reliability Pass
+### Phase C: Scoped Corrections + Reanalyze Intent Preservation
+Goal: corrections apply at intended scope, not accidental global shift.
+Dependency note: implement together with Phase D because `targetKey` depends on the section fingerprint scheme.
+
+Scope files:
+- `src/core/rhythmTypes.ts`
+- `src/core/timelineEditor.ts`
+- `src/components/RhythmPage.tsx`
+- `src/core/lyricsAlign.ts`
+
+Implementation:
+1. Add lyric correction op to `TimelineEditOp`:
+   - `{ type: 'lyric_correction'; scope: 'line' | 'section_occurrence' | 'section_class' | 'global'; targetKey: string; deltaBars: number }`
+2. Source of truth:
+   - lyric corrections are persisted in `timeline.edits[]` as `lyric_correction`
+   - no separate mutation-only store as primary truth
+3. Build alignment rules from edit history at analysis time:
+   - resolver precedence: line > section_occurrence > section_class > global
+4. Reanalyze flow:
+   - regenerate baseline placement
+   - reapply resolved correction rules from edits
+5. UI behavior:
+   - default nudge scope: `section_occurrence`
+   - support explicit scope chooser in correction controls
+   - repeated-section propagation is suggestion-based, never automatic global promotion
+
+Definition of done:
+1. Nudge + reanalyze does not snap corrected line back.
+2. Verse-only correction leaves chorus unchanged unless explicitly propagated.
+3. Global corrections still work when intentionally chosen.
+
+### Phase D: Section Fingerprint Design (Concrete)
+Goal: stable target keys for scoped lyric corrections across reruns.
+
+Fingerprint key format:
+`<sectionType>|occ<occurrenceIndex>|txt<textAnchor>|p<positionBucket>`
+
+Definitions:
+1. `sectionType`:
+   - explicit header label if available (`verse`, `chorus`, `bridge`, etc.)
+   - else inferred from repeated-first-line clustering
+   - else `unknown`
+2. `occurrenceIndex`:
+   - Nth occurrence within each `sectionType` in timeline order (1-based)
+3. `textAnchor`:
+   - normalized first non-empty line, truncated to 40 chars
+   - if absent, `no_lyrics`
+4. `positionBucket`:
+   - decile bucket from section start bar: `floor((startBar / totalBars) * 10)`
+
+Edge-case handling:
+1. Lyrics not fetched yet:
+   - use synthetic sections from timeline spans; `textAnchor = no_lyrics`
+2. Same text in Verse 1 and Verse 3:
+   - separated by `occurrenceIndex` and `positionBucket`
+3. LRC with no section headers:
+   - segment into pseudo-sections by lyric time gaps (`> max(8s, 2 bars)`)
+   - then apply same fingerprint scheme
+
+Definition of done:
+1. Fingerprints are stable across reruns for unchanged song/audio.
+2. Same repeated text in different song regions does not collapse into one occurrence key.
+
+### Phase E (Optional): External Evidence Fusion
+Goal: improve structure confidence without replacing internal analyzer.
+
 Scope files:
 - `src/core/RhythmAnalyzer.ts`
-- `rhythm.md`
+- `src/main/index.ts` (if provider calls run in main process)
 
 Implementation:
-- Keep `timeSignatureHint` as highest-priority override.
-- Add dual time-signature evaluation path for `3/4` and `4/4`.
-- Choose winner using one combined score with:
-  - unique-chord penalty,
-  - low-confidence-bar ratio,
-  - anomaly ratio.
-- Blend current key scoring with pitch-class histogram correlation.
-- Keep analyzer in-process TypeScript (no Python/WASM in this phase).
+1. Provider adapter interface for optional priors.
+2. Async refine pass after baseline result.
+3. Apply priors as soft weighting only if confidence improves.
+4. Provider timeout/failure cannot block baseline analysis.
 
 Definition of done:
-- Mull of Kintyre baseline improves vs current output.
-- With hints provided, output is deterministic and stable across reruns.
+1. Baseline timeline appears immediately.
+2. Refinement applies only on measurable confidence gain.
+3. Provider failures are non-fatal.
 
-### Phase 1D: Lyrics Accuracy (Non-Blocking for Rhythm Trust)
-Scope files:
-- `src/main/index.ts`
-- `src/core/lyricsAlign.ts`
-- `src/App.tsx`
+## Public Interface and Type Changes
+1. `TimelineEditOp` includes `lyric_correction`.
+2. `AnalysisOptions` may include correction application mode flags (if needed for staged rollout).
+4. `BeatEvent.confidence` becomes real per-beat confidence (not constant).
+5. `AnalysisResult.meta` adds time-signature decision diagnostics for debugging.
 
-Implementation:
-- Extend `fetch-lyrics` response shape to include `syncedLyrics` when available from LRCLIB.
-- Prefer timestamped lyric mapping when `syncedLyrics` exists.
-- Fall back to current structural alignment when timed lyrics are unavailable.
+## Test Matrix
 
-Definition of done:
-- Timed lyrics align by bar when available.
-- Structural fallback remains functional.
+### Unit
+1. Vocal-energy intro detection:
+   - fixture with known vocal onset yields expected intro bar estimate
+3. Beat nudge:
+   - beats with nearby strong onsets move toward peak within clamp limits
+4. Correction precedence:
+   - line overrides section; section overrides global
+5. Section fingerprint:
+   - same text in different occurrences yields distinct keys
 
-### Public Interfaces / Type Changes
-- Keep existing `PreviewMode`, `HearItState`, and `RhythmPreviewPlayer`.
-- Add `PracticeTransportState` in `src/core/rhythmTypes.ts` with:
-  - `playing: boolean`
-  - `currentTime: number`
-  - `activeChordId: string | null`
-  - `loopRange: { startTime: number; endTime: number } | null`
-- Keep `ChordValidationStats`, but define ownership/lifecycle in practice flow.
-- Widen lyrics API typing in:
-  - `src/App.tsx`
-  - `src/main/preload.ts`
-  to: `{ ok: boolean; lyrics?: string; syncedLyrics?: string; error?: string }`
-- No new backend IPC unless renderer-only implementation proves insufficient.
+### Integration
+1. Reanalyze after section-only correction:
+   - corrected section remains, unrelated sections unchanged
+3. Reanalyze after global correction:
+   - full-song shift preserved
+4. External evidence off/on:
+   - baseline still works with providers disabled or failing
 
-## Acceptance Criteria + Test Matrix
+### Manual
+1. Mull of Kintyre (3/4 stress case, first 60 bars checked)
+2. Hey Jude (4/4 baseline)
+3. One additional repeated-chorus song
 
-### Acceptance Criteria
-1. User can analyze a song and immediately use Hear It with play/pause/stop/seek and bar-loop UI.
-2. Generated chords+bass and source audio support A/B trust-check with shared cursor.
-3. Timeline edits are audible immediately in generated playback without re-analysis.
-4. Practice mode is transport-driven and MIDI stats increment during live play.
-5. Analyzer behavior is validated on at least 3 songs with documented failure modes and hint effects.
-6. `rhythm.md` statuses stay accurate (`done` vs `partial`) with no overstated completion claims.
+## Acceptance Criteria
+1. Plan focus is analyzer + lyrics, with MIDI/practice clearly deferred.
+2. Reanalyze preserves correction intent at selected scope.
+3. Vocal energy is used in baseline structural lyric placement.
+4. Phase A has measurable pass/fail thresholds, not qualitative-only goals.
 
-### Test Matrix
-
-#### Unit
-- Generated event schedule timing correctness from timeline chord events.
-- Loop boundary conversion from bars to seconds.
-- Cursor continuity when toggling A/B modes.
-- Validation-window classification around timing thresholds.
-- Time-signature evaluator behavior on fixed fixtures.
-
-#### Integration
-- Analyze project then Hear It generated/source both work.
-- Toggle A/B without cursor reset drift.
-- Loop controls work in both generated and source playback.
-- Practice mode receives MIDI and updates stats live.
-- Re-analysis with hints persists updated timeline.
-
-#### Manual Acceptance Set
-- Mull of Kintyre (3/4 stress case).
-- Hey Jude (4/4 baseline).
-- One additional song for generalization.
-- For each song:
-  - run A/B in at least 3 sections,
-  - apply at least 2 timeline edits,
-  - confirm audible improvement.
-
-### Assumptions and Defaults
-- Default Hear It mode remains `generated`.
-- Trust workflow remains A/B toggle (no overlay mix).
-- Analyzer remains in-process TypeScript for this phase.
-- No new dependencies by default.
-- No new backend IPC by default.
-- Lyrics improvements are useful but non-blocking for phase 1 completion.
+## Deferred Backlog
+1. MIDI live scoring completion.
+2. Practice transport lifecycle cleanup.
+3. Loop UX polish outside analyzer/lyrics phase needs.

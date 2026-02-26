@@ -124,11 +124,14 @@ export interface ChordTimelineArtifact {
 // Edit Operations
 // ============================================
 
+export type LyricCorrectionScope = 'line' | 'section_occurrence' | 'section_class' | 'global';
+
 export type TimelineEditOp =
   | { type: 'set_chord'; eventId: string; symbol: string; barStart?: number; barEnd?: number }
   | { type: 'shift_boundary'; eventId: string; deltaBeat: number }
   | { type: 'split_event'; eventId: string; atBar: number; atBeat: number }
-  | { type: 'merge_with_next'; eventId: string };
+  | { type: 'merge_with_next'; eventId: string }
+  | { type: 'lyric_correction'; scope: LyricCorrectionScope; targetKey: string; deltaBars: number };
 
 export interface TimelineEdit {
   id: string;
@@ -164,6 +167,10 @@ export interface PracticeProjectLite {
   timeline: ChordTimelineArtifact | null;
   /** Cached raw lyrics text (so re-analysis doesn't need to re-fetch) */
   cachedLyrics?: string;
+  /** Cached synced lyrics (LRC format) for stable timed re-analysis */
+  cachedSyncedLyrics?: string;
+  /** Global lyrics shift in bars applied after alignment (positive = later) */
+  lyricsBarOffset?: number;
   /** When created */
   createdAt: string;
   /** When last opened */
@@ -213,6 +220,16 @@ export interface AnalysisOptions {
   timeSignatureHint?: { numerator: number; denominator: number };
   /** Hint for key (e.g. 'D', 'Am', 'Bb'). If provided, diatonic chords are boosted. */
   keyHint?: string;
+  /** Global lyrics shift in bars, applied after lyric alignment (optional) */
+  lyricsBarOffset?: number;
+}
+
+export interface TimeSignatureDecision {
+  score34: number;
+  score44: number;
+  accentPreference: string;
+  winnerMargin: number;
+  winner: string;
 }
 
 export interface AnalysisResult {
@@ -222,6 +239,7 @@ export interface AnalysisResult {
     analysisVersion: string;
     configHash: string;
     durationMs: number;
+    timeSignatureDecision?: TimeSignatureDecision;
   };
 }
 

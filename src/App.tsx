@@ -47,7 +47,10 @@ declare global {
       projectImportLocalMedia: () => Promise<any>;
       normalizeAudioToWav: (inputPath: string, projectId: string) => Promise<any>;
       projectSetAudioPath: (projectId: string, audioPath: string) => Promise<boolean>;
-      projectSaveLyrics: (projectId: string, lyrics: string) => Promise<boolean>;
+      projectSaveLyrics: (
+        projectId: string,
+        lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number }
+      ) => Promise<boolean>;
       fetchLyrics: (artist: string, title: string) => Promise<{ ok: boolean; lyrics?: string; syncedLyrics?: string; error?: string }>;
     };
   }

@@ -26,6 +26,7 @@ import type {
   BeatGrid,
   ChordEvent,
   ChordVoicingData,
+  TimeSignatureDecision,
 } from './rhythmTypes';
 import { CHORD_VOICINGS } from '../data/chordProgressions';
 
@@ -68,6 +69,13 @@ function toMono(buffer: AudioBuffer): Float32Array {
 
 const FFT_SIZE = 4096;
 const HOP_SIZE = 2048;
+
+// Beat correction tuning constants (centralized for future AnalysisOptions exposure)
+const BEAT_NUDGE_WEIGHT = 0.6;
+const BEAT_NUDGE_MAX_SHIFT_SEC = 0.08;
+const BEAT_NUDGE_SEARCH_WINDOW_SEC = 0.12;
+const BEAT_NUDGE_MIN_SPACING_FACTOR = 0.35; // minimum spacing as fraction of beatDuration
+const BEAT_CONFIDENCE_FLOOR = 0.3; // confidence for beats with no nearby onset peak
 
 /**
  * Fast chroma extraction using Goertzel algorithm
@@ -167,6 +175,101 @@ function computeOnsetStrength(
   }
 
   return { times, strength };
+}
+
+/**
+ * Extract onset peaks (local maxima above p75 threshold).
+ * Returns arrays of peak times and their normalized strengths.
+ */
+function extractOnsetPeaks(
+  times: Float32Array,
+  strength: Float32Array,
+): { peakTimes: number[]; peakStrengths: number[] } {
+  if (strength.length < 3) return { peakTimes: [], peakStrengths: [] };
+
+  // Compute p75 of nonzero strength values as threshold
+  const nonzero = Array.from(strength).filter(s => s > 0).sort((a, b) => a - b);
+  const threshold = nonzero.length > 0
+    ? nonzero[Math.floor(nonzero.length * 0.75)]
+    : 0;
+
+  const peakTimes: number[] = [];
+  const peakStrengths: number[] = [];
+
+  for (let i = 1; i < strength.length - 1; i++) {
+    if (strength[i] >= threshold &&
+        strength[i] >= strength[i - 1] &&
+        strength[i] >= strength[i + 1]) {
+      peakTimes.push(times[i]);
+      peakStrengths.push(strength[i]);
+    }
+  }
+
+  // Normalize peak strengths to 0-1
+  const maxPeak = peakStrengths.length > 0 ? Math.max(...peakStrengths) : 1;
+  if (maxPeak > 0) {
+    for (let i = 0; i < peakStrengths.length; i++) {
+      peakStrengths[i] /= maxPeak;
+    }
+  }
+
+  return { peakTimes, peakStrengths };
+}
+
+/**
+ * Apply onset-weighted correction to beat times.
+ * Nudges each beat toward the nearest strong onset within a search window.
+ */
+function applyBeatNudging(
+  beatGrid: BeatGrid,
+  peakTimes: number[],
+  peakStrengths: number[],
+): void {
+  if (peakTimes.length === 0) return;
+
+  const beatDuration = 60 / beatGrid.tempo;
+  const W = Math.min(BEAT_NUDGE_SEARCH_WINDOW_SEC, 0.25 * beatDuration);
+  const minSpacing = BEAT_NUDGE_MIN_SPACING_FACTOR * beatDuration;
+
+  for (const beat of beatGrid.beats) {
+    const predicted = beat.time;
+
+    // Find strongest peak within [-W, +W]
+    let bestPeakIdx = -1;
+    let bestPeakStr = 0;
+    for (let p = 0; p < peakTimes.length; p++) {
+      const diff = peakTimes[p] - predicted;
+      if (diff < -W) continue;
+      if (diff > W) break; // peakTimes are sorted
+      if (peakStrengths[p] > bestPeakStr) {
+        bestPeakStr = peakStrengths[p];
+        bestPeakIdx = p;
+      }
+    }
+
+    if (bestPeakIdx >= 0) {
+      const delta = peakTimes[bestPeakIdx] - predicted;
+      const nudge = BEAT_NUDGE_WEIGHT * delta;
+      const clampedNudge = Math.max(-BEAT_NUDGE_MAX_SHIFT_SEC, Math.min(BEAT_NUDGE_MAX_SHIFT_SEC, nudge));
+      beat.time = predicted + clampedNudge;
+
+      // Per-beat confidence: high onset support + low correction penalty
+      const correctionPenalty = Math.abs(clampedNudge) / BEAT_NUDGE_MAX_SHIFT_SEC;
+      beat.confidence = Math.max(BEAT_CONFIDENCE_FLOOR, bestPeakStr * (1 - 0.3 * correctionPenalty));
+    } else {
+      // No peak found — keep predicted time, low confidence
+      beat.confidence = BEAT_CONFIDENCE_FLOOR;
+    }
+  }
+
+  // Enforce monotonic beat order with minimum spacing
+  for (let i = 1; i < beatGrid.beats.length; i++) {
+    const prev = beatGrid.beats[i - 1];
+    const curr = beatGrid.beats[i];
+    if (curr.time - prev.time < minSpacing) {
+      curr.time = prev.time + minSpacing;
+    }
+  }
 }
 
 /**
@@ -336,7 +439,7 @@ function buildBeatGrid(
       bar,
       beatInBar,
       tempoLocal: tempo,
-      confidence: 0.8,
+      confidence: BEAT_CONFIDENCE_FLOOR, // will be updated by applyBeatNudging
     });
 
     beatInBar++;
@@ -1101,8 +1204,14 @@ function runChordPipeline(
   duration: number,
   timeSignature: { numerator: number; denominator: number },
   keyHint?: string,
+  onsetPeaks?: { peakTimes: number[]; peakStrengths: number[] },
 ): ChordPipelineResult {
   const beatGrid = buildBeatGrid(tempo, firstBeat, duration, timeSignature);
+
+  // Apply onset-weighted beat correction if peaks are available
+  if (onsetPeaks) {
+    applyBeatNudging(beatGrid, onsetPeaks.peakTimes, onsetPeaks.peakStrengths);
+  }
 
   const { chords: rawChords, detectedKey } = detectChordsPerBeat(
     audio, sampleRate, beatGrid, keyHint,
@@ -1173,6 +1282,10 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
 
     console.log('[RhythmAnalyzer] Onset strength computed', { frames: strength.length });
 
+    // 2b. Extract onset peaks for beat nudging
+    const onsetPeaks = extractOnsetPeaks(times, strength);
+    console.log('[RhythmAnalyzer] Onset peaks extracted', { count: onsetPeaks.peakTimes.length });
+
     // 3. Estimate tempo
     const tempo = estimateTempo(strength, hopRate, options.tempoHint);
     console.log('[RhythmAnalyzer] Tempo estimated', { bpm: tempo });
@@ -1182,12 +1295,13 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
 
     // 5. Determine time signature
     let bestResult: ChordPipelineResult;
+    let tsDecision: TimeSignatureDecision | undefined;
 
     if (options.timeSignatureHint) {
       // Hint takes highest priority
       bestResult = runChordPipeline(
         audio, sampleRate, tempo, firstBeat, duration,
-        options.timeSignatureHint, options.keyHint,
+        options.timeSignatureHint, options.keyHint, onsetPeaks,
       );
       console.log('[RhythmAnalyzer] Using time signature hint', {
         ts: `${options.timeSignatureHint.numerator}/${options.timeSignatureHint.denominator}`,
@@ -1196,11 +1310,11 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
       // Dual evaluation: try both 3/4 and 4/4, pick the winner
       const result44 = runChordPipeline(
         audio, sampleRate, tempo, firstBeat, duration,
-        { numerator: 4, denominator: 4 }, options.keyHint,
+        { numerator: 4, denominator: 4 }, options.keyHint, onsetPeaks,
       );
       const result34 = runChordPipeline(
         audio, sampleRate, tempo, firstBeat, duration,
-        { numerator: 3, denominator: 4 }, options.keyHint,
+        { numerator: 3, denominator: 4 }, options.keyHint, onsetPeaks,
       );
 
       // Also factor in accent-pattern score as a tiebreaker
@@ -1209,6 +1323,8 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
 
       const score44 = result44.qualityScore + (accentTs.numerator === 4 ? accentBoost : 0);
       const score34 = result34.qualityScore + (accentTs.numerator === 3 ? accentBoost : 0);
+
+      const accentPref = `${accentTs.numerator}/${accentTs.denominator}`;
 
       console.log('[RhythmAnalyzer] Dual time-sig evaluation', {
         '4/4': {
@@ -1225,14 +1341,26 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
           lowConf: result34.lowConfidenceRatio.toFixed(3),
           anomalies: result34.anomalyCount,
         },
-        accentPreference: `${accentTs.numerator}/${accentTs.denominator}`,
+        accentPreference: accentPref,
       });
 
+      // Deterministic tie-break: when scores are equal, prefer 4/4 (more common)
       bestResult = score34 > score44 ? result34 : result44;
+      const winnerScore = score34 > score44 ? score34 : score44;
+      const loserScore = score34 > score44 ? score44 : score34;
+
+      tsDecision = {
+        score34,
+        score44,
+        accentPreference: accentPref,
+        winnerMargin: winnerScore - loserScore,
+        winner: `${bestResult.beatGrid.timeSignature.numerator}/${bestResult.beatGrid.timeSignature.denominator}`,
+      };
 
       console.log('[RhythmAnalyzer] Time signature chosen', {
-        ts: `${bestResult.beatGrid.timeSignature.numerator}/${bestResult.beatGrid.timeSignature.denominator}`,
-        score: (score34 > score44 ? score34 : score44).toFixed(3),
+        ts: tsDecision.winner,
+        score: winnerScore.toFixed(3),
+        margin: tsDecision.winnerMargin.toFixed(4),
       });
     }
 
@@ -1262,9 +1390,10 @@ export class RhythmAnalyzer implements AnalyzerAdapter {
       beatGrid,
       chords,
       meta: {
-        analysisVersion: 'rhythm-analyzer-v3',
-        configHash: `fft${FFT_SIZE}_hop${HOP_SIZE}_key${detectedKey}_ts${beatGrid.timeSignature.numerator}`,
+        analysisVersion: 'rhythm-analyzer-v4',
+        configHash: `fft${FFT_SIZE}_hop${HOP_SIZE}_key${detectedKey}_ts${beatGrid.timeSignature.numerator}_nudge${BEAT_NUDGE_WEIGHT}`,
         durationMs,
+        timeSignatureDecision: tsDecision,
       },
     };
   }

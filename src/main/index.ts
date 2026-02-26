@@ -542,9 +542,16 @@ ipcMain.handle('project-set-audio-path', async (_event, projectId: string, audio
   return setProjectAudioPath(projectId, audioPath);
 });
 
-ipcMain.handle('project-save-lyrics', async (_event, projectId: string, lyrics: string) => {
-  return saveProjectLyrics(projectId, lyrics);
-});
+ipcMain.handle(
+  'project-save-lyrics',
+  async (
+    _event,
+    projectId: string,
+    lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number },
+  ) => {
+    return saveProjectLyrics(projectId, lyricsData);
+  },
+);
 
 // ---- Lyrics Fetch ----
 

@@ -63,6 +63,10 @@ export function applyEdit(
     case 'merge_with_next':
       applyMergeWithNext(newTimeline, op);
       break;
+    case 'lyric_correction':
+      // Lyric corrections are stored as edits but applied during reanalyze,
+      // not as immediate timeline mutations. The edit is recorded for intent preservation.
+      break;
   }
 
   newTimeline.edits.push(edit);

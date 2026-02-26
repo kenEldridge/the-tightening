@@ -186,8 +186,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ============================================
 
   // Save cached lyrics to project
-  projectSaveLyrics: (projectId: string, lyrics: string) =>
-    ipcRenderer.invoke('project-save-lyrics', projectId, lyrics),
+  projectSaveLyrics: (
+    projectId: string,
+    lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number },
+  ) => ipcRenderer.invoke('project-save-lyrics', projectId, lyricsData),
 
   // Fetch lyrics from the internet
   fetchLyrics: (artist: string, title: string) =>
