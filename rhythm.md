@@ -5,308 +5,99 @@ Primary loop for this phase:
 
 `analyze -> align lyrics -> correct -> reanalyze`
 
-This revision is code-grounded to current implementation in:
+Scope files:
 - `src/core/RhythmAnalyzer.ts`
 - `src/core/lyricsAlign.ts`
 - `src/core/rhythmTypes.ts`
 - `src/core/timelineEditor.ts`
+- `src/components/RhythmPage.tsx`
 - `src/main/projectStorage.ts`
 
 MIDI/practice polish is deferred. Structural reliability and lyric alignment intent preservation are the active top priority.
 
-## Current Code Findings (Ground Truth)
-1. `buildBeatGrid(...)` currently creates a uniform grid with constant beat confidence `0.8`.
-2. Onset strength is currently energy-difference based (not full spectral flux).
-3. Dual 3/4 vs 4/4 chord-pipeline comparison already exists.
-4. `detectVocalEnergyPerBar(...)` exists and writes `ChordEvent.vocalEnergy`.
-5. `lyricsAlign.estimateIntroBars(...)` currently ignores `vocalEnergy` and uses song-length constants.
-6. `TimelineEditOp` has no lyric correction op yet (`set_chord`, `shift_boundary`, `split_event`, `merge_with_next` only).
-7. Project storage is raw JSON; old projects will be deleted and rebuilt rather than migrated.
+## Phase Status
 
-## Scope
-1. Analyzer structural reliability with explicit drift correction spec.
-2. Vocal-energy-informed lyric baseline placement.
-3. Scoped lyric correction model with deterministic reapply on reanalyze.
-4. Integrate lyric corrections into timeline edit history.
+| Phase | Description | Status |
+|-------|-------------|--------|
+| A | Beat Grid Reliability | DONE |
+| B | Vocal-Energy Baseline Lyrics | DONE |
+| C | Scoped Corrections + Intent Preservation | DONE |
+| D | Section Fingerprint Design | DONE |
+| E | External Evidence Fusion | SKIPPED |
+| G | Fix Correction → Reanalyze (line scope) | DONE |
+| H | Scope Chooser UI + Global Offset Unification | DONE |
 
 ## Out of Scope (Deferred)
 1. MIDI scoring and transport-driven practice improvements.
 2. Practice UX work unrelated to analyzer and lyrics trust.
 3. New audio engine capabilities.
 
-## Execution Plan
+## Phase A: Beat Grid Reliability — DONE
 
-### Phase Dependencies and Parallelism
-1. Phases A and B are independent and may be implemented in parallel.
-2. Phases C and D are interdependent and should be implemented together.
-3. Phase E (external evidence) is optional and runs after C+D if pursued.
+Onset-peak extraction, beat nudging (weighted toward nearest onset peak), per-beat confidence, deterministic time-signature decision with exposed diagnostics.
 
-### Phase A: Beat Grid Reliability (Option B, Concrete)
-Goal: fix grid drift, not just smoothing side effects.
+Constants: `BEAT_NUDGE_WEIGHT=0.6`, `BEAT_NUDGE_MAX_SHIFT_SEC=0.08`, `BEAT_NUDGE_SEARCH_WINDOW_SEC=0.12`.
 
-Scope files:
-- `src/core/RhythmAnalyzer.ts`
-- `src/core/rhythmTypes.ts`
-- `src/components/RhythmPage.tsx` (confidence surfacing only)
+## Phase B: Vocal-Energy Baseline Lyrics — DONE
 
-Implementation:
-1. Keep current onset strength function, but add onset-peak extraction:
-   - local maxima on `strength[]`
-   - peak threshold: `>= p75(nonzeroStrength)` per track
-2. Extract beat-correction tuning literals into named constants in `RhythmAnalyzer.ts`:
-   - `BEAT_NUDGE_WEIGHT = 0.6`
-   - `BEAT_NUDGE_MAX_SHIFT_SEC = 0.08`
-   - `BEAT_NUDGE_SEARCH_WINDOW_SEC = 0.12`
-   - keep constants centralized for future `AnalysisOptions` exposure
-3. Add onset-weighted beat correction after uniform grid creation:
-   - predicted beat time = uniform beat time
-   - search window per beat: `W = min(BEAT_NUDGE_SEARCH_WINDOW_SEC, 0.25 * beatDuration)`
-   - if strongest peak found in `[-W, +W]`, apply:
-      - `delta = peakTime - predictedTime`
-      - `nudgedTime = predictedTime + BEAT_NUDGE_WEIGHT * delta`
-      - clamp final shift to `[-BEAT_NUDGE_MAX_SHIFT_SEC, +BEAT_NUDGE_MAX_SHIFT_SEC]`
-   - if no peak found, keep predicted time unchanged
-4. Enforce monotonic beat order after nudging:
-   - minimum spacing `>= 0.35 * beatDuration`
-   - if violated, fall back to previous valid spacing
-5. Replace fixed beat confidence with per-beat confidence:
-   - onset support score (normalized local peak strength)
-   - correction magnitude penalty (larger shifts lower confidence)
-   - confidence floor for no-peak beats
-6. Keep existing dual 3/4 vs 4/4 arbitration, but expose explicit decision metrics:
-   - `score34`, `score44`, `accentPreference`, `winnerMargin`
-7. Deterministic reruns:
-   - deterministic tie-break ordering for equal scores
-   - no random sources in decision path
+`estimateIntroBars()` uses 3-bar median smoothed vocal energy, dynamic threshold `T = max(0.55, medianEnergy + 0.1)`, first run of 3 consecutive bars above T. Falls back to length heuristic when vocal energy is missing on >50% bars. `computeBarLyricWeights()` de-prioritizes low-energy bars for structural lyric placement.
 
-Definition of done (pass/fail):
-1. Mull of Kintyre time signature:
-   - no-hint reruns (3 consecutive) all choose 3/4
-2. Beat grid drift:
-   - against manual bar-start fixture (first 60 bars), mean absolute bar-start error < 100 ms
-3. Determinism:
-   - same audio + same hints + same code returns identical time-signature winner and barCount on 5 reruns
+## Phases C+D: Scoped Corrections + Section Fingerprints — DONE
 
-### Phase B: Vocal-Energy-Informed Baseline Lyrics
-Goal: baseline lyric placement should use available singing/instrumental evidence before user correction rules.
+### Correction system
+- `lyric_correction` edit op with scope: `line | section_occurrence | section_class | global`
+- Corrections stored in `timeline.edits[]` as single source of truth
+- On reanalyze: carry over `lyric_correction` edits, regenerate baseline, then apply corrections
+- Precedence: line > section_occurrence > section_class > global
+- Line corrections: accumulate (sum deltas for same text+position)
+- Section/global corrections: latest wins (last edit in array)
 
-Scope files:
-- `src/core/lyricsAlign.ts`
-- `src/core/rhythmTypes.ts`
+### Section fingerprints
+Format: `<sectionType>|occ<N>|txt<textAnchor>|p<positionBucket>`
+- Stable across reruns for unchanged song/audio
+- Position bucket (decile) + occurrence index disambiguate repeated text
 
-Implementation:
-1. Replace `estimateIntroBars(...)` constants with vocal-energy-driven intro detection:
-   - smooth `vocalEnergy` by 3-bar median
-   - find first run of 3 bars with energy above threshold `T = max(0.55, medianEnergy + 0.1)`
-   - intro ends at run start; clamp intro bars to `[0, 12]`
-2. Fallback when vocal energy is unusable:
-   - if missing on > 50% bars, revert to current length-based heuristic
-3. Structural fallback mapping uses vocalEnergy as bar weight:
-   - low-energy bars are de-prioritized for lyric line placement
-   - preserve section ordering and minimum 1-bar line spacing
-4. Keep timed lyrics (LRC) highest priority when available
+### Line-level targetKey
+Format: `line|bar<N>|p<positionDecile>|txt<normalizedText>`
+- Position decile disambiguates identical lyrics at different song positions
+- Accumulation groups corrections within 10 bars with matching text
+- Fuzzy matching: ±3 bar search window on reanalysis
 
-Definition of done:
-1. On a fixture with known vocal onset, intro bar estimate matches expected onset window.
-2. Structural fallback avoids placing dense lyrics in clearly instrumental intro bars when vocalEnergy is present.
+## Phase G: Fix Correction → Reanalyze Iteration — DONE
 
-### Phase C: Scoped Corrections + Reanalyze Intent Preservation
-Goal: corrections apply at intended scope, not accidental global shift.
-Dependency note: implement together with Phase D because `targetKey` depends on the section fingerprint scheme.
+Arrow buttons default to `line` scope. Single-line nudge no longer shifts entire section. Same-line corrections accumulate across multiple nudges.
 
-Scope files:
-- `src/core/rhythmTypes.ts`
-- `src/core/timelineEditor.ts`
-- `src/components/RhythmPage.tsx`
-- `src/core/lyricsAlign.ts`
+## Phase H: Scope Chooser UI + Global Offset Unification — DONE
 
-Implementation:
-1. Add lyric correction op to `TimelineEditOp`:
-   - `{ type: 'lyric_correction'; scope: 'line' | 'section_occurrence' | 'section_class' | 'global'; targetKey: string; deltaBars: number }`
-2. Source of truth:
-   - lyric corrections are persisted in `timeline.edits[]` as `lyric_correction`
-   - no separate mutation-only store as primary truth
-3. Build alignment rules from edit history at analysis time:
-   - resolver precedence: line > section_occurrence > section_class > global
-4. Reanalyze flow:
-   - regenerate baseline placement
-   - reapply resolved correction rules from edits
-5. UI behavior:
-   - default nudge scope: `section_occurrence`
-   - support explicit scope chooser in correction controls
-   - repeated-section propagation is suggestion-based, never automatic global promotion
+### Scope chooser
+- Button group in timeline view: "This line" | "This section" | "Global"
+- Default: "This line" (per-row arrow buttons)
+- Section scope: shifts all lyrics in the current section (uses section fingerprint)
+- Global scope: shifts all lyrics in the song
 
-Definition of done:
-1. Nudge + reanalyze does not snap corrected line back.
-2. Verse-only correction leaves chorus unchanged unless explicitly propagated.
-3. Global corrections still work when intentionally chosen.
-
-### Phase D: Section Fingerprint Design (Concrete)
-Goal: stable target keys for scoped lyric corrections across reruns.
-
-Fingerprint key format:
-`<sectionType>|occ<occurrenceIndex>|txt<textAnchor>|p<positionBucket>`
-
-Definitions:
-1. `sectionType`:
-   - explicit header label if available (`verse`, `chorus`, `bridge`, etc.)
-   - else inferred from repeated-first-line clustering
-   - else `unknown`
-2. `occurrenceIndex`:
-   - Nth occurrence within each `sectionType` in timeline order (1-based)
-3. `textAnchor`:
-   - normalized first non-empty line, truncated to 40 chars
-   - if absent, `no_lyrics`
-4. `positionBucket`:
-   - decile bucket from section start bar: `floor((startBar / totalBars) * 10)`
-
-Edge-case handling:
-1. Lyrics not fetched yet:
-   - use synthetic sections from timeline spans; `textAnchor = no_lyrics`
-2. Same text in Verse 1 and Verse 3:
-   - separated by `occurrenceIndex` and `positionBucket`
-3. LRC with no section headers:
-   - segment into pseudo-sections by lyric time gaps (`> max(8s, 2 bars)`)
-   - then apply same fingerprint scheme
-
-Definition of done:
-1. Fingerprints are stable across reruns for unchanged song/audio.
-2. Same repeated text in different song regions does not collapse into one occurrence key.
-
-### Phase E (Optional): External Evidence Fusion
-Goal: improve structure confidence without replacing internal analyzer.
-
-Scope files:
-- `src/core/RhythmAnalyzer.ts`
-- `src/main/index.ts` (if provider calls run in main process)
-
-Implementation:
-1. Provider adapter interface for optional priors.
-2. Async refine pass after baseline result.
-3. Apply priors as soft weighting only if confidence improves.
-4. Provider timeout/failure cannot block baseline analysis.
-
-Definition of done:
-1. Baseline timeline appears immediately.
-2. Refinement applies only on measurable confidence gain.
-3. Provider failures are non-fatal.
+### Global offset unification
+- `lyricsBarOffset` is now a legacy field, always 0
+- Any existing non-zero `lyricsBarOffset` is migrated once to a `lyric_correction` with `scope: 'global'`
+- All lyric shifts are managed through `lyric_correction` edits in `timeline.edits[]`
+- Removed `lyricsBarOffset` from `AnalysisOptions` and the hints panel
+- No more double-apply risk between `shiftLyricsByBars` and `applyLyricCorrections`
 
 ## Public Interface and Type Changes
-1. `TimelineEditOp` includes `lyric_correction`.
-2. `AnalysisOptions` may include correction application mode flags (if needed for staged rollout).
-4. `BeatEvent.confidence` becomes real per-beat confidence (not constant).
-5. `AnalysisResult.meta` adds time-signature decision diagnostics for debugging.
+1. `TimelineEditOp` includes `lyric_correction` with scope/targetKey/deltaBars.
+2. `BeatEvent.confidence` is real per-beat confidence (not constant).
+3. `AnalysisResult.meta` includes `timeSignatureDecision` diagnostics.
+4. `AnalysisOptions.lyricsBarOffset` removed — global shifts are lyric_correction edits.
+5. `buildLineTargetKey()` exported from lyricsAlign.ts for consistent key generation.
 
-## Test Matrix
-
-### Unit
-1. Vocal-energy intro detection:
-   - fixture with known vocal onset yields expected intro bar estimate
-3. Beat nudge:
-   - beats with nearby strong onsets move toward peak within clamp limits
-4. Correction precedence:
-   - line overrides section; section overrides global
-5. Section fingerprint:
-   - same text in different occurrences yields distinct keys
-
-### Integration
-1. Reanalyze after section-only correction:
-   - corrected section remains, unrelated sections unchanged
-3. Reanalyze after global correction:
-   - full-song shift preserved
-4. External evidence off/on:
-   - baseline still works with providers disabled or failing
-
-### Manual
-1. Mull of Kintyre (3/4 stress case, first 60 bars checked)
-2. Hey Jude (4/4 baseline)
-3. One additional repeated-chorus song
-
-## Acceptance Criteria
-1. Plan focus is analyzer + lyrics, with MIDI/practice clearly deferred.
-2. Reanalyze preserves correction intent at selected scope.
-3. Vocal energy is used in baseline structural lyric placement.
-4. Phase A has measurable pass/fail thresholds, not qualitative-only goals.
-
-## Phase G: Fix Correction → Reanalyze Iteration (NEXT)
-
-### Problem (Observed)
-Baseline lyrics placement is now good (Phases A+B working). But when a user nudges
-a single lyric line (e.g., bar 125 → 124), then reanalyzes, the correction shifts
-the **entire section** by +1 bar instead of just that one line. Every lyric after
-bar 124 is now wrong. This defeats the purpose of scoped corrections.
-
-### Root Cause
-`moveLyrics` records a `lyric_correction` with `scope: 'section_occurrence'` and
-`deltaBars: direction`. On reanalyze, `applyLyricCorrections` finds all bars in
-that section and shifts all of them by `deltaBars`. A single-line nudge should
-not propagate to the entire section.
-
-### Design Decision: What Scope Should a Single Arrow Nudge Use?
-The arrow buttons on individual lyric rows are inherently **line-level** corrections.
-They move one specific lyric line, not an entire section. The current code incorrectly
-defaults to `section_occurrence`.
-
-### Proposed Fix
-
-#### 1. Change `moveLyrics` default scope to `line`
-The per-row arrow buttons should record `scope: 'line'` with a `targetKey` that
-identifies the specific lyric line, not the section.
-
-**Line-level targetKey format:**
-`line|bar<barNumber>|txt<first40chars>`
-
-This is simpler than the section fingerprint — it anchors to the bar number where
-the lyric originally lived plus its text content. On reanalyze, a line correction
-matches if the same text lands on the same (or nearby) bar in the new baseline.
-
-#### 2. Add line-level matching in `applyLyricCorrections`
-After baseline placement, for each `line`-scoped correction:
-- Parse the original bar number and text anchor from `targetKey`
-- Search the baseline for a chord with matching lyrics text (fuzzy: first 40 chars)
-  within ±3 bars of the original position
-- If found, shift just that one lyric line by `deltaBars`
-- If not found (lyrics text changed or bar drifted too far), log a warning and skip
-
-#### 3. Keep `section_occurrence` scope for explicit user action
-Add a separate "Shift Section" control (not the per-row arrows) that records
-`scope: 'section_occurrence'`. This is the intentional "move all lyrics in this
-verse later by 2 bars" action.
-
-#### 4. Accumulate same-line corrections
-If the user nudges the same line multiple times (bar 125→124, then 124→123),
-the corrections should accumulate. On reanalyze, sum all `line`-scoped corrections
-with the same text anchor to get the total delta.
-
-### Scope Files
-- `src/components/RhythmPage.tsx` — change `moveLyrics` scope to `line`, add line targetKey
-- `src/core/lyricsAlign.ts` — add line-level matching in `applyLyricCorrections`
-
-### Status: Steps 1, 2, 4 DONE. Step 3 deferred.
-
-### Definition of Done
-1. ✅ Nudge one lyric line → reanalyze → only that line is shifted, all others unchanged.
-2. ✅ Nudge same line twice → reanalyze → line shifted by cumulative delta.
-3. ⬜ Section-level shift UI — needs user-facing scope chooser (deferred to Phase H).
-
-## Phase H: Correction Scope Chooser UI (TODO)
-
-The per-row arrow buttons now correctly use `line` scope. But users need a way to
-apply corrections at broader scopes (section, global, "from here down") for
-systematic drift. This should be a user choice, not hardcoded.
-
-### Proposed UI
-- When user nudges a line, show a brief scope selector: "Apply to: This line | This section | All from here"
-- "This line" = current behavior (scope: line)
-- "This section" = scope: section_occurrence, shifts all lyrics in the current section
-- "All from here" = scope: section_class or a new scope, shifts everything from this bar onward
-
-### Design TBD
-Exact interaction pattern needs user input — could be a dropdown, a modal, or
-modifier keys (e.g., Shift+arrow = section scope). Defer until line-level
-correction is validated in practice.
+## Analysis Hints
+Persisted via `projectSaveHints` IPC. Survive across reanalyses.
+- Key hint (e.g., 'D', 'Am')
+- Tempo hint (BPM)
+- Time signature hint ('auto' | '3/4' | '4/4')
 
 ## Deferred Backlog
 1. MIDI live scoring completion.
 2. Practice transport lifecycle cleanup.
 3. Loop UX polish outside analyzer/lyrics phase needs.
+4. `section_class` scope support in UI (nudge all choruses at once).
+5. "From here down" scope for systematic drift correction.

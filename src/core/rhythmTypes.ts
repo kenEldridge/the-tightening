@@ -227,8 +227,6 @@ export interface AnalysisOptions {
   timeSignatureHint?: { numerator: number; denominator: number };
   /** Hint for key (e.g. 'D', 'Am', 'Bb'). If provided, diatonic chords are boosted. */
   keyHint?: string;
-  /** Global lyrics shift in bars, applied after lyric alignment (optional) */
-  lyricsBarOffset?: number;
 }
 
 export interface TimeSignatureDecision {

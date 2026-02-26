@@ -680,10 +680,9 @@ function extractLyricCorrections(edits: TimelineEdit[]): ResolvedCorrection[] {
  * Resolve the effective delta for a given section fingerprint,
  * applying precedence: line > section_occurrence > section_class > global.
  *
- * For line scope, targetKey is the exact fingerprint.
- * For section_occurrence, targetKey matches the fingerprint.
- * For section_class, targetKey is just the sectionType (e.g., "chorus").
- * For global, targetKey is "global".
+ * For section/global scopes, "latest wins" — the last matching edit in the
+ * array takes precedence (allows users to override earlier corrections).
+ * Line corrections are handled separately via accumulation, not here.
  */
 function resolveCorrection(
   fingerprint: string,
@@ -693,22 +692,27 @@ function resolveCorrection(
   const parts = fingerprint.split('|');
   const sectionType = parts[0] || '';
 
-  // Check in precedence order
-  // 1. Line-level (exact fingerprint match)
-  const lineMatch = corrections.find(c => c.scope === 'line' && c.targetKey === fingerprint);
-  if (lineMatch) return lineMatch.deltaBars;
+  // Check in precedence order (highest to lowest)
+  // 1. Section occurrence (exact fingerprint match) — latest wins
+  for (let i = corrections.length - 1; i >= 0; i--) {
+    if (corrections[i].scope === 'section_occurrence' && corrections[i].targetKey === fingerprint) {
+      return corrections[i].deltaBars;
+    }
+  }
 
-  // 2. Section occurrence (exact fingerprint match, different scope)
-  const occMatch = corrections.find(c => c.scope === 'section_occurrence' && c.targetKey === fingerprint);
-  if (occMatch) return occMatch.deltaBars;
+  // 2. Section class (matches section type) — latest wins
+  for (let i = corrections.length - 1; i >= 0; i--) {
+    if (corrections[i].scope === 'section_class' && corrections[i].targetKey === sectionType) {
+      return corrections[i].deltaBars;
+    }
+  }
 
-  // 3. Section class (matches section type)
-  const classMatch = corrections.find(c => c.scope === 'section_class' && c.targetKey === sectionType);
-  if (classMatch) return classMatch.deltaBars;
-
-  // 4. Global
-  const globalMatch = corrections.find(c => c.scope === 'global');
-  if (globalMatch) return globalMatch.deltaBars;
+  // 3. Global — latest wins
+  for (let i = corrections.length - 1; i >= 0; i--) {
+    if (corrections[i].scope === 'global') {
+      return corrections[i].deltaBars;
+    }
+  }
 
   return 0;
 }
@@ -721,13 +725,43 @@ function normalizeTextAnchor(text: string): string {
 }
 
 /**
- * Parse a line-level targetKey into its components.
- * Format: line|bar<N>|txt<text>
+ * Build a line-level targetKey for a lyric correction.
+ *
+ * Format: line|bar<barNumber>|p<positionDecile>|txt<textAnchor>
+ *
+ * The position decile (0-9) based on bar position within the song
+ * disambiguates identical lyrics at different song positions (e.g., repeated chorus).
  */
-function parseLineTargetKey(targetKey: string): { barNumber: number; textAnchor: string } | null {
-  const match = targetKey.match(/^line\|bar(\d+)\|txt(.*)$/);
-  if (!match) return null;
-  return { barNumber: parseInt(match[1], 10), textAnchor: match[2] };
+export function buildLineTargetKey(barNumber: number, totalBars: number, lyricsText: string): string {
+  const textAnchor = normalizeTextAnchor(lyricsText);
+  const posDecile = totalBars > 0 ? Math.floor((barNumber / totalBars) * 10) : 0;
+  return `line|bar${barNumber}|p${posDecile}|txt${textAnchor}`;
+}
+
+/**
+ * Parse a line-level targetKey into its components.
+ * Supports both old format (line|bar<N>|txt<text>) and new format (line|bar<N>|p<D>|txt<text>).
+ */
+function parseLineTargetKey(targetKey: string): { barNumber: number; positionDecile: number; textAnchor: string } | null {
+  // New format: line|bar<N>|p<D>|txt<text>
+  const newMatch = targetKey.match(/^line\|bar(\d+)\|p(\d+)\|txt(.*)$/);
+  if (newMatch) {
+    return {
+      barNumber: parseInt(newMatch[1], 10),
+      positionDecile: parseInt(newMatch[2], 10),
+      textAnchor: newMatch[3],
+    };
+  }
+  // Legacy format: line|bar<N>|txt<text>
+  const oldMatch = targetKey.match(/^line\|bar(\d+)\|txt(.*)$/);
+  if (oldMatch) {
+    return {
+      barNumber: parseInt(oldMatch[1], 10),
+      positionDecile: -1, // unknown
+      textAnchor: oldMatch[2],
+    };
+  }
+  return null;
 }
 
 /**
@@ -756,17 +790,29 @@ export function applyLyricCorrections(
 
   // --- Line-level corrections ---
   if (lineCorrections.length > 0) {
-    // Accumulate deltas per text anchor (multiple nudges on the same line)
+    // Accumulate deltas per text+position (multiple nudges on the same line).
+    // Group by text anchor + approximate position: corrections within 10 bars
+    // of each other with the same text are considered the same line.
     const accumulatedDeltas = new Map<string, { textAnchor: string; originalBar: number; totalDelta: number }>();
     for (const corr of lineCorrections) {
       const parsed = parseLineTargetKey(corr.targetKey);
       if (!parsed) continue;
 
-      const existing = accumulatedDeltas.get(parsed.textAnchor);
-      if (existing) {
-        existing.totalDelta += corr.deltaBars;
+      // Find existing group with same text within 10 bars
+      let groupKey: string | null = null;
+      for (const [key, group] of accumulatedDeltas) {
+        if (group.textAnchor === parsed.textAnchor &&
+            Math.abs(group.originalBar - parsed.barNumber) <= 10) {
+          groupKey = key;
+          break;
+        }
+      }
+
+      if (groupKey) {
+        accumulatedDeltas.get(groupKey)!.totalDelta += corr.deltaBars;
       } else {
-        accumulatedDeltas.set(parsed.textAnchor, {
+        const newKey = `${parsed.textAnchor}|near${parsed.barNumber}`;
+        accumulatedDeltas.set(newKey, {
           textAnchor: parsed.textAnchor,
           originalBar: parsed.barNumber,
           totalDelta: corr.deltaBars,

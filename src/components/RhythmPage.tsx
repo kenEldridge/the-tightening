@@ -10,7 +10,7 @@ import { RhythmAnalyzer } from '../core/RhythmAnalyzer';
 import { createTimeline, applyEdit } from '../core/timelineEditor';
 import { buildPracticePayload, validateChordPress, createEmptyStats } from '../core/rhythmTrainer';
 import { RhythmPreviewPlayer, type PreviewMode, type HearItState } from '../core/RhythmPreviewPlayer';
-import { applyLyricsToTimeline, parseArtistTitle, shiftLyricsByBars, applyLyricCorrections } from '../core/lyricsAlign';
+import { applyLyricsToTimeline, parseArtistTitle, applyLyricCorrections, buildLineTargetKey, generateTimelineFingerprints, generateSectionFingerprint } from '../core/lyricsAlign';
 import type {
   PracticeProjectLite,
   ChordTimelineArtifact,
@@ -211,15 +211,9 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         if (options.timeSignatureHint) {
           hintsToSave.timeSignatureHint = `${options.timeSignatureHint.numerator}/${options.timeSignatureHint.denominator}`;
         }
-        if (typeof options.lyricsBarOffset === 'number') hintsToSave.lyricsBarOffset = options.lyricsBarOffset;
         project.analysisHints = hintsToSave;
         window.electronAPI.projectSaveHints?.(project.id, hintsToSave);
       }
-
-      const requestedOffset = options?.lyricsBarOffset;
-      const lyricsBarOffset = Number.isFinite(requestedOffset)
-        ? Math.trunc(requestedOffset as number)
-        : (project.lyricsBarOffset || 0);
 
       const result = await analyzer.analyze(project.audioPath, analyzerOptions);
 
@@ -238,6 +232,20 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         }
       }
 
+      // Migrate legacy lyricsBarOffset to a global lyric_correction edit (one-time)
+      const legacyOffset = project.lyricsBarOffset || 0;
+      if (legacyOffset !== 0 && !tl.edits.some(e => e.op.type === 'lyric_correction' && (e.op as any).scope === 'global')) {
+        const migrationEdit: import('../core/rhythmTypes').TimelineEdit = {
+          id: `edit_migrate_offset_${Date.now()}`,
+          op: { type: 'lyric_correction', scope: 'global' as const, targetKey: 'global', deltaBars: legacyOffset },
+          timestamp: new Date().toISOString(),
+        };
+        tl = { ...tl, edits: [...tl.edits, migrationEdit] };
+        console.log('[RhythmPage] Migrated lyricsBarOffset to global lyric_correction', { legacyOffset });
+        // Clear legacy field
+        project.lyricsBarOffset = 0;
+      }
+
       // Try to fetch lyrics and apply to timeline
       setAnalysisProgress('Fetching lyrics...');
       let rawLyrics = project.cachedLyrics || '';
@@ -250,7 +258,6 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
           if (lyricsResult.ok && lyricsResult.lyrics) {
             rawLyrics = lyricsResult.lyrics;
             syncedLyrics = lyricsResult.syncedLyrics;
-            // Cache on project so re-analysis doesn't need to re-fetch.
             project.cachedLyrics = rawLyrics;
             project.cachedSyncedLyrics = syncedLyrics;
           } else {
@@ -260,16 +267,12 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         if (rawLyrics) {
           // 1. Apply baseline lyrics placement
           tl = applyLyricsToTimeline(tl, rawLyrics, syncedLyrics);
-          if (lyricsBarOffset !== 0) {
-            tl = shiftLyricsByBars(tl, lyricsBarOffset);
-          }
-          // 2. Apply scoped lyric corrections from edit history (overrides baseline)
+          // 2. Apply ALL scoped lyric corrections from edit history (includes global shifts)
           tl = applyLyricCorrections(tl);
           console.log('[RhythmPage] Lyrics applied', {
             mode: syncedLyrics ? 'timed (LRC)' : 'structural',
             lines: rawLyrics.split('\n').filter(l => l.trim()).length,
             bars: tl.chords.filter(c => c.lyrics).length,
-            lyricsBarOffset,
             corrections: tl.edits.filter(e => e.op.type === 'lyric_correction').length,
           });
         }
@@ -277,9 +280,8 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         console.warn('[RhythmPage] Lyrics fetch failed (non-fatal):', lyricsErr);
       }
 
-      project.lyricsBarOffset = lyricsBarOffset;
       const lyricsCacheUpdate: { lyricsBarOffset: number; lyrics?: string; syncedLyrics?: string } = {
-        lyricsBarOffset,
+        lyricsBarOffset: 0, // Legacy field, always 0 now — corrections are in edits[]
       };
       if (rawLyrics) lyricsCacheUpdate.lyrics = rawLyrics;
       if (syncedLyrics) lyricsCacheUpdate.syncedLyrics = syncedLyrics;
@@ -289,7 +291,7 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       await window.electronAPI.projectSaveTimeline(project.id, tl);
 
       setTimeline(tl);
-      setCurrentProject({ ...project, timeline: tl, lyricsBarOffset });
+      setCurrentProject({ ...project, timeline: tl });
       setView('timeline');
       setAnalysisProgress('');
     } catch (err) {
@@ -334,31 +336,93 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
     await window.electronAPI.projectSaveTimeline(currentProject.id, updated);
   }, [timeline, currentProject]);
 
-  const moveLyrics = useCallback(async (fromIdx: number, direction: -1 | 1) => {
+  const moveLyrics = useCallback(async (fromIdx: number, direction: -1 | 1, scope: import('../core/rhythmTypes').LyricCorrectionScope = 'line') => {
     if (!timeline || !currentProject) return;
-    const toIdx = fromIdx + direction;
-    if (toIdx < 0 || toIdx >= timeline.chords.length) return;
 
     const updatedChords = timeline.chords.map(c => ({ ...c }));
     const lyricsText = updatedChords[fromIdx].lyrics;
-    if (!lyricsText) return;
+    if (!lyricsText && scope === 'line') return;
 
-    // Move lyrics visually: clear source, set target
-    updatedChords[fromIdx].lyrics = undefined;
-    if (updatedChords[toIdx].lyrics) {
-      updatedChords[toIdx].lyrics += ' / ' + lyricsText;
+    let targetKey: string;
+    const totalBars = timeline.chords.length;
+
+    if (scope === 'line') {
+      // Line-level: move just this one lyric
+      const toIdx = fromIdx + direction;
+      if (toIdx < 0 || toIdx >= totalBars) return;
+
+      updatedChords[fromIdx].lyrics = undefined;
+      if (updatedChords[toIdx].lyrics) {
+        updatedChords[toIdx].lyrics += ' / ' + lyricsText;
+      } else {
+        updatedChords[toIdx].lyrics = lyricsText;
+      }
+      targetKey = buildLineTargetKey(fromIdx, totalBars, lyricsText!);
+    } else if (scope === 'section_occurrence') {
+      // Section-level: shift all lyrics in this section
+      const fingerprints = generateTimelineFingerprints(updatedChords);
+      // Find which section this bar belongs to
+      let sectionFp = '';
+      for (const [barIdx, fp] of [...fingerprints.entries()].sort((a, b) => a[0] - b[0])) {
+        if (barIdx <= fromIdx) sectionFp = fp;
+      }
+      targetKey = sectionFp || 'unknown';
+
+      // Find section boundaries
+      const fpEntries = [...fingerprints.keys()].sort((a, b) => a - b);
+      const sectionStartIdx = fpEntries.findIndex(k => k <= fromIdx && (fpEntries[fpEntries.indexOf(k) + 1] ?? totalBars) > fromIdx);
+      const sectionStart = sectionStartIdx >= 0 ? fpEntries[sectionStartIdx] : 0;
+      const sectionEnd = fpEntries[sectionStartIdx + 1] ?? totalBars;
+
+      // Visually shift all lyrics in this section
+      const lyricData: Array<{ idx: number; lyrics: string }> = [];
+      for (let i = sectionStart; i < sectionEnd; i++) {
+        if (updatedChords[i].lyrics) {
+          lyricData.push({ idx: i, lyrics: updatedChords[i].lyrics! });
+          updatedChords[i].lyrics = undefined;
+        }
+      }
+      for (const { idx, lyrics } of lyricData) {
+        const target = idx + direction;
+        if (target >= 0 && target < totalBars) {
+          if (updatedChords[target].lyrics) {
+            updatedChords[target].lyrics += ' / ' + lyrics;
+          } else {
+            updatedChords[target].lyrics = lyrics;
+          }
+        }
+      }
     } else {
-      updatedChords[toIdx].lyrics = lyricsText;
+      // Global: shift all lyrics
+      targetKey = 'global';
+      const lyricData: Array<{ idx: number; lyrics: string; section?: string }> = [];
+      for (let i = 0; i < totalBars; i++) {
+        if (updatedChords[i].lyrics || updatedChords[i].section) {
+          lyricData.push({ idx: i, lyrics: updatedChords[i].lyrics || '', section: updatedChords[i].section });
+          updatedChords[i].lyrics = undefined;
+          updatedChords[i].section = undefined;
+        }
+      }
+      for (const { idx, lyrics, section } of lyricData) {
+        const target = idx + direction;
+        if (target >= 0 && target < totalBars) {
+          if (lyrics) {
+            if (updatedChords[target].lyrics) {
+              updatedChords[target].lyrics += ' / ' + lyrics;
+            } else {
+              updatedChords[target].lyrics = lyrics;
+            }
+          }
+          if (section && !updatedChords[target].section) {
+            updatedChords[target].section = section;
+          }
+        }
+      }
     }
-
-    // Record as a line-level lyric_correction edit
-    // targetKey format: line|bar<N>|txt<first40chars>
-    const textAnchor = lyricsText.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().slice(0, 40);
-    const targetKey = `line|bar${fromIdx}|txt${textAnchor}`;
 
     const correctionEdit: import('../core/rhythmTypes').TimelineEdit = {
       id: `edit_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      op: { type: 'lyric_correction', scope: 'line' as const, targetKey, deltaBars: direction },
+      op: { type: 'lyric_correction', scope, targetKey, deltaBars: direction },
       timestamp: new Date().toISOString(),
     };
 
@@ -525,7 +589,6 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
           <TimelineView
             timeline={timeline}
             audioPath={currentProject?.audioPath || null}
-            currentLyricsBarOffset={currentProject?.lyricsBarOffset || 0}
             savedHints={currentProject?.analysisHints}
             previewPlayerRef={previewPlayerRef}
             onEdit={applyTimelineEdit}
@@ -715,14 +778,13 @@ const IngestView: React.FC<{
 const TimelineView: React.FC<{
   timeline: ChordTimelineArtifact;
   audioPath: string | null;
-  currentLyricsBarOffset: number;
   savedHints?: { keyHint?: string; tempoHint?: number; timeSignatureHint?: string; lyricsBarOffset?: number };
   previewPlayerRef: React.MutableRefObject<RhythmPreviewPlayer | null>;
   onEdit: (op: TimelineEditOp) => void;
-  onMoveLyrics: (fromIdx: number, direction: -1 | 1) => void;
+  onMoveLyrics: (fromIdx: number, direction: -1 | 1, scope?: import('../core/rhythmTypes').LyricCorrectionScope) => void;
   onPractice: (barRange?: { start: number; end: number }) => void;
   onReanalyze?: (opts?: AnalysisOptions) => void;
-}> = ({ timeline, audioPath, currentLyricsBarOffset, savedHints, previewPlayerRef, onEdit, onMoveLyrics, onPractice, onReanalyze }) => {
+}> = ({ timeline, audioPath, savedHints, previewPlayerRef, onEdit, onMoveLyrics, onPractice, onReanalyze }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editSymbol, setEditSymbol] = useState('');
   const [hearItState, setHearItState] = useState<HearItState | null>(null);
@@ -734,10 +796,10 @@ const TimelineView: React.FC<{
   const [hintTimeSig, setHintTimeSig] = useState<'auto' | '3/4' | '4/4'>(
     (savedHints?.timeSignatureHint as 'auto' | '3/4' | '4/4') || 'auto'
   );
-  const [hintLyricsOffset, setHintLyricsOffset] = useState(
-    savedHints?.lyricsBarOffset !== undefined ? String(savedHints.lyricsBarOffset) : ''
-  );
   const [showHints, setShowHints] = useState(false);
+
+  // Nudge scope: controls what the arrow buttons affect
+  const [nudgeScope, setNudgeScope] = useState<import('../core/rhythmTypes').LyricCorrectionScope>('line');
 
   // Loop controls
   const [loopStartBar, setLoopStartBar] = useState('');
@@ -785,10 +847,6 @@ const TimelineView: React.FC<{
     }
   }, [timeline.edits.length]);
 
-  useEffect(() => {
-    setHintLyricsOffset(currentLyricsBarOffset ? String(currentLyricsBarOffset) : '');
-  }, [currentLyricsBarOffset]);
-
   const player = previewPlayerRef.current;
   const activeChordId = hearItState?.activeChordId || null;
 
@@ -815,11 +873,6 @@ const TimelineView: React.FC<{
             {timeline.beatGrid.tempo} BPM — {timeline.beatGrid.timeSignature.numerator}/{timeline.beatGrid.timeSignature.denominator} — {timeline.beatGrid.barCount} bars — {timeline.chords.length} chords — {timeline.edits.length} edits
           </div>
         </div>
-        {currentLyricsBarOffset ? (
-          <div style={{ fontSize: '11px', color: '#aa8' }}>
-            Lyrics shift: {currentLyricsBarOffset > 0 ? '+' : ''}{currentLyricsBarOffset} bars
-          </div>
-        ) : null}
         <div style={{ display: 'flex', gap: '8px' }}>
           {onReanalyze && (
             <button onClick={() => setShowHints(!showHints)} style={smallBtnStyle}>
@@ -896,22 +949,6 @@ const TimelineView: React.FC<{
             <option value="3/4">3/4 (Waltz)</option>
             <option value="4/4">4/4</option>
           </select>
-          <label style={{ color: '#aa8', whiteSpace: 'nowrap' }}>Lyrics shift:</label>
-          <input
-            value={hintLyricsOffset}
-            onChange={(e) => setHintLyricsOffset(e.target.value)}
-            placeholder="bars"
-            style={{
-              width: '55px',
-              padding: '3px 6px',
-              backgroundColor: '#333',
-              border: '1px solid #555',
-              borderRadius: '3px',
-              color: '#eee',
-              fontFamily: 'monospace',
-              fontSize: '12px',
-            }}
-          />
           <button
             onClick={() => {
               const opts: AnalysisOptions = {};
@@ -923,10 +960,6 @@ const TimelineView: React.FC<{
               if (hintTimeSig !== 'auto') {
                 const num = hintTimeSig === '3/4' ? 3 : 4;
                 opts.timeSignatureHint = { numerator: num, denominator: 4 };
-              }
-              if (hintLyricsOffset.trim()) {
-                const shift = parseInt(hintLyricsOffset.trim(), 10);
-                if (!isNaN(shift)) opts.lyricsBarOffset = shift;
               }
               onReanalyze(opts);
               setShowHints(false);
@@ -943,6 +976,45 @@ const TimelineView: React.FC<{
           </button>
         </div>
       )}
+
+      {/* ---- Nudge Scope Chooser ---- */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '6px 12px',
+        backgroundColor: '#252530',
+        border: '1px solid #336',
+        borderRadius: '6px',
+        marginBottom: '8px',
+        fontSize: '12px',
+      }}>
+        <span style={{ color: '#88a' }}>Arrow nudge scope:</span>
+        {(['line', 'section_occurrence', 'global'] as const).map(s => {
+          const labels: Record<string, string> = { line: 'This line', section_occurrence: 'This section', global: 'Global' };
+          const isActive = nudgeScope === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setNudgeScope(s)}
+              style={{
+                ...smallBtnStyle,
+                backgroundColor: isActive ? '#2a2a3a' : 'transparent',
+                borderColor: isActive ? '#88f' : '#444',
+                color: isActive ? '#aaf' : '#666',
+                fontWeight: isActive ? 700 : 400,
+              }}
+            >
+              {labels[s]}
+            </button>
+          );
+        })}
+        <span style={{ color: '#555', fontSize: '11px', marginLeft: '4px' }}>
+          {nudgeScope === 'line' ? 'Moves one lyric line' :
+           nudgeScope === 'section_occurrence' ? 'Moves all lyrics in this section' :
+           'Moves all lyrics in the song'}
+        </span>
+      </div>
 
       {/* ---- Hear It Transport Bar ---- */}
       <div style={{
@@ -1227,21 +1299,25 @@ const TimelineView: React.FC<{
                 {chord.lyrics || ''}
               </div>
               <div style={{ ...cellStyle, backgroundColor: rowBg, display: 'flex', gap: '2px', padding: '4px 2px' }}>
-                {chord.lyrics && (
+                {(chord.lyrics || nudgeScope !== 'line') && (
                   <>
                     <button
-                      onClick={() => onMoveLyrics(idx, -1)}
+                      onClick={() => onMoveLyrics(idx, -1, nudgeScope)}
                       disabled={idx === 0}
                       style={{ ...arrowBtnStyle, opacity: idx === 0 ? 0.3 : 1 }}
-                      title="Move lyrics up one bar"
+                      title={nudgeScope === 'line' ? 'Move lyrics up one bar' :
+                             nudgeScope === 'section_occurrence' ? 'Shift section up one bar' :
+                             'Shift all lyrics up one bar'}
                     >
                       ▲
                     </button>
                     <button
-                      onClick={() => onMoveLyrics(idx, 1)}
+                      onClick={() => onMoveLyrics(idx, 1, nudgeScope)}
                       disabled={idx >= timeline.chords.length - 1}
                       style={{ ...arrowBtnStyle, opacity: idx >= timeline.chords.length - 1 ? 0.3 : 1 }}
-                      title="Move lyrics down one bar"
+                      title={nudgeScope === 'line' ? 'Move lyrics down one bar' :
+                             nudgeScope === 'section_occurrence' ? 'Shift section down one bar' :
+                             'Shift all lyrics down one bar'}
                     >
                       ▼
                     </button>
