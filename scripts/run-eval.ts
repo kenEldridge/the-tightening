@@ -3,15 +3,16 @@
  * Evaluation CLI
  *
  * Usage:
- *   npx tsx scripts/run-eval.ts                      # Run full evaluation
- *   npx tsx scripts/run-eval.ts --generate-ground-truth  # Generate ground truth CSVs
- *   npx tsx scripts/run-eval.ts --snapshot <songId>  # Snapshot a run for determinism testing
+ *   npx tsx scripts/run-eval.ts                         # Evaluate from saved timelines
+ *   npx tsx scripts/run-eval.ts --analyze               # Run fresh headless analysis, then evaluate
+ *   npx tsx scripts/run-eval.ts --generate-ground-truth # Generate ground truth CSVs
+ *   npx tsx scripts/run-eval.ts --snapshot <songId>     # Snapshot a run for determinism testing
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import type { PracticeProjectLite, ChordTimelineArtifact } from '../src/core/rhythmTypes';
+import type { PracticeProjectLite, ChordTimelineArtifact, AnalysisOptions, AnalysisResult } from '../src/core/rhythmTypes';
 import type { BarAnchor, ChordLabel } from '../src/eval/evaluationTypes';
 import { evaluateSong, runFullEvaluation } from '../src/eval/evaluationHarness';
 import { parseBarAnchors, parseChordLabels, barAnchorsToCSV, chordLabelsToCSV } from '../src/eval/csvParser';
@@ -40,6 +41,7 @@ interface SongConfig {
   songId: string;
   songName: string;
   projectFile: string | null; // null = no project yet
+  hints?: AnalysisOptions;
 }
 
 const SONG_MAP: SongConfig[] = [
@@ -47,16 +49,19 @@ const SONG_MAP: SongConfig[] = [
     songId: 'mull-of-kintyre',
     songName: 'Wings - Mull Of Kintyre',
     projectFile: 'proj_1772208360394_apk5ua.json',
+    hints: { tempoHint: 92, timeSignatureHint: { numerator: 3, denominator: 4 }, keyHint: 'A' },
   },
   {
     songId: 'hey-jude',
     songName: 'Hey Jude - The Beatles',
     projectFile: 'proj_1772208499985_tjxzr9.json',
+    hints: { tempoHint: 72, timeSignatureHint: { numerator: 4, denominator: 4 }, keyHint: 'F' },
   },
   {
     songId: 'canon-in-d',
     songName: 'Canon in D - Pachelbel',
     projectFile: 'proj_1772208577561_z4trq8.json',
+    hints: { tempoHint: 54, timeSignatureHint: { numerator: 4, denominator: 4 }, keyHint: 'D' },
   },
 ];
 
@@ -313,12 +318,45 @@ function loadSnapshots(songId: string): ChordTimelineArtifact[] {
 }
 
 // ============================================
+// Headless Analysis
+// ============================================
+
+async function runHeadlessAnalysis(config: SongConfig): Promise<AnalysisResult | null> {
+  if (!config.projectFile) {
+    console.log(`  Skipping headless — no project file`);
+    return null;
+  }
+
+  const project = loadProject(config.projectFile);
+  if (!project?.audioPath) {
+    console.log(`  Skipping headless — no audio path in project`);
+    return null;
+  }
+
+  if (!fs.existsSync(project.audioPath)) {
+    console.log(`  Skipping headless — audio file not found: ${project.audioPath}`);
+    return null;
+  }
+
+  // Lazy import to avoid loading Node adapter when not needed
+  const { NodeRhythmAnalyzer } = await import('../src/node/NodeRhythmAnalyzer');
+  const analyzer = new NodeRhythmAnalyzer();
+  return analyzer.analyze(project.audioPath, config.hints || {});
+}
+
+// ============================================
 // Main Evaluation
 // ============================================
 
-function runEval(): void {
+async function runEval(useHeadless: boolean): Promise<void> {
   fs.mkdirSync(EVAL_OUTPUT_DIR, { recursive: true });
   fs.mkdirSync(DOCS_DIR, { recursive: true });
+
+  if (useHeadless) {
+    console.log('Mode: fresh headless analysis');
+  } else {
+    console.log('Mode: saved timelines');
+  }
 
   const results = [];
 
@@ -334,20 +372,32 @@ function runEval(): void {
       continue;
     }
 
-    // Load project
-    if (!config.projectFile) {
-      console.log(`  Skipping — no project file (song not yet analyzed)`);
-      continue;
+    let beats;
+    let chords;
+
+    if (useHeadless) {
+      // Fresh headless analysis
+      const analysisResult = await runHeadlessAnalysis(config);
+      if (!analysisResult) continue;
+      beats = analysisResult.beatGrid.beats;
+      chords = analysisResult.chords;
+    } else {
+      // Saved timeline
+      if (!config.projectFile) {
+        console.log(`  Skipping — no project file (song not yet analyzed)`);
+        continue;
+      }
+
+      const project = loadProject(config.projectFile);
+      if (!project?.timeline) {
+        console.log(`  Skipping — project has no timeline`);
+        continue;
+      }
+
+      beats = project.timeline.beatGrid.beats;
+      chords = project.timeline.chords;
     }
 
-    const project = loadProject(config.projectFile);
-    if (!project?.timeline) {
-      console.log(`  Skipping — project has no timeline`);
-      continue;
-    }
-
-    const beats = project.timeline.beatGrid.beats;
-    const chords = project.timeline.chords;
     const snapshots = loadSnapshots(config.songId);
 
     console.log(`  Beats: ${beats.length}, Chords: ${chords.length}`);
@@ -412,5 +462,9 @@ if (args.includes('--generate-ground-truth')) {
   }
   snapshotRun(songId);
 } else {
-  runEval();
+  const useHeadless = args.includes('--analyze');
+  runEval(useHeadless).catch(err => {
+    console.error('Evaluation failed:', err);
+    process.exit(1);
+  });
 }
