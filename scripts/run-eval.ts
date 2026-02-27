@@ -46,17 +46,17 @@ const SONG_MAP: SongConfig[] = [
   {
     songId: 'mull-of-kintyre',
     songName: 'Wings - Mull Of Kintyre',
-    projectFile: 'proj_1772138230701_smcv6t.json',
+    projectFile: 'proj_1772208360394_apk5ua.json',
   },
   {
     songId: 'hey-jude',
     songName: 'Hey Jude - The Beatles',
-    projectFile: null,
+    projectFile: 'proj_1772208499985_tjxzr9.json',
   },
   {
     songId: 'canon-in-d',
     songName: 'Canon in D - Pachelbel',
-    projectFile: null,
+    projectFile: 'proj_1772208577561_z4trq8.json',
   },
 ];
 
