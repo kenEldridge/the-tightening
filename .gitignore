@@ -51,3 +51,6 @@ visuals_for_claude/*.png
 
 # IDE workspace files
 *.code-workspace
+
+# Evaluation output (machine-generated)
+eval-output/
