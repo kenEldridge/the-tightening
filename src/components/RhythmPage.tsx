@@ -849,6 +849,36 @@ const TimelineView: React.FC<{
 
   const player = previewPlayerRef.current;
   const activeChordId = hearItState?.activeChordId || null;
+  const activeRowRef = useRef<HTMLDivElement | null>(null);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const programmaticScrollRef = useRef(false);
+
+  // Disable auto-scroll on user scroll, re-enable when playback stops
+  useEffect(() => {
+    const handleWheel = () => {
+      if (!programmaticScrollRef.current) {
+        setAutoScrollEnabled(false);
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // Re-enable auto-scroll when playback starts
+  useEffect(() => {
+    if (hearItState?.playing) {
+      setAutoScrollEnabled(true);
+    }
+  }, [hearItState?.playing]);
+
+  // Auto-scroll to keep active chord centered
+  useEffect(() => {
+    if (autoScrollEnabled && activeRowRef.current) {
+      programmaticScrollRef.current = true;
+      activeRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => { programmaticScrollRef.current = false; }, 500);
+    }
+  }, [activeChordId, autoScrollEnabled]);
 
   const handleSetChord = (eventId: string) => {
     if (!editSymbol.trim()) return;
@@ -1122,6 +1152,24 @@ const TimelineView: React.FC<{
           </span>
         )}
 
+        {/* Auto-scroll toggle */}
+        {hearItState?.playing && !autoScrollEnabled && (
+          <button
+            onClick={() => setAutoScrollEnabled(true)}
+            style={{
+              ...smallBtnStyle,
+              backgroundColor: '#3a3020',
+              border: '1px solid #a84',
+              color: '#e8a',
+              fontSize: '11px',
+              padding: '2px 8px',
+            }}
+            title="Resume auto-scrolling to current bar"
+          >
+            Auto-scroll
+          </button>
+        )}
+
         {/* Skipped chords indicator */}
         {hearItState && hearItState.skippedChords > 0 && (
           <span
@@ -1242,7 +1290,7 @@ const TimelineView: React.FC<{
 
           return (
             <React.Fragment key={chord.id}>
-              <div style={{ ...cellStyle, backgroundColor: rowBg, color: '#888' }}>{chord.barStart}</div>
+              <div ref={isActive ? activeRowRef : undefined} style={{ ...cellStyle, backgroundColor: rowBg, color: '#888' }}>{chord.barStart}</div>
               <div style={{ ...cellStyle, backgroundColor: rowBg, color: '#888' }}>{chord.startTime.toFixed(1)}s</div>
               <div style={{
                 ...cellStyle,
