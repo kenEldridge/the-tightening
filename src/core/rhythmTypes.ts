@@ -43,6 +43,8 @@ export interface BeatEvent {
   tempoLocal: number;
   /** Detection confidence 0-1 */
   confidence: number;
+  /** Onset-derived beat strength, normalized 0-1 for playback dynamics. */
+  strength?: number;
 }
 
 export interface ChordCandidate {
@@ -50,6 +52,9 @@ export interface ChordCandidate {
   confidence: number;
   source: 'audio' | 'manual';
 }
+
+export type ChordDegree = 'I' | 'ii' | 'iii' | 'IV' | 'V' | 'vi' | 'vii_dim' | 'N';
+export type ChordQualityTag = 'maj' | 'min' | 'dim' | 'dom7' | 'unknown';
 
 export interface ChordEvent {
   id: string;
@@ -63,6 +68,10 @@ export interface ChordEvent {
   barEnd: number;
   /** Chord symbol (e.g. 'F', 'C7', 'Bb') */
   symbol: string;
+  /** Key-relative scale degree (optional, new analyses always set this) */
+  degree?: ChordDegree;
+  /** Chord quality preserving triad/7th distinction (optional) */
+  qualityTag?: ChordQualityTag;
   /** Detection confidence 0-1 */
   confidence: number;
   /** How this chord was determined */
@@ -110,6 +119,8 @@ export interface ChordTimelineArtifact {
   analyzerConfigHash: string;
   /** Beat grid */
   beatGrid: BeatGrid;
+  /** Detected key root as pitch class 0-11 (C=0). Optional for legacy projects. */
+  keyRoot?: number;
   /** Chord events */
   chords: ChordEvent[];
   /** Edit history (lightweight for Phase 1) */
@@ -131,7 +142,8 @@ export type TimelineEditOp =
   | { type: 'shift_boundary'; eventId: string; deltaBeat: number }
   | { type: 'split_event'; eventId: string; atBar: number; atBeat: number }
   | { type: 'merge_with_next'; eventId: string }
-  | { type: 'lyric_correction'; scope: LyricCorrectionScope; targetKey: string; deltaBars: number };
+  | { type: 'lyric_correction'; scope: LyricCorrectionScope; targetKey: string; deltaBars: number }
+  | { type: 'transpose_key'; fromKeyRoot: number; toKeyRoot: number };
 
 export interface TimelineEdit {
   id: string;
@@ -245,6 +257,7 @@ export interface AnalysisResult {
     configHash: string;
     durationMs: number;
     timeSignatureDecision?: TimeSignatureDecision;
+    keyRoot?: number;
   };
 }
 

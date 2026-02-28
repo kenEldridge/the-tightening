@@ -27,6 +27,7 @@ import type {
   TimeSignatureDecision,
 } from './rhythmTypes';
 import { CHORD_VOICINGS } from '../data/chordProgressions';
+import { symbolToDegree } from './chordDegrees';
 
 // ============================================
 // Spectral Analysis
@@ -41,6 +42,12 @@ const BEAT_NUDGE_MAX_SHIFT_SEC = 0.08;
 const BEAT_NUDGE_SEARCH_WINDOW_SEC = 0.12;
 const BEAT_NUDGE_MIN_SPACING_FACTOR = 0.35; // minimum spacing as fraction of beatDuration
 const BEAT_CONFIDENCE_FLOOR = 0.3; // confidence for beats with no nearby onset peak
+
+// Beat strength annotation constants
+const BEAT_STRENGTH_WINDOW_SEC = 0.06;       // search window around each beat for onset peak
+const BEAT_STRENGTH_GLOBAL_FLOOR_PCT = 0.10; // values below p10 become 0
+const BEAT_STRENGTH_GLOBAL_CEIL_PCT = 0.95;  // p95 maps to ~1
+const BEAT_STRENGTH_BAR_BLEND = 0.35;        // weight of bar-local accent signal
 
 /**
  * Fast chroma extraction using Goertzel algorithm
@@ -234,6 +241,82 @@ function applyBeatNudging(
     if (curr.time - prev.time < minSpacing) {
       curr.time = prev.time + minSpacing;
     }
+  }
+}
+
+/**
+ * Annotate each beat with onset-derived strength for playback dynamics.
+ * Uses global percentile normalization blended with bar-local relative strength.
+ * Does NOT mutate beat times — annotation only.
+ */
+function annotateBeatStrength(
+  beatGrid: BeatGrid,
+  onsetTimes: Float32Array,
+  onsetStrength: Float32Array,
+): void {
+  const beats = beatGrid.beats;
+  if (beats.length === 0 || onsetTimes.length === 0) return;
+
+  // 1. Sample raw onset strength at each beat position
+  const rawSamples = new Float32Array(beats.length);
+  const hopDuration = onsetTimes.length > 1 ? onsetTimes[1] - onsetTimes[0] : 0.05;
+
+  for (let b = 0; b < beats.length; b++) {
+    const beatTime = beats[b].time;
+    // Find strongest onset frame within ±BEAT_STRENGTH_WINDOW_SEC of beat time
+    const windowStart = beatTime - BEAT_STRENGTH_WINDOW_SEC;
+    const windowEnd = beatTime + BEAT_STRENGTH_WINDOW_SEC;
+
+    // Binary-ish search: estimate start index from time
+    let startIdx = Math.max(0, Math.floor((windowStart - onsetTimes[0]) / hopDuration) - 1);
+    startIdx = Math.max(0, Math.min(startIdx, onsetTimes.length - 1));
+
+    let bestVal = 0;
+    for (let i = startIdx; i < onsetTimes.length; i++) {
+      if (onsetTimes[i] > windowEnd) break;
+      if (onsetTimes[i] >= windowStart && onsetStrength[i] > bestVal) {
+        bestVal = onsetStrength[i];
+      }
+    }
+    rawSamples[b] = bestVal;
+  }
+
+  // 2. Check if total energy is near-zero — if so, set all strength to 0
+  let totalEnergy = 0;
+  for (let i = 0; i < rawSamples.length; i++) totalEnergy += rawSamples[i];
+  if (totalEnergy < 1e-10) {
+    for (const beat of beats) beat.strength = 0;
+    return;
+  }
+
+  // 3. Compute global percentiles for normalization
+  const sorted = Array.from(rawSamples).sort((a, b) => a - b);
+  const p10 = sorted[Math.floor(sorted.length * BEAT_STRENGTH_GLOBAL_FLOOR_PCT)];
+  const p95 = sorted[Math.floor(sorted.length * BEAT_STRENGTH_GLOBAL_CEIL_PCT)];
+  const range = p95 - p10;
+
+  // 4. Compute bar-level max for bar-relative blending
+  const barMax = new Map<number, number>();
+  for (let b = 0; b < beats.length; b++) {
+    const bar = beats[b].bar;
+    const cur = barMax.get(bar) ?? 0;
+    if (rawSamples[b] > cur) barMax.set(bar, rawSamples[b]);
+  }
+
+  // 5. Blend absolute + bar-relative for final strength
+  for (let b = 0; b < beats.length; b++) {
+    // s_abs: globally normalized
+    const sAbs = range > 0
+      ? Math.max(0, Math.min(1, (rawSamples[b] - p10) / range))
+      : 0;
+
+    // s_bar: bar-relative
+    const bMax = barMax.get(beats[b].bar) ?? 0;
+    const sBar = bMax > 0 ? rawSamples[b] / bMax : 0;
+
+    // Blended strength
+    const blended = (1 - BEAT_STRENGTH_BAR_BLEND) * sAbs + BEAT_STRENGTH_BAR_BLEND * sBar;
+    beats[b].strength = Math.max(0, Math.min(1, blended));
   }
 }
 
@@ -1339,10 +1422,40 @@ export async function analyzeFromSamples(
     symbols: [...new Set(chords.map(c => c.symbol))].join(', '),
   });
 
-  // 5. Detect vocal energy per bar (for lyrics alignment)
+  // 5. Annotate beat strength from onset energy (for playback dynamics)
+  annotateBeatStrength(beatGrid, times, strength);
+
+  const strengthValues = beatGrid.beats.filter(b => b.strength != null).map(b => b.strength!);
+  if (strengthValues.length > 0) {
+    const avg = strengthValues.reduce((a, b) => a + b, 0) / strengthValues.length;
+    const high = strengthValues.filter(s => s >= 0.95).length;
+    console.log('[RhythmAnalyzer] Beat strength annotated', {
+      beats: strengthValues.length,
+      avgStrength: avg.toFixed(3),
+      highCount: high,
+      highPct: (100 * high / strengthValues.length).toFixed(1) + '%',
+    });
+  }
+
+  // 6. Detect vocal energy per bar (for lyrics alignment)
   const vocalEnergyMap = detectVocalEnergyPerBar(audio, sampleRate, beatGrid);
   for (const chord of chords) {
     chord.vocalEnergy = vocalEnergyMap.get(chord.barStart) ?? 0;
+  }
+
+  // 6. Annotate chords with key-relative degrees
+  const keyRootPc = noteToPitchClass(detectedKey);
+  if (keyRootPc >= 0) {
+    for (const chord of chords) {
+      const deg = symbolToDegree(chord.symbol, keyRootPc);
+      if (deg) {
+        chord.degree = deg.degree;
+        chord.qualityTag = deg.qualityTag;
+      } else {
+        chord.degree = 'N';
+        chord.qualityTag = 'unknown';
+      }
+    }
   }
 
   const durationMs = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - start;
@@ -1355,6 +1468,7 @@ export async function analyzeFromSamples(
       configHash: `fft${FFT_SIZE}_hop${HOP_SIZE}_key${detectedKey}_ts${beatGrid.timeSignature.numerator}_nudge${BEAT_NUDGE_WEIGHT}`,
       durationMs,
       timeSignatureDecision: tsDecision,
+      keyRoot: keyRootPc >= 0 ? keyRootPc : undefined,
     },
   };
 }

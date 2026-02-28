@@ -570,30 +570,45 @@ ipcMain.handle(
 ipcMain.handle('fetch-lyrics', async (_event, artist: string, title: string) => {
   const { net } = await import('electron');
 
-  // Try LRCLIB first (free, no key, reliable)
-  try {
-    const params = new URLSearchParams();
-    if (artist) params.set('artist_name', artist);
-    params.set('track_name', title);
-    const url = `https://lrclib.net/api/search?${params.toString()}`;
-    loggers.main.info('[Lyrics] Trying LRCLIB', { artist, title, url });
-
-    const response = await net.fetch(url, { method: 'GET' });
-    if (response.ok) {
-      const results = await response.json() as Array<{ plainLyrics?: string; syncedLyrics?: string; artistName?: string; trackName?: string }>;
-      if (results.length > 0 && results[0].plainLyrics) {
-        const hasSynced = !!results[0].syncedLyrics;
-        loggers.main.info('[Lyrics] LRCLIB success', { length: results[0].plainLyrics.length, hasSynced });
-        return {
-          ok: true,
-          lyrics: results[0].plainLyrics,
-          syncedLyrics: results[0].syncedLyrics || undefined,
-        };
-      }
+  // Build artist name variations to try (original, parts split by comma/&/feat)
+  const artistVariations = [artist];
+  if (artist) {
+    // "Paul McCartney, Wings" → try "Paul McCartney" and "Wings"
+    // "Artist & Other" → try "Artist" and "Other"
+    const parts = artist.split(/[,&]/).map(s => s.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (part !== artist) artistVariations.push(part);
     }
-    loggers.main.info('[Lyrics] LRCLIB: no results');
-  } catch (err) {
-    loggers.main.warn('[Lyrics] LRCLIB failed', { error: (err as Error).message });
+    // Also try with just track name (no artist)
+    artistVariations.push('');
+  }
+
+  // Try LRCLIB first (free, no key, reliable)
+  for (const tryArtist of artistVariations) {
+    try {
+      const params = new URLSearchParams();
+      if (tryArtist) params.set('artist_name', tryArtist);
+      params.set('track_name', title);
+      const url = `https://lrclib.net/api/search?${params.toString()}`;
+      loggers.main.info('[Lyrics] Trying LRCLIB', { artist: tryArtist, title, url });
+
+      const response = await net.fetch(url, { method: 'GET' });
+      if (response.ok) {
+        const results = await response.json() as Array<{ plainLyrics?: string; syncedLyrics?: string; artistName?: string; trackName?: string }>;
+        if (results.length > 0 && results[0].plainLyrics) {
+          const hasSynced = !!results[0].syncedLyrics;
+          loggers.main.info('[Lyrics] LRCLIB success', { artist: tryArtist, length: results[0].plainLyrics.length, hasSynced });
+          return {
+            ok: true,
+            lyrics: results[0].plainLyrics,
+            syncedLyrics: results[0].syncedLyrics || undefined,
+          };
+        }
+      }
+      loggers.main.info('[Lyrics] LRCLIB: no results', { artist: tryArtist });
+    } catch (err) {
+      loggers.main.warn('[Lyrics] LRCLIB failed', { artist: tryArtist, error: (err as Error).message });
+    }
   }
 
   // Fallback: lyrics.ovh

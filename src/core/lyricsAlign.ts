@@ -947,6 +947,8 @@ export function parseArtistTitle(sourceTitle: string): { artist: string; title: 
     .replace(/\(lyrics?\)/gi, '')
     .replace(/\[lyrics?\]/gi, '')
     .replace(/\(HD\)/gi, '')
+    .replace(/\((audio|video|live|remaster(ed)?|mono|stereo|\d{4}\s*remaster(ed)?)\)/gi, '')
+    .replace(/\[(audio|video|live|remaster(ed)?|mono|stereo|\d{4}\s*remaster(ed)?)\]/gi, '')
     .replace(/\|.*$/g, '')
     .trim();
 

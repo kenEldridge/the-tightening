@@ -90,7 +90,10 @@
       "WebFetch(domain:www.youtube.com)",
       "WebFetch(domain:aatishb.com)",
       "Bash(del \"C:\\\\Users\\\\eldri\\\\projects\\\\the-tightening\\\\src\\\\components\\\\FallingNotesCanvas.tsx\")",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsx:*)",
+      "WebFetch(domain:keneldridge.github.io)"
     ],
     "deny": [],
     "ask": []

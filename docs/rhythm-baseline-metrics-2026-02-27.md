@@ -1,15 +1,15 @@
 # Rhythm Detection Baseline Metrics
-Generated: 2026-02-27T16:33:29.051Z
+Generated: 2026-02-27T20:53:11.887Z
 
 ## Aggregate
 
 | Metric | Value |
 |--------|-------|
-| Mean Beat F1 | 0.164 |
-| Mean Downbeat F1 | 0.308 |
-| Mean Root Accuracy | 12.1% |
-| Mean Full Accuracy | 11.2% |
-| Mean Drift (median) | 2712.1 ms |
+| Mean Beat F1 | 0.160 |
+| Mean Downbeat F1 | 0.306 |
+| Mean Root Accuracy | 11.7% |
+| Mean Full Accuracy | 10.8% |
+| Mean Drift (median) | 32414.5 ms |
 | Mean False Changes /32 bars | 3.6 |
 
 ## Wings - Mull Of Kintyre (`mull-of-kintyre`)
@@ -69,21 +69,21 @@ Generated: 2026-02-27T16:33:29.051Z
 ## Canon in D - Pachelbel (`canon-in-d`)
 
 ### Beat Detection
-- **F1**: 0.054 (P=0.030, R=0.235)
-- Matched: 19 / 81 GT, 623 predicted
+- **F1**: 0.044 (P=0.028, R=0.111)
+- Matched: 9 / 81 GT, 324 predicted
 
 ### Downbeat Detection
-- **F1**: 0.042 (P=0.032, R=0.062)
-- Matched: 5 / 81 GT, 156 predicted
+- **F1**: 0.037 (P=0.037, R=0.037)
+- Matched: 3 / 81 GT, 81 predicted
 
 ### Bar Drift
-- Median: 7690.6 ms
-- P95: 14612.1 ms
+- Median: 96797.8 ms
+- P95: 183915.3 ms
 - Bars evaluated: 81
 
 ### Chord Accuracy
-- Root: 24.7%
-- Full: 24.7%
+- Root: 23.5%
+- Full: 23.5%
 - Bars evaluated: 81
 
 ### False Chord Changes

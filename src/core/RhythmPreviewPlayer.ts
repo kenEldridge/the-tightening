@@ -122,38 +122,65 @@ export class RhythmPreviewPlayer {
       }
 
       const noteDur = beatDuration * 0.8; // Each hit lasts 80% of a beat
+      const hasStrength = chordBeats.some(b => b.strength != null);
 
       for (const beat of chordBeats) {
-        if (beat.beatInBar === 1) {
-          // Beat 1: bass root + full chord (strong beat)
-          bassEvents.push({
-            time: beat.time,
-            note: voicing.bass,
-            duration: noteDur * 1.5, // Bass rings a bit longer
-            velocity: 0.65,
-          });
-          chordEvents.push({
-            time: beat.time + 0.02, // Slight offset so chord doesn't mask bass attack
-            notes: voicing.notes,
-            duration: noteDur,
-            velocity: 0.45,
-          });
-        } else if (beatsPerBar >= 4 && beat.beatInBar === 3) {
-          // Beat 3 (in 4/4): bass only (secondary strong beat)
-          bassEvents.push({
-            time: beat.time,
-            note: voicing.bass,
-            duration: noteDur,
-            velocity: 0.5,
-          });
+        if (!hasStrength) {
+          // ---- Legacy fallback: no strength data, use original fixed pattern ----
+          if (beat.beatInBar === 1) {
+            bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur * 1.5, velocity: 0.65 });
+            chordEvents.push({ time: beat.time + 0.02, notes: voicing.notes, duration: noteDur, velocity: 0.45 });
+          } else if (beatsPerBar >= 4 && beat.beatInBar === 3) {
+            bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur, velocity: 0.5 });
+          } else {
+            chordEvents.push({ time: beat.time, notes: voicing.notes, duration: noteDur * 0.6, velocity: 0.35 });
+          }
+          continue;
+        }
+
+        // ---- Onset-driven playback ----
+        let s = beat.strength ?? 0;
+
+        // Confidence-aware blending: degrade toward legacy values when confidence is low
+        if (beat.confidence < 0.45) {
+          const legacyVel = beat.beatInBar === 1 ? 0.65 : (beatsPerBar >= 4 && beat.beatInBar === 3 ? 0.5 : 0.35);
+          s = 0.5 * s + 0.5 * legacyVel;
+        }
+
+        // Anti-noise floor: skip weak non-anchor beats
+        if (s < 0.08 && beat.beatInBar !== 1) continue;
+
+        // Velocity mapping (clamped)
+        const bassVel = Math.max(0.25, Math.min(0.85, 0.30 + 0.45 * s));
+        const chordVel = Math.max(0.15, Math.min(0.75, 0.18 + 0.42 * s));
+        const stabDur = (0.45 + 0.40 * s) * beatDuration;
+
+        if (beatsPerBar >= 4) {
+          // ---- 4/4 meter rules ----
+          if (beat.beatInBar === 1) {
+            // Beat 1: always bass + chord
+            bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur * 1.5, velocity: bassVel });
+            chordEvents.push({ time: beat.time + 0.02, notes: voicing.notes, duration: noteDur, velocity: chordVel });
+          } else if (beat.beatInBar === 3) {
+            // Beat 3: bass if strong enough, chord optional
+            if (s >= 0.30) bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur, velocity: bassVel });
+            if (s >= 0.45) chordEvents.push({ time: beat.time + 0.02, notes: voicing.notes, duration: stabDur, velocity: chordVel });
+          } else {
+            // Beats 2, 4: chord if strong enough, bass only if very strong
+            if (s >= 0.62) bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur, velocity: bassVel * 0.8 });
+            if (s >= 0.18) chordEvents.push({ time: beat.time, notes: voicing.notes, duration: stabDur, velocity: chordVel });
+          }
         } else {
-          // Beats 2, 4 (or 2,3 in 3/4): chord stab only (weak beats)
-          chordEvents.push({
-            time: beat.time,
-            notes: voicing.notes,
-            duration: noteDur * 0.6, // Shorter stab on weak beats
-            velocity: 0.35,
-          });
+          // ---- 3/4 meter rules ----
+          if (beat.beatInBar === 1) {
+            // Beat 1: always bass + chord
+            bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur * 1.5, velocity: bassVel });
+            chordEvents.push({ time: beat.time + 0.02, notes: voicing.notes, duration: noteDur, velocity: chordVel });
+          } else {
+            // Beats 2, 3: chord if strong enough, bass only for rare accents
+            if (s >= 0.78) bassEvents.push({ time: beat.time, note: voicing.bass, duration: noteDur, velocity: bassVel * 0.7 });
+            if (s >= 0.16) chordEvents.push({ time: beat.time, notes: voicing.notes, duration: stabDur, velocity: chordVel });
+          }
         }
       }
     }

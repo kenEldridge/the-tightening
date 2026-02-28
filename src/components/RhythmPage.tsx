@@ -220,6 +220,7 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
       let tl = createTimeline(result.beatGrid, result.chords, {
         analysisVersion: result.meta.analysisVersion,
         configHash: result.meta.configHash,
+        keyRoot: result.meta.keyRoot,
       });
 
       // Carry over lyric_correction edits from previous timeline (intent preservation)
@@ -903,7 +904,36 @@ const TimelineView: React.FC<{
             {timeline.beatGrid.tempo} BPM — {timeline.beatGrid.timeSignature.numerator}/{timeline.beatGrid.timeSignature.denominator} — {timeline.beatGrid.barCount} bars — {timeline.chords.length} chords — {timeline.edits.length} edits
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Key transposition selector */}
+          {timeline.keyRoot != null ? (
+            <select
+              value={timeline.keyRoot}
+              onChange={(e) => {
+                const newKeyRoot = parseInt(e.target.value, 10);
+                if (newKeyRoot !== timeline.keyRoot) {
+                  onEdit({ type: 'transpose_key', fromKeyRoot: timeline.keyRoot!, toKeyRoot: newKeyRoot });
+                }
+              }}
+              style={{
+                backgroundColor: '#333',
+                color: '#eee',
+                border: '1px solid #555',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                fontSize: '12px',
+              }}
+              title="Transpose to a different key"
+            >
+              {['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'].map((name, i) => (
+                <option key={i} value={i}>Key: {name}</option>
+              ))}
+            </select>
+          ) : (
+            <span style={{ color: '#666', fontSize: '11px' }} title="Re-analyze to enable key transposition">
+              No key data
+            </span>
+          )}
           {onReanalyze && (
             <button onClick={() => setShowHints(!showHints)} style={smallBtnStyle}>
               {showHints ? 'Hide Hints' : 'Re-analyze...'}
