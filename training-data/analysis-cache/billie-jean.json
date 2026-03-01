@@ -1,0 +1,7651 @@
+{
+  "beatGrid": {
+    "tempo": 117.5,
+    "timeSignature": {
+      "numerator": 4,
+      "denominator": 4
+    },
+    "beats": [
+      {
+        "time": 0.09287981688976288,
+        "bar": 1,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.6263143479529353,
+        "strength": 0.8692100217835274
+      },
+      {
+        "time": 0.6315024679011487,
+        "bar": 1,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.4217616055262208,
+        "strength": 0.7835112858904354
+      },
+      {
+        "time": 1.142261214078741,
+        "bar": 1,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.8946069945838855,
+        "strength": 1
+      },
+      {
+        "time": 1.6530199244935462,
+        "bar": 1,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.5070732962883171,
+        "strength": 0.848484116142521
+      },
+      {
+        "time": 2.1637787064339253,
+        "bar": 2,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.7213092058887685,
+        "strength": 0.9965722111500775
+      },
+      {
+        "time": 2.6745374168487306,
+        "bar": 2,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.48831134001988724,
+        "strength": 0.8847407871094773
+      },
+      {
+        "time": 3.185296127263536,
+        "bar": 2,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.7277072513720213,
+        "strength": 1
+      },
+      {
+        "time": 3.696054837678341,
+        "bar": 2,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.40157461735514327,
+        "strength": 0.7840082347003787
+      },
+      {
+        "time": 4.206813548093146,
+        "bar": 3,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.5059846094230651,
+        "strength": 1
+      },
+      {
+        "time": 4.717572258507952,
+        "bar": 3,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.552220921962696
+      },
+      {
+        "time": 5.228330968922757,
+        "bar": 3,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.48516118272409603,
+        "strength": 0.9859361592740621
+      },
+      {
+        "time": 5.766953754044593,
+        "bar": 3,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.522590217975848
+      },
+      {
+        "time": 6.249848389752367,
+        "bar": 4,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.48065937796313474,
+        "strength": 1
+      },
+      {
+        "time": 6.7884711748742035,
+        "bar": 4,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42558299442840364
+      },
+      {
+        "time": 7.299229885289009,
+        "bar": 4,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3601765740369128,
+        "strength": 0.9000514728791853
+      },
+      {
+        "time": 7.809988595703814,
+        "bar": 4,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5943613731115654
+      },
+      {
+        "time": 8.320747020016325,
+        "bar": 5,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.5730468241674233,
+        "strength": 1
+      },
+      {
+        "time": 8.831506016533424,
+        "bar": 5,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5976058781540218
+      },
+      {
+        "time": 9.342264440845936,
+        "bar": 5,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.5079516752766932,
+        "strength": 0.9605996889283723
+      },
+      {
+        "time": 9.853023437363035,
+        "bar": 5,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6439095214284825
+      },
+      {
+        "time": 10.363781861675546,
+        "bar": 6,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.577218233145535,
+        "strength": 0.9996870632589056
+      },
+      {
+        "time": 10.874540858192645,
+        "bar": 6,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3592263870077192,
+        "strength": 0.8211489641887106
+      },
+      {
+        "time": 11.385299282505157,
+        "bar": 6,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.5770675818508305,
+        "strength": 1
+      },
+      {
+        "time": 11.896058279022256,
+        "bar": 6,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6666521050555843
+      },
+      {
+        "time": 12.406817275539357,
+        "bar": 7,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.5302220503226852,
+        "strength": 1
+      },
+      {
+        "time": 12.917575699851866,
+        "bar": 7,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3208883807126022,
+        "strength": 0.7521910753763209
+      },
+      {
+        "time": 13.428334696368967,
+        "bar": 7,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.5094013370198034,
+        "strength": 0.9866459128643182
+      },
+      {
+        "time": 13.939093120681477,
+        "bar": 7,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5151254544992008
+      },
+      {
+        "time": 14.449852117198578,
+        "bar": 8,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.43046656608542244,
+        "strength": 1
+      },
+      {
+        "time": 14.960610541511087,
+        "bar": 8,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5511381822048276
+      },
+      {
+        "time": 15.471369538028188,
+        "bar": 8,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.4276888225702959,
+        "strength": 0.9981454252443583
+      },
+      {
+        "time": 15.982127962340698,
+        "bar": 8,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.38243633129777077
+      },
+      {
+        "time": 16.433305348804655,
+        "bar": 9,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1626817223867982
+      },
+      {
+        "time": 16.943943646676995,
+        "bar": 9,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2596123460293912
+      },
+      {
+        "time": 17.454581944549336,
+        "bar": 9,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.16099873623521055
+      },
+      {
+        "time": 17.965220242421676,
+        "bar": 9,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4112495786918937
+      },
+      {
+        "time": 18.475858540294016,
+        "bar": 10,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2089192552997994
+      },
+      {
+        "time": 18.986496838166357,
+        "bar": 10,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1683095206713106
+      },
+      {
+        "time": 19.497135136038697,
+        "bar": 10,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.20885936692879908
+      },
+      {
+        "time": 20.007773433911037,
+        "bar": 10,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43104661522957083
+      },
+      {
+        "time": 20.518411731783377,
+        "bar": 11,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.22801352819856596
+      },
+      {
+        "time": 21.029050029655718,
+        "bar": 11,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.17709935182089487
+      },
+      {
+        "time": 21.539688327528058,
+        "bar": 11,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5140094844571665
+      },
+      {
+        "time": 22.0503266254004,
+        "bar": 11,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.21470526962044306
+      },
+      {
+        "time": 22.56096492327274,
+        "bar": 12,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.44676788460006683
+      },
+      {
+        "time": 23.07160322114508,
+        "bar": 12,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.39042083509354775
+      },
+      {
+        "time": 23.58224151901742,
+        "bar": 12,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37369436124770905
+      },
+      {
+        "time": 24.09287981688976,
+        "bar": 12,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4608788544001272
+      },
+      {
+        "time": 24.6035181147621,
+        "bar": 13,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.24279756114140383
+      },
+      {
+        "time": 25.11415641263444,
+        "bar": 13,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.12371634774130172
+      },
+      {
+        "time": 25.60295209440779,
+        "bar": 13,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5866155374993848
+      },
+      {
+        "time": 26.13543300837912,
+        "bar": 13,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2835527000723682
+      },
+      {
+        "time": 26.64607130625146,
+        "bar": 14,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3020856562042932
+      },
+      {
+        "time": 27.1567096041238,
+        "bar": 14,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.18525083274034315
+      },
+      {
+        "time": 27.64598693606701,
+        "bar": 14,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5639513570372755
+      },
+      {
+        "time": 28.17798619986848,
+        "bar": 14,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.18885895606530645
+      },
+      {
+        "time": 28.688624497740822,
+        "bar": 15,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4764945658125779
+      },
+      {
+        "time": 29.199262795613162,
+        "bar": 15,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4065045554784977
+      },
+      {
+        "time": 29.709901093485502,
+        "bar": 15,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.19672544666393404
+      },
+      {
+        "time": 30.220539391357843,
+        "bar": 15,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3323770345968155
+      },
+      {
+        "time": 30.731177689230183,
+        "bar": 16,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.17909096941415692
+      },
+      {
+        "time": 31.241815987102523,
+        "bar": 16,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.18837832083094658
+      },
+      {
+        "time": 31.759920694092486,
+        "bar": 16,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6511338513461803
+      },
+      {
+        "time": 32.26309258284721,
+        "bar": 16,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3960701906519303
+      },
+      {
+        "time": 32.77373088071955,
+        "bar": 17,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.06810515320416402
+      },
+      {
+        "time": 33.28436917859189,
+        "bar": 17,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5499284925046238
+      },
+      {
+        "time": 33.79500747646423,
+        "bar": 17,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2511415460932012
+      },
+      {
+        "time": 34.30564577433657,
+        "bar": 17,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.21719760089634593
+      },
+      {
+        "time": 34.81628407220891,
+        "bar": 18,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.21286891812399636
+      },
+      {
+        "time": 35.32692237008125,
+        "bar": 18,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.24080410780456113
+      },
+      {
+        "time": 35.83756066795359,
+        "bar": 18,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.45192933827742615
+      },
+      {
+        "time": 36.34819896582593,
+        "bar": 18,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.11271221421493635
+      },
+      {
+        "time": 36.85883726369827,
+        "bar": 19,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.503923740956585
+      },
+      {
+        "time": 37.36947556157061,
+        "bar": 19,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 37.88011385944295,
+        "bar": 19,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.18336168119441526
+      },
+      {
+        "time": 38.39075215731529,
+        "bar": 19,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2743484814901637
+      },
+      {
+        "time": 38.90139045518763,
+        "bar": 20,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.31565058816581393
+      },
+      {
+        "time": 39.41202875305997,
+        "bar": 20,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 39.92266705093231,
+        "bar": 20,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4455741835748933
+      },
+      {
+        "time": 40.43330534880465,
+        "bar": 20,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3947214575701796
+      },
+      {
+        "time": 40.94394364667699,
+        "bar": 21,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.017443421777843637
+      },
+      {
+        "time": 41.45458194454933,
+        "bar": 21,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.08011232859724675
+      },
+      {
+        "time": 41.96522024242167,
+        "bar": 21,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.24543386653364124
+      },
+      {
+        "time": 42.47585854029401,
+        "bar": 21,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43329058229933903
+      },
+      {
+        "time": 42.98649683816635,
+        "bar": 22,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.26416149309208603
+      },
+      {
+        "time": 43.49713513603869,
+        "bar": 22,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 44.007773433911034,
+        "bar": 22,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.14053685154918671
+      },
+      {
+        "time": 44.518411731783374,
+        "bar": 22,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.47622153904838993
+      },
+      {
+        "time": 45.029050029655714,
+        "bar": 23,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43809460971709135
+      },
+      {
+        "time": 45.539688327528054,
+        "bar": 23,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.08475312067845081
+      },
+      {
+        "time": 46.050326625400395,
+        "bar": 23,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.36018881539285647
+      },
+      {
+        "time": 46.560964923272735,
+        "bar": 23,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.15910498339909912
+      },
+      {
+        "time": 47.071603221145075,
+        "bar": 24,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.34873952714154766
+      },
+      {
+        "time": 47.582241519017415,
+        "bar": 24,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 48.092879816889756,
+        "bar": 24,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4457257782625803
+      },
+      {
+        "time": 48.603518114762096,
+        "bar": 24,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.05283046444354557
+      },
+      {
+        "time": 49.114156412634436,
+        "bar": 25,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3757103930815368
+      },
+      {
+        "time": 49.62479471050678,
+        "bar": 25,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 50.13543300837912,
+        "bar": 25,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 50.64607130625146,
+        "bar": 25,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 51.1567096041238,
+        "bar": 26,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 51.66734790199614,
+        "bar": 26,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 52.24599611568958,
+        "bar": 26,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6911054386023531
+      },
+      {
+        "time": 52.68862449774082,
+        "bar": 26,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 53.19926279561316,
+        "bar": 27,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 53.7099010934855,
+        "bar": 27,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 54.22053939135784,
+        "bar": 27,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 54.73117768923018,
+        "bar": 27,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 55.24181598710252,
+        "bar": 28,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 55.75245428497486,
+        "bar": 28,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 56.33206808782638,
+        "bar": 28,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5892284339276552
+      },
+      {
+        "time": 56.8428259399343,
+        "bar": 28,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6426552962723637
+      },
+      {
+        "time": 57.28436917859188,
+        "bar": 29,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 57.79500747646422,
+        "bar": 29,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 58.30564577433656,
+        "bar": 29,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 58.8162840722089,
+        "bar": 29,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 59.32692237008124,
+        "bar": 30,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 59.83756066795358,
+        "bar": 30,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 60.34819896582592,
+        "bar": 30,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 60.85883726369826,
+        "bar": 30,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 61.3694755615706,
+        "bar": 31,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 61.88011385944294,
+        "bar": 31,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 62.39075215731528,
+        "bar": 31,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 62.901390455187624,
+        "bar": 31,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 63.412028753059964,
+        "bar": 32,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 63.922667050932304,
+        "bar": 32,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 64.43330534880465,
+        "bar": 32,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 64.943943646677,
+        "bar": 32,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 65.45458194454935,
+        "bar": 33,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 65.9652202424217,
+        "bar": 33,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 66.47585854029404,
+        "bar": 33,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 66.98649683816639,
+        "bar": 33,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 67.42943877121238,
+        "bar": 34,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6811877371396011
+      },
+      {
+        "time": 67.94019891213865,
+        "bar": 34,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.485867311401798,
+        "strength": 1
+      },
+      {
+        "time": 68.45095447542822,
+        "bar": 34,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6179499356946562
+      },
+      {
+        "time": 68.9617146163545,
+        "bar": 34,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.37449225134329733,
+        "strength": 0.9194461156305386
+      },
+      {
+        "time": 69.47247475728078,
+        "bar": 35,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3367494137924725,
+        "strength": 0.7989433770450254
+      },
+      {
+        "time": 69.98323489820706,
+        "bar": 35,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.5672681341715677,
+        "strength": 1
+      },
+      {
+        "time": 70.49399046149662,
+        "bar": 35,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5448152089539984
+      },
+      {
+        "time": 71.00475060242292,
+        "bar": 35,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.45825752512116136,
+        "strength": 0.9324029634196539
+      },
+      {
+        "time": 71.5155107433492,
+        "bar": 36,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5306708139741008
+      },
+      {
+        "time": 72.02626630663876,
+        "bar": 36,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.44218911156775537,
+        "strength": 1
+      },
+      {
+        "time": 72.53702644756504,
+        "bar": 36,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.44896000075214026
+      },
+      {
+        "time": 73.04778658849132,
+        "bar": 36,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3617285431428021,
+        "strength": 0.9181780860528312
+      },
+      {
+        "time": 73.55854215178088,
+        "bar": 37,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5707663101933806
+      },
+      {
+        "time": 74.06930229270716,
+        "bar": 37,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.37266293081798035,
+        "strength": 0.9531728064068534
+      },
+      {
+        "time": 74.58006243363346,
+        "bar": 37,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5049887582710205
+      },
+      {
+        "time": 75.09081799692302,
+        "bar": 37,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.43073634337191935,
+        "strength": 1
+      },
+      {
+        "time": 75.6015781378493,
+        "bar": 38,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6319390422006149
+      },
+      {
+        "time": 76.11233827877558,
+        "bar": 38,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3704116915962835,
+        "strength": 0.9950633813166475
+      },
+      {
+        "time": 76.62309384206515,
+        "bar": 38,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.557359175736297
+      },
+      {
+        "time": 77.13385398299143,
+        "bar": 38,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.355717912557558,
+        "strength": 0.9544551247045459
+      },
+      {
+        "time": 77.6446141239177,
+        "bar": 39,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4197434347302066
+      },
+      {
+        "time": 78.155374264844,
+        "bar": 39,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6618222025702821
+      },
+      {
+        "time": 78.69399390284059,
+        "bar": 39,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6439745745994336
+      },
+      {
+        "time": 79.20475404376687,
+        "bar": 39,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.39536632462882726,
+        "strength": 0.9527998264262139
+      },
+      {
+        "time": 79.71551418469315,
+        "bar": 40,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5162122985414794
+      },
+      {
+        "time": 80.22626974798271,
+        "bar": 40,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.4710598877593054,
+        "strength": 1
+      },
+      {
+        "time": 80.737029888909,
+        "bar": 40,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4427800991662367
+      },
+      {
+        "time": 81.24779002983529,
+        "bar": 40,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.39705990399849234,
+        "strength": 0.8988168487738359
+      },
+      {
+        "time": 81.75854559312485,
+        "bar": 41,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.46646777865461864
+      },
+      {
+        "time": 82.26930573405113,
+        "bar": 41,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.4706901829860149,
+        "strength": 1
+      },
+      {
+        "time": 82.78006587497741,
+        "bar": 41,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3543192017558757
+      },
+      {
+        "time": 83.31868551297401,
+        "bar": 41,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.34765729938608325,
+        "strength": 0.7013389705884172
+      },
+      {
+        "time": 83.8294456539003,
+        "bar": 42,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3693450507701098
+      },
+      {
+        "time": 84.34020579482657,
+        "bar": 42,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3857239577148276,
+        "strength": 0.8720101447212671
+      },
+      {
+        "time": 84.85096135811614,
+        "bar": 42,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5474268711575052
+      },
+      {
+        "time": 85.3694755615709,
+        "bar": 42,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.34683676274603703
+      },
+      {
+        "time": 85.8724816399687,
+        "bar": 43,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5038412911686316
+      },
+      {
+        "time": 86.35537770618795,
+        "bar": 43,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3366534211292257,
+        "strength": 0.8100335894714866
+      },
+      {
+        "time": 86.86613326947752,
+        "bar": 43,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3019658212323509,
+        "strength": 0.7262023548383075
+      },
+      {
+        "time": 87.3768934104038,
+        "bar": 43,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.39251946938578386,
+        "strength": 0.9434794818657567
+      },
+      {
+        "time": 87.88765355133009,
+        "bar": 44,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6026305061365094
+      },
+      {
+        "time": 88.39840911461965,
+        "bar": 44,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3705332054247155,
+        "strength": 0.9096588340579461
+      },
+      {
+        "time": 88.90916925554593,
+        "bar": 44,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5209591670527454
+      },
+      {
+        "time": 89.41992939647221,
+        "bar": 44,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.35332474883900467,
+        "strength": 0.8665010325569051
+      },
+      {
+        "time": 89.9585490344688,
+        "bar": 45,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.36886098261875394
+      },
+      {
+        "time": 90.44144510068806,
+        "bar": 45,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3719027820755411,
+        "strength": 0.8873365605939277
+      },
+      {
+        "time": 90.95220524161434,
+        "bar": 45,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.30441098804698474,
+        "strength": 0.7259245712151907
+      },
+      {
+        "time": 91.4629608049039,
+        "bar": 45,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.39874308084862936,
+        "strength": 0.950397369560047
+      },
+      {
+        "time": 92.00158502053722,
+        "bar": 46,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.586979578205786
+      },
+      {
+        "time": 92.48448108675647,
+        "bar": 46,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.35798207958027345,
+        "strength": 0.8884581334410324
+      },
+      {
+        "time": 93.02310072475306,
+        "bar": 46,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.31939942813175937,
+        "strength": 0.7076254899394703
+      },
+      {
+        "time": 93.53386086567934,
+        "bar": 46,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3187002438295637,
+        "strength": 0.7057466337363065
+      },
+      {
+        "time": 94.04462100660564,
+        "bar": 47,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.45588401804257545,
+        "strength": 0.9011442034081328
+      },
+      {
+        "time": 94.55538114753192,
+        "bar": 47,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.5512356812907596,
+        "strength": 1
+      },
+      {
+        "time": 95.06613671082148,
+        "bar": 47,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.4598341172769273,
+        "strength": 0.9081202741995437
+      },
+      {
+        "time": 95.57689685174776,
+        "bar": 47,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.4844876030467941,
+        "strength": 0.9563619970101269
+      },
+      {
+        "time": 96.08765699267404,
+        "bar": 48,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.35702326521582767,
+        "strength": 0.7424545249155197
+      },
+      {
+        "time": 96.5984125559636,
+        "bar": 48,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.47281221782398697,
+        "strength": 0.9828048271515852
+      },
+      {
+        "time": 97.10917269688989,
+        "bar": 48,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3972924690442139,
+        "strength": 0.8254421900557309
+      },
+      {
+        "time": 97.61993283781618,
+        "bar": 48,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.36990703285023185,
+        "strength": 0.7681866442462073
+      },
+      {
+        "time": 98.13068840110574,
+        "bar": 49,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3792748562758215,
+        "strength": 0.8323638561128626
+      },
+      {
+        "time": 98.64144854203202,
+        "bar": 49,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.4080778603509999,
+        "strength": 0.8951590624919743
+      },
+      {
+        "time": 99.1522086829583,
+        "bar": 49,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6388376504403753
+      },
+      {
+        "time": 99.66296424624787,
+        "bar": 49,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.36606324958568465,
+        "strength": 0.8022638215258416
+      },
+      {
+        "time": 100.20158846188119,
+        "bar": 50,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5823066382317976
+      },
+      {
+        "time": 100.68448452810043,
+        "bar": 50,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3694920392186459,
+        "strength": 0.8427037552939447
+      },
+      {
+        "time": 101.19524466902672,
+        "bar": 50,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5327188372856263
+      },
+      {
+        "time": 101.70600023231628,
+        "bar": 50,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3118229162771844,
+        "strength": 0.7105301290092375
+      },
+      {
+        "time": 102.24462444794959,
+        "bar": 51,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.33468144491566926,
+        "strength": 0.7430442289335855
+      },
+      {
+        "time": 102.75538458887587,
+        "bar": 51,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.45019304268687815,
+        "strength": 1
+      },
+      {
+        "time": 103.26614015216543,
+        "bar": 51,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3188111057095567,
+        "strength": 0.7085080015471155
+      },
+      {
+        "time": 103.77690029309173,
+        "bar": 51,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.40262681156850405,
+        "strength": 0.8952254410657815
+      },
+      {
+        "time": 104.28766043401801,
+        "bar": 52,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.37596522798985316,
+        "strength": 0.8936373371231879
+      },
+      {
+        "time": 104.77055192260053,
+        "bar": 52,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3150250932180635,
+        "strength": 0.6880041826126807
+      },
+      {
+        "time": 105.30917613823385,
+        "bar": 52,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6068060072825683
+      },
+      {
+        "time": 105.81993627916013,
+        "bar": 52,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3486054507900894,
+        "strength": 0.8298427105783241
+      },
+      {
+        "time": 106.3306918424497,
+        "bar": 53,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.32253866026569306,
+        "strength": 0.7115781820496383
+      },
+      {
+        "time": 106.84145198337598,
+        "bar": 53,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.46191082440803194,
+        "strength": 1
+      },
+      {
+        "time": 107.35221212430227,
+        "bar": 53,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3366682473597598,
+        "strength": 0.7435004438249637
+      },
+      {
+        "time": 107.86296768759183,
+        "bar": 53,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.30533024465329456,
+        "strength": 0.6746211293861564
+      },
+      {
+        "time": 108.37372782851811,
+        "bar": 54,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3704427951822092,
+        "strength": 0.8653250487098887
+      },
+      {
+        "time": 108.8844879694444,
+        "bar": 54,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.39564677843640356,
+        "strength": 0.9246667779275094
+      },
+      {
+        "time": 109.39524811037067,
+        "bar": 54,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5381380602959942
+      },
+      {
+        "time": 109.90600367366024,
+        "bar": 54,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.35499446545584984,
+        "strength": 0.8304820955058099
+      },
+      {
+        "time": 110.41676381458652,
+        "bar": 55,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7221657609248353
+      },
+      {
+        "time": 110.92752395551281,
+        "bar": 55,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3647204418226965,
+        "strength": 0.8808103691784217
+      },
+      {
+        "time": 111.43827951880237,
+        "bar": 55,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5467516667503812
+      },
+      {
+        "time": 111.94903965972865,
+        "bar": 55,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6668653678554866
+      },
+      {
+        "time": 112.48766387536196,
+        "bar": 56,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.458753593832382
+      },
+      {
+        "time": 112.99841943865152,
+        "bar": 56,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7604668544758855
+      },
+      {
+        "time": 113.50917957957782,
+        "bar": 56,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.46815768166560523
+      },
+      {
+        "time": 113.99207564579706,
+        "bar": 56,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7094214189635784
+      },
+      {
+        "time": 114.4758585402947,
+        "bar": 57,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2370078627452153
+      },
+      {
+        "time": 115.01359135001292,
+        "bar": 57,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.30516743177306754,
+        "strength": 0.795183473020335
+      },
+      {
+        "time": 115.49713513603939,
+        "bar": 57,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37980148844371797
+      },
+      {
+        "time": 116.03511163186548,
+        "bar": 57,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.30549914621208907,
+        "strength": 0.7968583728780309
+      },
+      {
+        "time": 116.57373126986207,
+        "bar": 58,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.40195759456592267
+      },
+      {
+        "time": 117.05662733608132,
+        "bar": 58,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6494035980653218
+      },
+      {
+        "time": 117.59525155171464,
+        "bar": 58,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4048311549354494
+      },
+      {
+        "time": 118.1060071150042,
+        "bar": 58,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3675596617340405,
+        "strength": 0.9598571237274112
+      },
+      {
+        "time": 118.61676725593048,
+        "bar": 59,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.48211134477465745
+      },
+      {
+        "time": 119.12752739685676,
+        "bar": 59,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.39118866163875826,
+        "strength": 0.9998130225176084
+      },
+      {
+        "time": 119.63828296014633,
+        "bar": 59,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.36376682164048785
+      },
+      {
+        "time": 120.1490431010726,
+        "bar": 59,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3549342268242107,
+        "strength": 0.9081831541833881
+      },
+      {
+        "time": 120.6598032419989,
+        "bar": 60,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7613931138981578
+      },
+      {
+        "time": 121.17055880528847,
+        "bar": 60,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3702757108784977,
+        "strength": 0.9664729107477029
+      },
+      {
+        "time": 121.68131894621474,
+        "bar": 60,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5467407546533071
+      },
+      {
+        "time": 122.19207908714102,
+        "bar": 60,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3446012603978738,
+        "strength": 0.9005025376858988
+      },
+      {
+        "time": 122.70283465043059,
+        "bar": 61,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5599634538643676
+      },
+      {
+        "time": 123.21359479135687,
+        "bar": 61,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3236355846147343,
+        "strength": 0.8900617068209224
+      },
+      {
+        "time": 123.72435493228315,
+        "bar": 61,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37346953255704074
+      },
+      {
+        "time": 124.23511507320944,
+        "bar": 61,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6658913968231774
+      },
+      {
+        "time": 124.68862449774164,
+        "bar": 62,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 125.25663077742529,
+        "bar": 62,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3196772378376034,
+        "strength": 0.8846868160453711
+      },
+      {
+        "time": 125.70990109348634,
+        "bar": 62,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 126.27814648164113,
+        "bar": 62,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6175456894505571
+      },
+      {
+        "time": 126.73117768923103,
+        "bar": 63,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 127.24181598710338,
+        "bar": 63,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 127.75245428497573,
+        "bar": 63,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 128.26309258284806,
+        "bar": 63,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 128.7737308807204,
+        "bar": 64,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.48552397586699064
+      },
+      {
+        "time": 129.28436917859273,
+        "bar": 64,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 129.79500747646506,
+        "bar": 64,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.06413498524852329
+      },
+      {
+        "time": 130.3056457743374,
+        "bar": 64,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.07260805922306532
+      },
+      {
+        "time": 130.81628407220973,
+        "bar": 65,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.22374480039954375
+      },
+      {
+        "time": 131.32692237008206,
+        "bar": 65,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 131.8375606679544,
+        "bar": 65,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.26118566615938105
+      },
+      {
+        "time": 132.34819896582673,
+        "bar": 65,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.40998286068375944
+      },
+      {
+        "time": 132.85883726369906,
+        "bar": 66,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.16325568580558997
+      },
+      {
+        "time": 133.3694755615714,
+        "bar": 66,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42740995484058103
+      },
+      {
+        "time": 133.88011385944372,
+        "bar": 66,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2439188183644475
+      },
+      {
+        "time": 134.39075215731606,
+        "bar": 66,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.19701128067461565
+      },
+      {
+        "time": 134.9013904551884,
+        "bar": 67,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1432616890587354
+      },
+      {
+        "time": 135.41202875306072,
+        "bar": 67,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.13379103007608245
+      },
+      {
+        "time": 135.92266705093306,
+        "bar": 67,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.03142829345942071
+      },
+      {
+        "time": 136.4333053488054,
+        "bar": 67,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5156809341805076
+      },
+      {
+        "time": 136.94394364667772,
+        "bar": 68,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4080574500019934
+      },
+      {
+        "time": 137.45458194455006,
+        "bar": 68,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.38687269576127076
+      },
+      {
+        "time": 137.9652202424224,
+        "bar": 68,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4263164231792099
+      },
+      {
+        "time": 138.47585854029472,
+        "bar": 68,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4480702059496606
+      },
+      {
+        "time": 138.98649683816706,
+        "bar": 69,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.22279379634762672
+      },
+      {
+        "time": 139.4971351360394,
+        "bar": 69,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.35501341882116055
+      },
+      {
+        "time": 140.00777343391172,
+        "bar": 69,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.24529427554456068
+      },
+      {
+        "time": 140.51841173178406,
+        "bar": 69,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.48069153753065
+      },
+      {
+        "time": 141.0290500296564,
+        "bar": 70,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.47387914996597524
+      },
+      {
+        "time": 141.53968832752872,
+        "bar": 70,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5019173443118146
+      },
+      {
+        "time": 142.05032662540106,
+        "bar": 70,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2486883796242946
+      },
+      {
+        "time": 142.5609649232734,
+        "bar": 70,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5057544341926615
+      },
+      {
+        "time": 143.07160322114572,
+        "bar": 71,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5061927760734102
+      },
+      {
+        "time": 143.58224151901805,
+        "bar": 71,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.13833372066966876
+      },
+      {
+        "time": 144.0928798168904,
+        "bar": 71,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 144.60351811476272,
+        "bar": 71,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4366462800903216
+      },
+      {
+        "time": 145.11415641263505,
+        "bar": 72,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.29777282781438297
+      },
+      {
+        "time": 145.6247947105074,
+        "bar": 72,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.424388019912885
+      },
+      {
+        "time": 146.13543300837972,
+        "bar": 72,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.11993509863339763
+      },
+      {
+        "time": 146.64607130625205,
+        "bar": 72,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3896841063636063
+      },
+      {
+        "time": 147.1567096041244,
+        "bar": 73,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.04628976068369118
+      },
+      {
+        "time": 147.66734790199672,
+        "bar": 73,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.16385961594485318
+      },
+      {
+        "time": 148.17798619986905,
+        "bar": 73,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.47801839879556557
+      },
+      {
+        "time": 148.6886244977414,
+        "bar": 73,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2700358343074942
+      },
+      {
+        "time": 149.19926279561372,
+        "bar": 74,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.34372133819896
+      },
+      {
+        "time": 149.70990109348605,
+        "bar": 74,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.46681908825919527
+      },
+      {
+        "time": 150.2205393913584,
+        "bar": 74,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.07842472584238482
+      },
+      {
+        "time": 150.73117768923072,
+        "bar": 74,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4462273499690196
+      },
+      {
+        "time": 151.24181598710305,
+        "bar": 75,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3972213330507539
+      },
+      {
+        "time": 151.78821621106047,
+        "bar": 75,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6150541481841535
+      },
+      {
+        "time": 152.26309258284772,
+        "bar": 75,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.16065674974250232
+      },
+      {
+        "time": 152.77373088072005,
+        "bar": 75,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 153.28436917859239,
+        "bar": 76,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 153.79500747646472,
+        "bar": 76,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4421218347456961
+      },
+      {
+        "time": 154.30564577433705,
+        "bar": 76,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.027061203208025613
+      },
+      {
+        "time": 154.81628407220938,
+        "bar": 76,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 155.32692237008172,
+        "bar": 77,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.05689368604481506
+      },
+      {
+        "time": 155.83756066795405,
+        "bar": 77,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.16547963592894854
+      },
+      {
+        "time": 156.34819896582638,
+        "bar": 77,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.38330740885550985
+      },
+      {
+        "time": 156.85883726369872,
+        "bar": 77,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 157.36947556157105,
+        "bar": 78,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.17609997015137965
+      },
+      {
+        "time": 157.88011385944338,
+        "bar": 78,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43632249698964404
+      },
+      {
+        "time": 158.39075215731572,
+        "bar": 78,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.03733467578909452
+      },
+      {
+        "time": 158.90139045518805,
+        "bar": 78,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.11262997452245624
+      },
+      {
+        "time": 159.41202875306038,
+        "bar": 79,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.14618948135492862
+      },
+      {
+        "time": 159.92266705093272,
+        "bar": 79,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.45873417550003603
+      },
+      {
+        "time": 160.43330534880505,
+        "bar": 79,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 160.94394364667738,
+        "bar": 79,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.23249098423328268
+      },
+      {
+        "time": 161.45458194454972,
+        "bar": 80,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.18736014031622508
+      },
+      {
+        "time": 161.96522024242205,
+        "bar": 80,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.404845114889561
+      },
+      {
+        "time": 162.47585854029438,
+        "bar": 80,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.08772867083114715
+      },
+      {
+        "time": 162.98649683816672,
+        "bar": 80,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.308580857129938
+      },
+      {
+        "time": 163.49713513603905,
+        "bar": 81,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 164.00777343391138,
+        "bar": 81,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4580794681786116
+      },
+      {
+        "time": 164.51841173178371,
+        "bar": 81,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.09689137653463853
+      },
+      {
+        "time": 165.02905002965605,
+        "bar": 81,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.025363683246174617
+      },
+      {
+        "time": 165.53968832752838,
+        "bar": 82,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 166.05032662540071,
+        "bar": 82,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5273593082163841
+      },
+      {
+        "time": 166.56096492327305,
+        "bar": 82,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.15729451243712972
+      },
+      {
+        "time": 167.07160322114538,
+        "bar": 82,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37958111407221334
+      },
+      {
+        "time": 167.5822415190177,
+        "bar": 83,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4807462098804953
+      },
+      {
+        "time": 168.09287981689005,
+        "bar": 83,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3320826514127626
+      },
+      {
+        "time": 168.60351811476238,
+        "bar": 83,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.030210286941629822
+      },
+      {
+        "time": 169.1141564126347,
+        "bar": 83,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 169.62479471050705,
+        "bar": 84,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.13805896791283168
+      },
+      {
+        "time": 170.13543300837938,
+        "bar": 84,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.139687452447935
+      },
+      {
+        "time": 170.6460713062517,
+        "bar": 84,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.15611926758927586
+      },
+      {
+        "time": 171.16918713754805,
+        "bar": 84,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5837389790995963
+      },
+      {
+        "time": 171.66734790199638,
+        "bar": 85,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.30245595535801684
+      },
+      {
+        "time": 172.1779861998687,
+        "bar": 85,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4518918827627951
+      },
+      {
+        "time": 172.68862449774105,
+        "bar": 85,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.22057276188509156
+      },
+      {
+        "time": 173.19926279561338,
+        "bar": 85,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.14256718029502824
+      },
+      {
+        "time": 173.7099010934857,
+        "bar": 86,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3382603940737129
+      },
+      {
+        "time": 174.22053939135805,
+        "bar": 86,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1288123324192402
+      },
+      {
+        "time": 174.73117768923038,
+        "bar": 86,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.29922979512475567
+      },
+      {
+        "time": 175.2418159871027,
+        "bar": 86,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4808121321445544
+      },
+      {
+        "time": 175.75245428497504,
+        "bar": 87,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1862667894739885
+      },
+      {
+        "time": 176.26309258284738,
+        "bar": 87,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42281604326034383
+      },
+      {
+        "time": 176.7737308807197,
+        "bar": 87,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.14729082311364702
+      },
+      {
+        "time": 177.28436917859204,
+        "bar": 87,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42974314657115753
+      },
+      {
+        "time": 177.79500747646438,
+        "bar": 88,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42212009072454426
+      },
+      {
+        "time": 178.3056457743367,
+        "bar": 88,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.24525794473821713
+      },
+      {
+        "time": 178.81628407220904,
+        "bar": 88,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 179.32692237008138,
+        "bar": 88,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.45427019976961613
+      },
+      {
+        "time": 179.8375606679537,
+        "bar": 89,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4186145803965419
+      },
+      {
+        "time": 180.34819896582604,
+        "bar": 89,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 180.85883726369838,
+        "bar": 89,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.1654131106311901
+      },
+      {
+        "time": 181.3694755615707,
+        "bar": 89,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42333037444198146
+      },
+      {
+        "time": 181.88011385944304,
+        "bar": 90,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 182.39075215731538,
+        "bar": 90,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.020620721941245874
+      },
+      {
+        "time": 182.9013904551877,
+        "bar": 90,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 183.4552625510287,
+        "bar": 90,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5723175944191836
+      },
+      {
+        "time": 183.92266705093238,
+        "bar": 91,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.35366956569017954
+      },
+      {
+        "time": 184.4333053488047,
+        "bar": 91,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.0031938343262325254
+      },
+      {
+        "time": 184.94394364667704,
+        "bar": 91,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 185.45458194454937,
+        "bar": 91,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 185.9652202424217,
+        "bar": 92,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 186.47585854029404,
+        "bar": 92,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 186.98649683816637,
+        "bar": 92,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.28001990230541135
+      },
+      {
+        "time": 187.4971351360387,
+        "bar": 92,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3963522357159158
+      },
+      {
+        "time": 188.00777343391104,
+        "bar": 93,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.11346296560872172
+      },
+      {
+        "time": 188.51841173178337,
+        "bar": 93,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 189.0290500296557,
+        "bar": 93,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43692514205298244
+      },
+      {
+        "time": 189.53968832752804,
+        "bar": 93,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 190.05032662540037,
+        "bar": 94,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 190.5609649232727,
+        "bar": 94,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 191.07160322114504,
+        "bar": 94,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.017319049147494468
+      },
+      {
+        "time": 191.58224151901737,
+        "bar": 94,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.393585259296887
+      },
+      {
+        "time": 192.0928798168897,
+        "bar": 95,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 192.60351811476204,
+        "bar": 95,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 193.11415641263437,
+        "bar": 95,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 193.6247947105067,
+        "bar": 95,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 194.13543300837904,
+        "bar": 96,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4011891126040182
+      },
+      {
+        "time": 194.64607130625137,
+        "bar": 96,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 195.1567096041237,
+        "bar": 96,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 195.66734790199604,
+        "bar": 96,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 196.17798619986837,
+        "bar": 97,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.08386836060111347
+      },
+      {
+        "time": 196.6886244977407,
+        "bar": 97,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.44251555382775803
+      },
+      {
+        "time": 197.19926279561304,
+        "bar": 97,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 197.70990109348537,
+        "bar": 97,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 198.2205393913577,
+        "bar": 98,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 198.73117768923004,
+        "bar": 98,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 199.24181598710237,
+        "bar": 98,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.35901023128859466
+      },
+      {
+        "time": 199.7524542849747,
+        "bar": 98,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 200.26309258284704,
+        "bar": 99,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 200.77373088071937,
+        "bar": 99,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 201.2843691785917,
+        "bar": 99,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 201.79500747646404,
+        "bar": 99,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 202.30564577433637,
+        "bar": 100,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3580324256632768
+      },
+      {
+        "time": 202.8162840722087,
+        "bar": 100,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 203.32692237008104,
+        "bar": 100,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 203.83756066795337,
+        "bar": 100,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 204.3481989658257,
+        "bar": 101,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 204.85883726369804,
+        "bar": 101,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4058945392693083
+      },
+      {
+        "time": 205.36947556157037,
+        "bar": 101,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 205.8801138594427,
+        "bar": 101,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 206.39075215731503,
+        "bar": 102,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 206.90139045518737,
+        "bar": 102,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 207.4120287530597,
+        "bar": 102,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 207.92266705093203,
+        "bar": 102,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 208.43330534880437,
+        "bar": 103,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 208.9439436466767,
+        "bar": 103,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 209.45458194454903,
+        "bar": 103,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37071587432791475
+      },
+      {
+        "time": 209.96522024242137,
+        "bar": 103,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 210.4758585402937,
+        "bar": 104,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 210.98649683816603,
+        "bar": 104,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 211.49713513603837,
+        "bar": 104,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 212.0077734339107,
+        "bar": 104,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 212.51841173178303,
+        "bar": 105,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 213.02905002965537,
+        "bar": 105,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 213.47856759175326,
+        "bar": 105,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7334423552162452
+      },
+      {
+        "time": 214.05032662540003,
+        "bar": 105,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 214.56096492327237,
+        "bar": 106,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 215.01084343689539,
+        "bar": 106,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5493678118612153
+      },
+      {
+        "time": 215.52160815545838,
+        "bar": 106,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.8351161208457668
+      },
+      {
+        "time": 216.03236371874794,
+        "bar": 106,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4204782639504002
+      },
+      {
+        "time": 216.54311928203748,
+        "bar": 107,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.48383016761151953
+      },
+      {
+        "time": 217.05388400060048,
+        "bar": 107,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6083935746054404
+      },
+      {
+        "time": 217.56463956389004,
+        "bar": 107,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3619462587316935,
+        "strength": 0.9635558052005311
+      },
+      {
+        "time": 218.0753951271796,
+        "bar": 107,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5215953860614081
+      },
+      {
+        "time": 218.64607130625103,
+        "bar": 108,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 219.09691540903216,
+        "bar": 108,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6724023737121274
+      },
+      {
+        "time": 219.60767097232173,
+        "bar": 108,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3343048039191116,
+        "strength": 0.9153899255912336
+      },
+      {
+        "time": 220.11843569088472,
+        "bar": 108,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6440896914626393
+      },
+      {
+        "time": 220.62919125417426,
+        "bar": 109,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6341252395259067
+      },
+      {
+        "time": 221.13994681746382,
+        "bar": 109,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6833559280055755
+      },
+      {
+        "time": 221.65071153602682,
+        "bar": 109,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.8476015715436567
+      },
+      {
+        "time": 222.16146709931638,
+        "bar": 109,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.776261611330292
+      },
+      {
+        "time": 222.67222266260595,
+        "bar": 110,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7259676580495711
+      },
+      {
+        "time": 223.18298738116894,
+        "bar": 110,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.31542971876915554,
+        "strength": 0.849735511026465
+      },
+      {
+        "time": 223.6937429444585,
+        "bar": 110,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3468811761437257,
+        "strength": 0.9339355906228582
+      },
+      {
+        "time": 224.20449850774804,
+        "bar": 110,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6081803239056615
+      },
+      {
+        "time": 224.71526322631104,
+        "bar": 111,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6696150166457093
+      },
+      {
+        "time": 225.2260187896006,
+        "bar": 111,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6936754079323217
+      },
+      {
+        "time": 225.73677435289017,
+        "bar": 111,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.36860223232921885,
+        "strength": 0.9690769169454415
+      },
+      {
+        "time": 226.24753907145316,
+        "bar": 111,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7376946006220617
+      },
+      {
+        "time": 226.75829463474273,
+        "bar": 112,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7747322175123499
+      },
+      {
+        "time": 227.2690501980323,
+        "bar": 112,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6995138247092336
+      },
+      {
+        "time": 227.77981491659529,
+        "bar": 112,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3750622731418751,
+        "strength": 0.9784572238278122
+      },
+      {
+        "time": 228.29057047988482,
+        "bar": 112,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7414479304913535
+      },
+      {
+        "time": 228.80133519844782,
+        "bar": 113,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3272586446852561,
+        "strength": 0.8977182365253771
+      },
+      {
+        "time": 229.31209076173738,
+        "bar": 113,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.8088039943350129
+      },
+      {
+        "time": 229.82284632502694,
+        "bar": 113,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3185165917255081,
+        "strength": 0.8727589071744548
+      },
+      {
+        "time": 230.33361104358994,
+        "bar": 113,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.686571664120035
+      },
+      {
+        "time": 230.8443666068795,
+        "bar": 114,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7202711698870228
+      },
+      {
+        "time": 231.35512217016907,
+        "bar": 114,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5963102068830093
+      },
+      {
+        "time": 231.86588688873206,
+        "bar": 114,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7906870272577325
+      },
+      {
+        "time": 232.3766424520216,
+        "bar": 114,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.49180955488395645
+      },
+      {
+        "time": 232.88739801531116,
+        "bar": 115,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7892966439395065
+      },
+      {
+        "time": 233.4545819445487,
+        "bar": 115,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.2739689897647737
+      },
+      {
+        "time": 233.90891829716372,
+        "bar": 115,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6607295876442101
+      },
+      {
+        "time": 234.4196738604533,
+        "bar": 115,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6572704999429921
+      },
+      {
+        "time": 234.93043857901628,
+        "bar": 116,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.840654819305205
+      },
+      {
+        "time": 235.44119414230585,
+        "bar": 116,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4574496093548758
+      },
+      {
+        "time": 235.95194970559538,
+        "bar": 116,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.8154514555115355
+      },
+      {
+        "time": 236.46271442415838,
+        "bar": 116,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4551196012885694
+      },
+      {
+        "time": 236.97346998744794,
+        "bar": 117,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.75403447176424
+      },
+      {
+        "time": 237.51209420308126,
+        "bar": 117,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.518602657823337
+      },
+      {
+        "time": 237.9949902693005,
+        "bar": 117,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7307785612357679
+      },
+      {
+        "time": 238.50574583259007,
+        "bar": 117,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6101396975632358
+      },
+      {
+        "time": 239.01650139587963,
+        "bar": 118,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3263164409378518,
+        "strength": 0.8899452436891611
+      },
+      {
+        "time": 239.55512561151292,
+        "bar": 118,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.40499710946401585
+      },
+      {
+        "time": 240.03802167773216,
+        "bar": 118,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6009960712875871
+      },
+      {
+        "time": 240.57664589336548,
+        "bar": 118,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5645208599773821
+      },
+      {
+        "time": 241.05954195958472,
+        "bar": 119,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4560458655612558
+      },
+      {
+        "time": 241.59816617521804,
+        "bar": 119,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.31536727525775055,
+        "strength": 0.7087848081368842
+      },
+      {
+        "time": 242.1089217385076,
+        "bar": 119,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.4437605950503626,
+        "strength": 0.996860520218022
+      },
+      {
+        "time": 242.61967730179714,
+        "bar": 119,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.35736574257452774,
+        "strength": 0.8023919625248406
+      },
+      {
+        "time": 243.13044202036014,
+        "bar": 120,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7415459503701627
+      },
+      {
+        "time": 243.6411975836497,
+        "bar": 120,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7387484504129125
+      },
+      {
+        "time": 244.12409364986894,
+        "bar": 120,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6717314242797509
+      },
+      {
+        "time": 244.66271786550226,
+        "bar": 120,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7264386892902164
+      },
+      {
+        "time": 245.17347342879182,
+        "bar": 121,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.36887820258995785,
+        "strength": 0.8394380679509563
+      },
+      {
+        "time": 245.6842289920814,
+        "bar": 121,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3273494786609425,
+        "strength": 0.7445707072186171
+      },
+      {
+        "time": 246.19499371064438,
+        "bar": 121,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.4260449611021708,
+        "strength": 0.9685498179871677
+      },
+      {
+        "time": 246.70574927393392,
+        "bar": 121,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3050150745453636,
+        "strength": 0.6930693183206538
+      },
+      {
+        "time": 247.21650483722348,
+        "bar": 122,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3231883244163927,
+        "strength": 0.8100387158833928
+      },
+      {
+        "time": 247.72726955578648,
+        "bar": 122,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.31500097699923807,
+        "strength": 0.7891046323333661
+      },
+      {
+        "time": 248.23802511907604,
+        "bar": 122,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.33178421563195754,
+        "strength": 0.8307446777534117
+      },
+      {
+        "time": 248.7487806823656,
+        "bar": 122,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7303578246180036
+      },
+      {
+        "time": 249.2595454009286,
+        "bar": 123,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.32103724693193647,
+        "strength": 0.8138556941297326
+      },
+      {
+        "time": 249.77030096421817,
+        "bar": 123,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7059873172246595
+      },
+      {
+        "time": 250.2810565275077,
+        "bar": 123,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3221292837612268,
+        "strength": 0.815832930420773
+      },
+      {
+        "time": 250.7918212460707,
+        "bar": 123,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7267258335753022
+      },
+      {
+        "time": 251.30257680936026,
+        "bar": 124,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6742444562194408
+      },
+      {
+        "time": 251.81334152792326,
+        "bar": 124,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6515160591712914
+      },
+      {
+        "time": 252.32409709121282,
+        "bar": 124,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3739785981867028,
+        "strength": 0.8897258843197025
+      },
+      {
+        "time": 252.83485265450238,
+        "bar": 124,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6129644405662589
+      },
+      {
+        "time": 253.34561737306538,
+        "bar": 125,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3322742187131252,
+        "strength": 0.8290568556363079
+      },
+      {
+        "time": 253.85637293635494,
+        "bar": 125,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6828761322536296
+      },
+      {
+        "time": 254.36712849964448,
+        "bar": 125,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.63805221264067
+      },
+      {
+        "time": 254.87789321820748,
+        "bar": 125,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.40656913007180606
+      },
+      {
+        "time": 255.38864878149704,
+        "bar": 126,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7132966996910097
+      },
+      {
+        "time": 255.92727299713036,
+        "bar": 126,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4767616940080176
+      },
+      {
+        "time": 256.4101690633496,
+        "bar": 126,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7459650171688421
+      },
+      {
+        "time": 256.92092462663913,
+        "bar": 126,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5498627111108845
+      },
+      {
+        "time": 257.4316801899287,
+        "bar": 127,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.308697367280147,
+        "strength": 0.7234450664593617
+      },
+      {
+        "time": 257.97030440556205,
+        "bar": 127,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3064642434811413,
+        "strength": 0.669290938535236
+      },
+      {
+        "time": 258.4810599688516,
+        "bar": 127,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.41370393950207757,
+        "strength": 0.9038982080104199
+      },
+      {
+        "time": 258.9918155321411,
+        "bar": 127,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6470174869853431
+      },
+      {
+        "time": 259.5025894059776,
+        "bar": 128,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.572569374755072
+      },
+      {
+        "time": 260.0133449692671,
+        "bar": 128,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.30195688529851733,
+        "strength": 0.6837439101292153
+      },
+      {
+        "time": 260.5241005325567,
+        "bar": 128,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3787808110629129,
+        "strength": 0.8580875523768433
+      },
+      {
+        "time": 261.03485609584624,
+        "bar": 128,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5973787193013237
+      },
+      {
+        "time": 261.54561165913583,
+        "bar": 129,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.588908871695681
+      },
+      {
+        "time": 262.05636722242537,
+        "bar": 129,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6281162328731146
+      },
+      {
+        "time": 262.5671410962618,
+        "bar": 129,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.4130526908414866,
+        "strength": 0.9050956678618188
+      },
+      {
+        "time": 263.07789665955136,
+        "bar": 129,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.31904519189027886,
+        "strength": 0.6994179687481775
+      },
+      {
+        "time": 263.5886522228409,
+        "bar": 130,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.30057691994868085,
+        "strength": 0.7257771158385562
+      },
+      {
+        "time": 264.0994077861305,
+        "bar": 130,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3271031689339455,
+        "strength": 0.7901837959834607
+      },
+      {
+        "time": 264.61016334942,
+        "bar": 130,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3063569548114951,
+        "strength": 0.7404008821642607
+      },
+      {
+        "time": 265.1209189127096,
+        "bar": 130,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3072278301759108,
+        "strength": 0.7428406153162059
+      },
+      {
+        "time": 265.6038241342023,
+        "bar": 131,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4385551541106577
+      },
+      {
+        "time": 266.1424483498356,
+        "bar": 131,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5611761850271615
+      },
+      {
+        "time": 266.65320391312514,
+        "bar": 131,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6118952119165268
+      },
+      {
+        "time": 267.1639594764147,
+        "bar": 131,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.344373323731245,
+        "strength": 0.8147139128992517
+      },
+      {
+        "time": 267.67471503970427,
+        "bar": 132,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3983588647363616,
+        "strength": 0.8558494332609627
+      },
+      {
+        "time": 268.18548891354067,
+        "bar": 132,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3141096755793927,
+        "strength": 0.6751982809708359
+      },
+      {
+        "time": 268.69624447683026,
+        "bar": 132,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.43796029533581565,
+        "strength": 0.9418490538519372
+      },
+      {
+        "time": 269.2070000401198,
+        "bar": 132,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.33300350488133623,
+        "strength": 0.7164601037110098
+      },
+      {
+        "time": 269.7177556034094,
+        "bar": 133,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3411459580654764,
+        "strength": 0.7709969643763246
+      },
+      {
+        "time": 270.2285111666989,
+        "bar": 133,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3087920461989521,
+        "strength": 0.6981927950417117
+      },
+      {
+        "time": 270.73926672998846,
+        "bar": 133,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.38535933940805667,
+        "strength": 0.8717100539575003
+      },
+      {
+        "time": 271.2500406038249,
+        "bar": 133,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.36898728174567225,
+        "strength": 0.8351131645595096
+      },
+      {
+        "time": 271.76079616711445,
+        "bar": 134,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.4250658365131509,
+        "strength": 0.926029050417911
+      },
+      {
+        "time": 272.27155173040404,
+        "bar": 134,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5511774376249217
+      },
+      {
+        "time": 272.7823072936936,
+        "bar": 134,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3422968504854915,
+        "strength": 0.7463899523088496
+      },
+      {
+        "time": 273.29306285698317,
+        "bar": 134,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5954588435699527
+      },
+      {
+        "time": 273.8038184202727,
+        "bar": 135,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3456731533110152,
+        "strength": 0.7964918637229694
+      },
+      {
+        "time": 274.31459229410916,
+        "bar": 135,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5885204437716757
+      },
+      {
+        "time": 274.8253478573987,
+        "bar": 135,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3684463874231648,
+        "strength": 0.8497986817140267
+      },
+      {
+        "time": 275.33610342068823,
+        "bar": 135,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3692298138877284,
+        "strength": 0.8519934487233677
+      },
+      {
+        "time": 275.8468589839778,
+        "bar": 136,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.45581100036101374,
+        "strength": 0.9699889137130936
+      },
+      {
+        "time": 276.35761454726736,
+        "bar": 136,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.43362479469078086
+      },
+      {
+        "time": 276.86837011055695,
+        "bar": 136,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3629228999135431,
+        "strength": 0.7730227562618732
+      },
+      {
+        "time": 277.37914398439335,
+        "bar": 136,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.4212752885005044
+      },
+      {
+        "time": 277.88989954768294,
+        "bar": 137,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.314731284770236,
+        "strength": 0.7789061059269075
+      },
+      {
+        "time": 278.4285237633162,
+        "bar": 137,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42906911436922435
+      },
+      {
+        "time": 278.911410674262,
+        "bar": 137,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.672691500981502
+      },
+      {
+        "time": 279.4221662375516,
+        "bar": 137,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.6522593487054984
+      },
+      {
+        "time": 279.93292180084114,
+        "bar": 138,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.7063232505986139
+      },
+      {
+        "time": 280.43330534880334,
+        "bar": 138,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.29911755896900044
+      },
+      {
+        "time": 280.95445123796713,
+        "bar": 138,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.5100927616299064
+      },
+      {
+        "time": 281.454581944548,
+        "bar": 138,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.17804919435176758
+      },
+      {
+        "time": 281.96522024242034,
+        "bar": 139,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.42831375843249675
+      },
+      {
+        "time": 282.4758585402927,
+        "bar": 139,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.03506417440459796
+      },
+      {
+        "time": 282.986496838165,
+        "bar": 139,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.11546656052982344
+      },
+      {
+        "time": 283.49713513603734,
+        "bar": 139,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.06568251284760517
+      },
+      {
+        "time": 284.0077734339097,
+        "bar": 140,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.37290066768638114
+      },
+      {
+        "time": 284.518411731782,
+        "bar": 140,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.07904237188802607
+      },
+      {
+        "time": 285.02905002965434,
+        "bar": 140,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.05748934714829241
+      },
+      {
+        "time": 285.5396883275267,
+        "bar": 140,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.01801542279339207
+      },
+      {
+        "time": 286.050326625399,
+        "bar": 141,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 286.56096492327134,
+        "bar": 141,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 287.0716032211437,
+        "bar": 141,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 287.582241519016,
+        "bar": 141,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.35002155579176397
+      },
+      {
+        "time": 288.09287981688834,
+        "bar": 142,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.35006513310822424
+      },
+      {
+        "time": 288.6035181147607,
+        "bar": 142,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 289.114156412633,
+        "bar": 142,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.014030316291480183
+      },
+      {
+        "time": 289.62479471050534,
+        "bar": 142,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 290.1354330083777,
+        "bar": 143,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.0262243330301732
+      },
+      {
+        "time": 290.64607130625,
+        "bar": 143,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3500008840825745
+      },
+      {
+        "time": 291.15670960412234,
+        "bar": 143,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 291.6673479019947,
+        "bar": 143,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 292.177986199867,
+        "bar": 144,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 292.68862449773934,
+        "bar": 144,
+        "beatInBar": 2,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0.3500000007905734
+      },
+      {
+        "time": 293.1992627956117,
+        "bar": 144,
+        "beatInBar": 3,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 293.709901093484,
+        "bar": 144,
+        "beatInBar": 4,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      },
+      {
+        "time": 294.22053939135634,
+        "bar": 145,
+        "beatInBar": 1,
+        "tempoLocal": 117.5,
+        "confidence": 0.3,
+        "strength": 0
+      }
+    ],
+    "barCount": 144
+  },
+  "chords": [
+    {
+      "id": "chord_1",
+      "startTime": 0.09287981688976288,
+      "endTime": 2.1354330083791244,
+      "barStart": 1,
+      "barEnd": 1,
+      "symbol": "G7",
+      "confidence": 0.718807321160606,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.05868377639608554,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_2",
+      "startTime": 2.1637787064339253,
+      "endTime": 4.206331897923286,
+      "barStart": 2,
+      "barEnd": 2,
+      "symbol": "G7",
+      "confidence": 0.5057542423315361,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.19622408769684943,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_3",
+      "startTime": 4.206813548093146,
+      "endTime": 6.249366739582507,
+      "barStart": 3,
+      "barEnd": 3,
+      "symbol": "G7",
+      "confidence": 0.4050909951316964,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.042663661816499415,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_4",
+      "startTime": 6.249848389752367,
+      "endTime": 8.292401581241728,
+      "barStart": 4,
+      "barEnd": 4,
+      "symbol": "G7",
+      "confidence": 0.17440929012559714,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0010083775031271259,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_5",
+      "startTime": 8.320747020016325,
+      "endTime": 10.363300211505686,
+      "barStart": 5,
+      "barEnd": 5,
+      "symbol": "Am",
+      "confidence": 0.26978909856634214,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.058763076816222094,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_6",
+      "startTime": 10.363781861675546,
+      "endTime": 12.406335053164907,
+      "barStart": 6,
+      "barEnd": 6,
+      "symbol": "C",
+      "confidence": 0.17285273167042203,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.010021318711135386,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_7",
+      "startTime": 12.406817275539357,
+      "endTime": 14.449370467028718,
+      "barStart": 7,
+      "barEnd": 7,
+      "symbol": "Am",
+      "confidence": 0.4204988700457687,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.0060439837626987585,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_8",
+      "startTime": 14.449852117198578,
+      "endTime": 16.49240530868794,
+      "barStart": 8,
+      "barEnd": 8,
+      "symbol": "Am",
+      "confidence": 0.2929431559543829,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.0004535738701043494,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_9",
+      "startTime": 16.433305348804655,
+      "endTime": 18.475858540294016,
+      "barStart": 9,
+      "barEnd": 9,
+      "symbol": "G#",
+      "confidence": 0.4156002582740097,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.00002185599764250003,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_10",
+      "startTime": 18.475858540294016,
+      "endTime": 20.518411731783377,
+      "barStart": 10,
+      "barEnd": 10,
+      "symbol": "G#",
+      "confidence": 0.41664073296907644,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.000016788935591247314,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_11",
+      "startTime": 20.518411731783377,
+      "endTime": 22.56096492327274,
+      "barStart": 11,
+      "barEnd": 11,
+      "symbol": "G#",
+      "confidence": 0.41456484668456994,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.000011359807463296426,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_12",
+      "startTime": 22.56096492327274,
+      "endTime": 24.6035181147621,
+      "barStart": 12,
+      "barEnd": 12,
+      "symbol": "G#",
+      "confidence": 0.41758781860428723,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.00006851598067700942,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_13",
+      "startTime": 24.6035181147621,
+      "endTime": 26.64607130625146,
+      "barStart": 13,
+      "barEnd": 13,
+      "symbol": "G#",
+      "confidence": 0.4109205837814913,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.00014069841902935993,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_14",
+      "startTime": 26.64607130625146,
+      "endTime": 28.688624497740822,
+      "barStart": 14,
+      "barEnd": 14,
+      "symbol": "G#",
+      "confidence": 0.2735679669681703,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.0001926942621237727,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_15",
+      "startTime": 28.688624497740822,
+      "endTime": 30.731177689230183,
+      "barStart": 15,
+      "barEnd": 15,
+      "symbol": "G#",
+      "confidence": 0.41922955110866333,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.00012596436847310953,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_16",
+      "startTime": 30.731177689230183,
+      "endTime": 32.77373088071955,
+      "barStart": 16,
+      "barEnd": 16,
+      "symbol": "G#",
+      "confidence": 0.3130583167129211,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.0015905893187566846,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_17",
+      "startTime": 32.77373088071955,
+      "endTime": 34.81628407220891,
+      "barStart": 17,
+      "barEnd": 17,
+      "symbol": "G#",
+      "confidence": 0.2764555971422724,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.29292499634012775,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_18",
+      "startTime": 34.81628407220891,
+      "endTime": 36.85883726369827,
+      "barStart": 18,
+      "barEnd": 18,
+      "symbol": "Am",
+      "confidence": 0.19814252765310833,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.056643268053476206,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_19",
+      "startTime": 36.85883726369827,
+      "endTime": 38.90139045518763,
+      "barStart": 19,
+      "barEnd": 19,
+      "symbol": "C",
+      "confidence": 0.2124568781899303,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.12742953250839284,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_20",
+      "startTime": 38.90139045518763,
+      "endTime": 40.94394364667699,
+      "barStart": 20,
+      "barEnd": 20,
+      "symbol": "G7",
+      "confidence": 0.3912994448812191,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.08799302980685042,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_21",
+      "startTime": 40.94394364667699,
+      "endTime": 42.98649683816635,
+      "barStart": 21,
+      "barEnd": 21,
+      "symbol": "Dm",
+      "confidence": 0.19751733146084452,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.036902386254111234,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_22",
+      "startTime": 42.98649683816635,
+      "endTime": 45.029050029655714,
+      "barStart": 22,
+      "barEnd": 22,
+      "symbol": "Am",
+      "confidence": 0.5169149496609771,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.7681922221550521,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_23",
+      "startTime": 45.029050029655714,
+      "endTime": 47.071603221145075,
+      "barStart": 23,
+      "barEnd": 23,
+      "symbol": "C",
+      "confidence": 0.3254506214310158,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.051866561616503534,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_24",
+      "startTime": 47.071603221145075,
+      "endTime": 49.114156412634436,
+      "barStart": 24,
+      "barEnd": 24,
+      "symbol": "G7",
+      "confidence": 0.16366434271306252,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.18792858364109732,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_25",
+      "startTime": 49.114156412634436,
+      "endTime": 51.1567096041238,
+      "barStart": 25,
+      "barEnd": 25,
+      "symbol": "G7",
+      "confidence": 0.3461181590781294,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.13013828469900637,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_26",
+      "startTime": 51.1567096041238,
+      "endTime": 53.19926279561316,
+      "barStart": 26,
+      "barEnd": 26,
+      "symbol": "G7",
+      "confidence": 0.1950834903696695,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0013391441503063828,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_27",
+      "startTime": 53.19926279561316,
+      "endTime": 55.24181598710252,
+      "barStart": 27,
+      "barEnd": 27,
+      "symbol": "Dm",
+      "confidence": 0.30938436344649184,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.0005739589899097594,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_28",
+      "startTime": 55.24181598710252,
+      "endTime": 57.28436917859188,
+      "barStart": 28,
+      "barEnd": 28,
+      "symbol": "Dm",
+      "confidence": 0.21046690048237557,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.017950117694437894,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_29",
+      "startTime": 57.28436917859188,
+      "endTime": 59.32692237008124,
+      "barStart": 29,
+      "barEnd": 29,
+      "symbol": "Dm",
+      "confidence": 0.33848849688137383,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.044803124382955035,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_30",
+      "startTime": 59.32692237008124,
+      "endTime": 61.3694755615706,
+      "barStart": 30,
+      "barEnd": 30,
+      "symbol": "C",
+      "confidence": 0.3660735918214606,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.00441730314740483,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_31",
+      "startTime": 61.3694755615706,
+      "endTime": 63.412028753059964,
+      "barStart": 31,
+      "barEnd": 31,
+      "symbol": "Am",
+      "confidence": 0.273601931869978,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.04059417989371851,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_32",
+      "startTime": 63.412028753059964,
+      "endTime": 65.45458194454933,
+      "barStart": 32,
+      "barEnd": 32,
+      "symbol": "Dm",
+      "confidence": 0.1940296006371519,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.02902021752762413,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_33",
+      "startTime": 65.45458194454935,
+      "endTime": 67.49713513603871,
+      "barStart": 33,
+      "barEnd": 33,
+      "symbol": "Dm",
+      "confidence": 0.5392899240748488,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.06137451496178141,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_34",
+      "startTime": 67.42943877121238,
+      "endTime": 69.47199196270174,
+      "barStart": 34,
+      "barEnd": 34,
+      "symbol": "Dm",
+      "confidence": 0.40773129705814387,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.043358734063499334,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_35",
+      "startTime": 69.47247475728078,
+      "endTime": 71.51502794877014,
+      "barStart": 35,
+      "barEnd": 35,
+      "symbol": "Dm",
+      "confidence": 0.3667796249432487,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.11595114702620282,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_36",
+      "startTime": 71.5155107433492,
+      "endTime": 73.55806393483856,
+      "barStart": 36,
+      "barEnd": 36,
+      "symbol": "Dm",
+      "confidence": 0.19913462513560815,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.06990654259783419,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_37",
+      "startTime": 73.55854215178088,
+      "endTime": 75.60109534327025,
+      "barStart": 37,
+      "barEnd": 37,
+      "symbol": "G7",
+      "confidence": 0.3362204734536346,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.3158159620850721,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_38",
+      "startTime": 75.6015781378493,
+      "endTime": 77.64413132933866,
+      "barStart": 38,
+      "barEnd": 38,
+      "symbol": "G7",
+      "confidence": 0.29974957980567984,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.04391708189578086,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_39",
+      "startTime": 77.6446141239177,
+      "endTime": 79.68716731540707,
+      "barStart": 39,
+      "barEnd": 39,
+      "symbol": "G7",
+      "confidence": 0.32988970389232064,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.5432662737172386,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_40",
+      "startTime": 79.71551418469315,
+      "endTime": 81.75806737618251,
+      "barStart": 40,
+      "barEnd": 40,
+      "symbol": "G7",
+      "confidence": 0.5700245639112458,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.35554397264275284,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_41",
+      "startTime": 81.75854559312485,
+      "endTime": 83.80109878461421,
+      "barStart": 41,
+      "barEnd": 41,
+      "symbol": "G7",
+      "confidence": 0.13863919858673918,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.49338099542586045,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_42",
+      "startTime": 83.8294456539003,
+      "endTime": 85.87199884538965,
+      "barStart": 42,
+      "barEnd": 42,
+      "symbol": "Am",
+      "confidence": 0.15586693616398928,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.38690904601766046,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_43",
+      "startTime": 85.8724816399687,
+      "endTime": 87.91503483145806,
+      "barStart": 43,
+      "barEnd": 43,
+      "symbol": "G7",
+      "confidence": 0.5427365532198543,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.2591302164144663,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_44",
+      "startTime": 87.88765355133009,
+      "endTime": 89.93020674281945,
+      "barStart": 44,
+      "barEnd": 44,
+      "symbol": "G7",
+      "confidence": 0.35938670102427106,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.6758564613967356,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_45",
+      "startTime": 89.9585490344688,
+      "endTime": 92.00110222595816,
+      "barStart": 45,
+      "barEnd": 45,
+      "symbol": "G7",
+      "confidence": 0.7612798646273016,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.20964345169353246,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_46",
+      "startTime": 92.00158502053722,
+      "endTime": 94.04413821202658,
+      "barStart": 46,
+      "barEnd": 46,
+      "symbol": "Dm",
+      "confidence": 0.40602007000174556,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.5359582510614409,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_47",
+      "startTime": 94.04462100660564,
+      "endTime": 96.087174198095,
+      "barStart": 47,
+      "barEnd": 47,
+      "symbol": "Am",
+      "confidence": 0.33815863125082424,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.6190831276890691,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_48",
+      "startTime": 96.08765699267404,
+      "endTime": 98.1302101841634,
+      "barStart": 48,
+      "barEnd": 48,
+      "symbol": "G7",
+      "confidence": 0.3901913499546121,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.5558413052484821,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_49",
+      "startTime": 98.13068840110574,
+      "endTime": 100.1732415925951,
+      "barStart": 49,
+      "barEnd": 49,
+      "symbol": "G7",
+      "confidence": 0.569895142710253,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.7215271760016834,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_50",
+      "startTime": 100.20158846188119,
+      "endTime": 102.24414165337055,
+      "barStart": 50,
+      "barEnd": 50,
+      "symbol": "G7",
+      "confidence": 0.3685044663900777,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.5362187145126369,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_51",
+      "startTime": 102.24462444794959,
+      "endTime": 104.28717763943895,
+      "barStart": 51,
+      "barEnd": 51,
+      "symbol": "G7",
+      "confidence": 0.5267701741667558,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.6093539187162663,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_52",
+      "startTime": 104.28766043401801,
+      "endTime": 106.33021362550737,
+      "barStart": 52,
+      "barEnd": 52,
+      "symbol": "G7",
+      "confidence": 0.3948843145658205,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.6898325273149104,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_53",
+      "startTime": 106.3306918424497,
+      "endTime": 108.37324503393906,
+      "barStart": 53,
+      "barEnd": 53,
+      "symbol": "C",
+      "confidence": 0.3620943217867752,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.5979367059973871,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_54",
+      "startTime": 108.37372782851811,
+      "endTime": 110.41628102000747,
+      "barStart": 54,
+      "barEnd": 54,
+      "symbol": "G7",
+      "confidence": 0.2662026093480873,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.6740812123563524,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_55",
+      "startTime": 110.41676381458652,
+      "endTime": 112.45931700607588,
+      "barStart": 55,
+      "barEnd": 55,
+      "symbol": "C",
+      "confidence": 0.1884238325891195,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.12379702870082046,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_56",
+      "startTime": 112.48766387536196,
+      "endTime": 114.53021706685132,
+      "barStart": 56,
+      "barEnd": 56,
+      "symbol": "G7",
+      "confidence": 0.18699658835822738,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.6180771441420146,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_57",
+      "startTime": 114.4758585402947,
+      "endTime": 116.51841173178406,
+      "barStart": 57,
+      "barEnd": 57,
+      "symbol": "G#",
+      "confidence": 0.3026385122199958,
+      "source": "audio",
+      "voicing": null,
+      "vocalEnergy": 0.03820593071755215,
+      "degree": "N",
+      "qualityTag": "unknown"
+    },
+    {
+      "id": "chord_58",
+      "startTime": 116.57373126986207,
+      "endTime": 118.61628446135143,
+      "barStart": 58,
+      "barEnd": 58,
+      "symbol": "C",
+      "confidence": 0.3560115845989841,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.5249316222003932,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_59",
+      "startTime": 118.61676725593048,
+      "endTime": 120.65932044741984,
+      "barStart": 59,
+      "barEnd": 59,
+      "symbol": "C",
+      "confidence": 0.33115038703751604,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.06625446787002347,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_60",
+      "startTime": 120.6598032419989,
+      "endTime": 122.70235643348826,
+      "barStart": 60,
+      "barEnd": 60,
+      "symbol": "C",
+      "confidence": 0.17254563232741513,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.476072994759989,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_61",
+      "startTime": 122.70283465043059,
+      "endTime": 124.74538784191995,
+      "barStart": 61,
+      "barEnd": 61,
+      "symbol": "C",
+      "confidence": 0.5208601575369514,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.03884126718924035,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_62",
+      "startTime": 124.68862449774164,
+      "endTime": 126.731177689231,
+      "barStart": 62,
+      "barEnd": 62,
+      "symbol": "C",
+      "confidence": 0.3763772159211998,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.00030445749445454627,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_63",
+      "startTime": 126.73117768923103,
+      "endTime": 128.7737308807204,
+      "barStart": 63,
+      "barEnd": 63,
+      "symbol": "C",
+      "confidence": 0.3155336556212705,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.002359325370957694,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_64",
+      "startTime": 128.7737308807204,
+      "endTime": 130.81628407220975,
+      "barStart": 64,
+      "barEnd": 64,
+      "symbol": "C",
+      "confidence": 0.22061517424794208,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.09997752204271625,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_65",
+      "startTime": 130.81628407220973,
+      "endTime": 132.8588372636991,
+      "barStart": 65,
+      "barEnd": 65,
+      "symbol": "C",
+      "confidence": 0.1747222871519341,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.31239058228053834,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_66",
+      "startTime": 132.85883726369906,
+      "endTime": 134.90139045518842,
+      "barStart": 66,
+      "barEnd": 66,
+      "symbol": "C",
+      "confidence": 0.16580295327537278,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.15636969139228776,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_67",
+      "startTime": 134.9013904551884,
+      "endTime": 136.94394364667775,
+      "barStart": 67,
+      "barEnd": 67,
+      "symbol": "G7",
+      "confidence": 0.21348172921037847,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.013904901224286887,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_68",
+      "startTime": 136.94394364667772,
+      "endTime": 138.98649683816708,
+      "barStart": 68,
+      "barEnd": 68,
+      "symbol": "G7",
+      "confidence": 0.21067616754659363,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.002522392927851512,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_69",
+      "startTime": 138.98649683816706,
+      "endTime": 141.02905002965642,
+      "barStart": 69,
+      "barEnd": 69,
+      "symbol": "G7",
+      "confidence": 0.21324609535900524,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0006481987637392527,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_70",
+      "startTime": 141.0290500296564,
+      "endTime": 143.07160322114575,
+      "barStart": 70,
+      "barEnd": 70,
+      "symbol": "G7",
+      "confidence": 0.2173622931559324,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0020205296896408814,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_71",
+      "startTime": 143.07160322114572,
+      "endTime": 145.11415641263508,
+      "barStart": 71,
+      "barEnd": 71,
+      "symbol": "C",
+      "confidence": 0.3671108518188091,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.0046557086193905785,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_72",
+      "startTime": 145.11415641263505,
+      "endTime": 147.15670960412442,
+      "barStart": 72,
+      "barEnd": 72,
+      "symbol": "G7",
+      "confidence": 0.3809411211187884,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.03440454403091354,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_73",
+      "startTime": 147.1567096041244,
+      "endTime": 149.19926279561375,
+      "barStart": 73,
+      "barEnd": 73,
+      "symbol": "C",
+      "confidence": 0.35269581735415173,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.4459995759039206,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_74",
+      "startTime": 149.19926279561372,
+      "endTime": 151.24181598710308,
+      "barStart": 74,
+      "barEnd": 74,
+      "symbol": "G7",
+      "confidence": 0.2191038811564238,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0012426376284832156,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_75",
+      "startTime": 151.24181598710305,
+      "endTime": 153.2843691785924,
+      "barStart": 75,
+      "barEnd": 75,
+      "symbol": "Dm",
+      "confidence": 0.3263549356310994,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.03217653853731379,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_76",
+      "startTime": 153.28436917859239,
+      "endTime": 155.32692237008175,
+      "barStart": 76,
+      "barEnd": 76,
+      "symbol": "Dm",
+      "confidence": 0.29510559220464255,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.007631789148911592,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_77",
+      "startTime": 155.32692237008172,
+      "endTime": 157.36947556157108,
+      "barStart": 77,
+      "barEnd": 77,
+      "symbol": "Dm",
+      "confidence": 0.32943526926810623,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.028911889861182326,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_78",
+      "startTime": 157.36947556157105,
+      "endTime": 159.4120287530604,
+      "barStart": 78,
+      "barEnd": 78,
+      "symbol": "C",
+      "confidence": 0.3671694956629039,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.06475036594583831,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_79",
+      "startTime": 159.41202875306038,
+      "endTime": 161.45458194454974,
+      "barStart": 79,
+      "barEnd": 79,
+      "symbol": "C",
+      "confidence": 0.17544832826608026,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.19720181116541335,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_80",
+      "startTime": 161.45458194454972,
+      "endTime": 163.49713513603908,
+      "barStart": 80,
+      "barEnd": 80,
+      "symbol": "C",
+      "confidence": 0.37281780363569095,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.027219908485447884,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_81",
+      "startTime": 163.49713513603905,
+      "endTime": 165.5396883275284,
+      "barStart": 81,
+      "barEnd": 81,
+      "symbol": "Dm",
+      "confidence": 0.30128735102918514,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.5931639582884949,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_82",
+      "startTime": 165.53968832752838,
+      "endTime": 167.58224151901774,
+      "barStart": 82,
+      "barEnd": 82,
+      "symbol": "Am",
+      "confidence": 0.15778063855618826,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.08754140487773114,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_83",
+      "startTime": 167.5822415190177,
+      "endTime": 169.62479471050708,
+      "barStart": 83,
+      "barEnd": 83,
+      "symbol": "G7",
+      "confidence": 0.18776266913516249,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.24389967264307116,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_84",
+      "startTime": 169.62479471050705,
+      "endTime": 171.6673479019964,
+      "barStart": 84,
+      "barEnd": 84,
+      "symbol": "C",
+      "confidence": 0.42674026500449924,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.16265353970400198,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_85",
+      "startTime": 171.66734790199638,
+      "endTime": 173.70990109348574,
+      "barStart": 85,
+      "barEnd": 85,
+      "symbol": "C",
+      "confidence": 0.4555383253479995,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.14036430782846973,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_86",
+      "startTime": 173.7099010934857,
+      "endTime": 175.75245428497507,
+      "barStart": 86,
+      "barEnd": 86,
+      "symbol": "C",
+      "confidence": 0.5855671246577218,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.21845106472693485,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_87",
+      "startTime": 175.75245428497504,
+      "endTime": 177.7950074764644,
+      "barStart": 87,
+      "barEnd": 87,
+      "symbol": "G7",
+      "confidence": 0.1778241765756905,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.4498291048960235,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_88",
+      "startTime": 177.79500747646438,
+      "endTime": 179.83756066795374,
+      "barStart": 88,
+      "barEnd": 88,
+      "symbol": "G7",
+      "confidence": 0.32948810951022,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.41966248809028267,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_89",
+      "startTime": 179.8375606679537,
+      "endTime": 181.88011385944307,
+      "barStart": 89,
+      "barEnd": 89,
+      "symbol": "Dm",
+      "confidence": 0.3045688960051576,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.6412378423592113,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_90",
+      "startTime": 181.88011385944304,
+      "endTime": 183.9226670509324,
+      "barStart": 90,
+      "barEnd": 90,
+      "symbol": "Dm",
+      "confidence": 0.23894683360939944,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.07307956057123205,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_91",
+      "startTime": 183.92266705093238,
+      "endTime": 185.96522024242174,
+      "barStart": 91,
+      "barEnd": 91,
+      "symbol": "G7",
+      "confidence": 0.3966994082980567,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.24979526446669612,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_92",
+      "startTime": 185.9652202424217,
+      "endTime": 188.00777343391107,
+      "barStart": 92,
+      "barEnd": 92,
+      "symbol": "G7",
+      "confidence": 0.36592056079635593,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.14005501467945858,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_93",
+      "startTime": 188.00777343391104,
+      "endTime": 190.0503266254004,
+      "barStart": 93,
+      "barEnd": 93,
+      "symbol": "G7",
+      "confidence": 0.37289977591618934,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.12705587412662978,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_94",
+      "startTime": 190.05032662540037,
+      "endTime": 192.09287981688973,
+      "barStart": 94,
+      "barEnd": 94,
+      "symbol": "G7",
+      "confidence": 0.35675933751717914,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.31043203246332307,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_95",
+      "startTime": 192.0928798168897,
+      "endTime": 194.13543300837907,
+      "barStart": 95,
+      "barEnd": 95,
+      "symbol": "C",
+      "confidence": 0.17886939165186677,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.5614837560475183,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_96",
+      "startTime": 194.13543300837904,
+      "endTime": 196.1779861998684,
+      "barStart": 96,
+      "barEnd": 96,
+      "symbol": "C",
+      "confidence": 0.3182148732286364,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.9219430039734496,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_97",
+      "startTime": 196.17798619986837,
+      "endTime": 198.22053939135773,
+      "barStart": 97,
+      "barEnd": 97,
+      "symbol": "C",
+      "confidence": 0.5282747710784363,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.24770804404458957,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_98",
+      "startTime": 198.2205393913577,
+      "endTime": 200.26309258284707,
+      "barStart": 98,
+      "barEnd": 98,
+      "symbol": "Dm",
+      "confidence": 0.3883407979287766,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.004802941349681435,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_99",
+      "startTime": 200.26309258284704,
+      "endTime": 202.3056457743364,
+      "barStart": 99,
+      "barEnd": 99,
+      "symbol": "Dm",
+      "confidence": 0.2522893397648409,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.2592402661447123,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_100",
+      "startTime": 202.30564577433637,
+      "endTime": 204.34819896582573,
+      "barStart": 100,
+      "barEnd": 100,
+      "symbol": "Dm",
+      "confidence": 0.1723021793264253,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.8689164134101144,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_101",
+      "startTime": 204.3481989658257,
+      "endTime": 206.39075215731506,
+      "barStart": 101,
+      "barEnd": 101,
+      "symbol": "Dm",
+      "confidence": 0.17712508582728959,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.7027462759474865,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_102",
+      "startTime": 206.39075215731503,
+      "endTime": 208.4333053488044,
+      "barStart": 102,
+      "barEnd": 102,
+      "symbol": "C",
+      "confidence": 0.32239707190244715,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.004152868745954025,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_103",
+      "startTime": 208.43330534880437,
+      "endTime": 210.47585854029373,
+      "barStart": 103,
+      "barEnd": 103,
+      "symbol": "C",
+      "confidence": 0.3497360178849602,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.01212077937218397,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_104",
+      "startTime": 210.4758585402937,
+      "endTime": 212.51841173178306,
+      "barStart": 104,
+      "barEnd": 104,
+      "symbol": "C",
+      "confidence": 0.5383114436104401,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.14461540605825332,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_105",
+      "startTime": 212.51841173178303,
+      "endTime": 214.5609649232724,
+      "barStart": 105,
+      "barEnd": 105,
+      "symbol": "G7",
+      "confidence": 0.28476179316525846,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.101829157116631,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_106",
+      "startTime": 214.56096492327237,
+      "endTime": 216.60351811476173,
+      "barStart": 106,
+      "barEnd": 106,
+      "symbol": "G7",
+      "confidence": 0.3963556953602056,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.155828885849432,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_107",
+      "startTime": 216.54311928203748,
+      "endTime": 218.58567247352684,
+      "barStart": 107,
+      "barEnd": 107,
+      "symbol": "G7",
+      "confidence": 0.37914657190042134,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.028861898837949315,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_108",
+      "startTime": 218.64607130625103,
+      "endTime": 220.6886244977404,
+      "barStart": 108,
+      "barEnd": 108,
+      "symbol": "G7",
+      "confidence": 0.3893855170609815,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.06407047195607199,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_109",
+      "startTime": 220.62919125417426,
+      "endTime": 222.67174444566362,
+      "barStart": 109,
+      "barEnd": 109,
+      "symbol": "G7",
+      "confidence": 0.6053170431118224,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.15499020314150058,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_110",
+      "startTime": 222.67222266260595,
+      "endTime": 224.7147758540953,
+      "barStart": 110,
+      "barEnd": 110,
+      "symbol": "G7",
+      "confidence": 0.4386793753121281,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.05010786963481039,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_111",
+      "startTime": 224.71526322631104,
+      "endTime": 226.7578164178004,
+      "barStart": 111,
+      "barEnd": 111,
+      "symbol": "G7",
+      "confidence": 0.3695260131373511,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.09306151680988861,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_112",
+      "startTime": 226.75829463474273,
+      "endTime": 228.8008478262321,
+      "barStart": 112,
+      "barEnd": 112,
+      "symbol": "Am",
+      "confidence": 0.17858984652326004,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.011450151295882352,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_113",
+      "startTime": 228.80133519844782,
+      "endTime": 230.84388838993718,
+      "barStart": 113,
+      "barEnd": 113,
+      "symbol": "Dm",
+      "confidence": 0.24462776065929884,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.027136871965342237,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_114",
+      "startTime": 230.8443666068795,
+      "endTime": 232.88691979836887,
+      "barStart": 114,
+      "barEnd": 114,
+      "symbol": "Am",
+      "confidence": 0.3166689509689231,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.008333411463730076,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_115",
+      "startTime": 232.88739801531116,
+      "endTime": 234.92995120680052,
+      "barStart": 115,
+      "barEnd": 115,
+      "symbol": "Am",
+      "confidence": 0.33992086667294585,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.013071364951361719,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_116",
+      "startTime": 234.93043857901628,
+      "endTime": 236.97299177050564,
+      "barStart": 116,
+      "barEnd": 116,
+      "symbol": "Am",
+      "confidence": 0.33610295887966785,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.03798948739645619,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_117",
+      "startTime": 236.97346998744794,
+      "endTime": 239.0160231789373,
+      "barStart": 117,
+      "barEnd": 117,
+      "symbol": "G7",
+      "confidence": 0.5343320204248818,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.03414273669455979,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_118",
+      "startTime": 239.01650139587963,
+      "endTime": 241.059054587369,
+      "barStart": 118,
+      "barEnd": 118,
+      "symbol": "Am",
+      "confidence": 0.3312215694784237,
+      "source": "audio",
+      "voicing": {
+        "bass": 45,
+        "notes": [
+          57,
+          60,
+          64
+        ]
+      },
+      "vocalEnergy": 0.03196062040219762,
+      "degree": "vi",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_119",
+      "startTime": 241.05954195958472,
+      "endTime": 243.10209515107408,
+      "barStart": 119,
+      "barEnd": 119,
+      "symbol": "Dm",
+      "confidence": 0.19131741461166987,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.027784713209430566,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_120",
+      "startTime": 243.13044202036014,
+      "endTime": 245.1729952118495,
+      "barStart": 120,
+      "barEnd": 120,
+      "symbol": "Dm",
+      "confidence": 0.3980731341743834,
+      "source": "audio",
+      "voicing": {
+        "bass": 38,
+        "notes": [
+          50,
+          53,
+          57
+        ]
+      },
+      "vocalEnergy": 0.03871328108203596,
+      "degree": "ii",
+      "qualityTag": "min"
+    },
+    {
+      "id": "chord_121",
+      "startTime": 245.17347342879182,
+      "endTime": 247.21602662028118,
+      "barStart": 121,
+      "barEnd": 121,
+      "symbol": "G7",
+      "confidence": 0.3554617691384777,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.050415196768089206,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_122",
+      "startTime": 247.21650483722348,
+      "endTime": 249.25905802871284,
+      "barStart": 122,
+      "barEnd": 122,
+      "symbol": "G7",
+      "confidence": 0.5675231395331507,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.021367583397996937,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_123",
+      "startTime": 249.2595454009286,
+      "endTime": 251.30209859241796,
+      "barStart": 123,
+      "barEnd": 123,
+      "symbol": "G7",
+      "confidence": 0.36990038867660197,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.0254874167249286,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_124",
+      "startTime": 251.30257680936026,
+      "endTime": 253.34513000084962,
+      "barStart": 124,
+      "barEnd": 124,
+      "symbol": "G7",
+      "confidence": 0.43612086010649476,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.02859994088691658,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_125",
+      "startTime": 253.34561737306538,
+      "endTime": 255.38817056455474,
+      "barStart": 125,
+      "barEnd": 125,
+      "symbol": "G7",
+      "confidence": 0.2033379283970516,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.012442302963700792,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_126",
+      "startTime": 255.38864878149704,
+      "endTime": 257.4312019729864,
+      "barStart": 126,
+      "barEnd": 126,
+      "symbol": "G7",
+      "confidence": 0.43182196879611695,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.017605638911455498,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_127",
+      "startTime": 257.4316801899287,
+      "endTime": 259.4742333814181,
+      "barStart": 127,
+      "barEnd": 127,
+      "symbol": "G7",
+      "confidence": 0.38509472968689595,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.05359504971743573,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_128",
+      "startTime": 259.5025894059776,
+      "endTime": 261.54514259746696,
+      "barStart": 128,
+      "barEnd": 128,
+      "symbol": "G7",
+      "confidence": 0.5504975041101371,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.03728807205698931,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_129",
+      "startTime": 261.54561165913583,
+      "endTime": 263.5881648506252,
+      "barStart": 129,
+      "barEnd": 129,
+      "symbol": "G7",
+      "confidence": 0.3542575550312187,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.015107210642309365,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_130",
+      "startTime": 263.5886522228409,
+      "endTime": 265.6312054143303,
+      "barStart": 130,
+      "barEnd": 130,
+      "symbol": "G7",
+      "confidence": 0.5114874890516058,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.06707753467982765,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_131",
+      "startTime": 265.6038241342023,
+      "endTime": 267.6463773256917,
+      "barStart": 131,
+      "barEnd": 131,
+      "symbol": "G7",
+      "confidence": 0.7823813095279053,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.049932966151343,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_132",
+      "startTime": 267.67471503970427,
+      "endTime": 269.71726823119366,
+      "barStart": 132,
+      "barEnd": 132,
+      "symbol": "G7",
+      "confidence": 0.5642541552398603,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.10488110189855761,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_133",
+      "startTime": 269.7177556034094,
+      "endTime": 271.7603087948988,
+      "barStart": 133,
+      "barEnd": 133,
+      "symbol": "G7",
+      "confidence": 0.7464173515097642,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.025895375883097236,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_134",
+      "startTime": 271.76079616711445,
+      "endTime": 273.80334935860384,
+      "barStart": 134,
+      "barEnd": 134,
+      "symbol": "G7",
+      "confidence": 0.44053986934763456,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.02813714954756676,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_135",
+      "startTime": 273.8038184202727,
+      "endTime": 275.8463716117621,
+      "barStart": 135,
+      "barEnd": 135,
+      "symbol": "G7",
+      "confidence": 0.23256013592942368,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.06407729232359131,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_136",
+      "startTime": 275.8468589839778,
+      "endTime": 277.8894121754672,
+      "barStart": 136,
+      "barEnd": 136,
+      "symbol": "G7",
+      "confidence": 0.1941935152875604,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.02723127859505515,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_137",
+      "startTime": 277.88989954768294,
+      "endTime": 279.93245273917233,
+      "barStart": 137,
+      "barEnd": 137,
+      "symbol": "G7",
+      "confidence": 0.19898100915404388,
+      "source": "audio",
+      "voicing": {
+        "bass": 43,
+        "notes": [
+          55,
+          59,
+          62,
+          65
+        ]
+      },
+      "vocalEnergy": 0.1540989652516227,
+      "degree": "V",
+      "qualityTag": "dom7"
+    },
+    {
+      "id": "chord_138",
+      "startTime": 279.93292180084114,
+      "endTime": 281.97547499233053,
+      "barStart": 138,
+      "barEnd": 138,
+      "symbol": "C",
+      "confidence": 0.40412595320156774,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.09436876793588514,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_139",
+      "startTime": 281.96522024242034,
+      "endTime": 284.00777343390973,
+      "barStart": 139,
+      "barEnd": 139,
+      "symbol": "C",
+      "confidence": 0.2138222665539693,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.1249583964033715,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_140",
+      "startTime": 284.0077734339097,
+      "endTime": 286.05032662539907,
+      "barStart": 140,
+      "barEnd": 140,
+      "symbol": "C",
+      "confidence": 0.36207722799516817,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.15392582478506028,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_141",
+      "startTime": 286.050326625399,
+      "endTime": 288.0928798168884,
+      "barStart": 141,
+      "barEnd": 141,
+      "symbol": "C",
+      "confidence": 0.5105319747621053,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.19372131628554215,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_142",
+      "startTime": 288.09287981688834,
+      "endTime": 290.13543300837773,
+      "barStart": 142,
+      "barEnd": 142,
+      "symbol": "C",
+      "confidence": 0.3263716933686113,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.03528430879222041,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_143",
+      "startTime": 290.1354330083777,
+      "endTime": 292.17798619986706,
+      "barStart": 143,
+      "barEnd": 143,
+      "symbol": "C",
+      "confidence": 0.31593376435393655,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.2066363784388603,
+      "degree": "I",
+      "qualityTag": "maj"
+    },
+    {
+      "id": "chord_144",
+      "startTime": 292.177986199867,
+      "endTime": 294.2205393913564,
+      "barStart": 144,
+      "barEnd": 144,
+      "symbol": "C",
+      "confidence": 0.3757033385290255,
+      "source": "audio",
+      "voicing": {
+        "bass": 36,
+        "notes": [
+          48,
+          52,
+          55
+        ]
+      },
+      "vocalEnergy": 0.06038973750382115,
+      "degree": "I",
+      "qualityTag": "maj"
+    }
+  ],
+  "meta": {
+    "analysisVersion": "rhythm-analyzer-v4",
+    "configHash": "fft4096_hop2048_keyC_ts4_nudge0.6",
+    "durationMs": 809.8138999999992,
+    "keyRoot": 0
+  }
+}

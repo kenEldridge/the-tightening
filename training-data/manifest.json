@@ -1,0 +1,93 @@
+{
+  "description": "Training set: MIDI ground truth paired with YouTube audio for analyzer evaluation",
+  "songs": [
+    {
+      "id": "let-it-be",
+      "artist": "The Beatles",
+      "title": "Let It Be",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/2009 MIDI/Let It Be MM GM.mid",
+      "midiTempo": 70,
+      "midiTimeSignature": "4/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=QDYfEBY9NM4",
+      "meta": { "youtubeTime": 243 },
+      "notes": "70 BPM, 243s, 3509 notes, 26 tracks. Key of C."
+    },
+    {
+      "id": "imagine",
+      "artist": "John Lennon",
+      "title": "Imagine",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/Various Artists/-imagine.mid",
+      "midiTempo": 78,
+      "midiTimeSignature": "4/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=zHxobd1WLno",
+      "meta": { "youtubeTime": 186 },
+      "notes": "78 BPM, 177s, 1909 notes, 9 tracks. Key of C."
+    },
+    {
+      "id": "bohemian-rhapsody",
+      "artist": "Queen",
+      "title": "Bohemian Rhapsody",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/By ARTIST/Queen/bohemian_rhapsody.mid",
+      "midiTempo": 78,
+      "midiTimeSignature": "2/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=XHrdsx8izBs",
+      "meta": { "youtubeTime": 354 },
+      "notes": "78 BPM, 328s, 5925 notes, 24 tracks. Complex time/tempo changes."
+    },
+    {
+      "id": "dancing-queen",
+      "artist": "ABBA",
+      "title": "Dancing Queen",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/Various Artists/abba - dancing queen.mid",
+      "midiTempo": 100,
+      "midiTimeSignature": "4/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=xFrGuyw1V8s",
+      "meta": { "youtubeTime": 233 },
+      "notes": "100 BPM, 237s, 8311 notes, 10 tracks. Key of A."
+    },
+    {
+      "id": "piano-man",
+      "artist": "Billy Joel",
+      "title": "Piano Man",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/2009 MIDI/piano_man1-C100.mid",
+      "midiTempo": 100,
+      "midiTimeSignature": "3/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=QwVjTlTdIDQ",
+      "meta": { "youtubeTime": 340 },
+      "notes": "100 BPM, 170s, 1053 notes, 1 track. 3/4 waltz time."
+    },
+    {
+      "id": "stand-by-me",
+      "artist": "Ben E. King",
+      "title": "Stand By Me",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/2009 MIDI/stand_by_me1_E120.mid",
+      "midiTempo": 120,
+      "midiTimeSignature": "4/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=TJx9E-rUqhg",
+      "meta": { "youtubeTime": 177 },
+      "notes": "120 BPM, 112s, 482 notes, 5 tracks. Key of A."
+    },
+    {
+      "id": "fur-elise",
+      "artist": "Beethoven",
+      "title": "Fur Elise",
+      "midiFile": "public/personally_owned_MIDI/Classical Archives - The Greats (MIDI)/extracted/Greats/Classical Archives - The Greats (MIDI)/Beethoven/Bagatella Fur Elise.mid",
+      "midiTempo": 159,
+      "midiTimeSignature": "3/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=_XG3h6LywNQ",
+      "meta": { "youtubeTime": 173 },
+      "notes": "159 BPM (fast 3/4), 131s, 950 notes, 6 tracks. Classical piano solo."
+    },
+    {
+      "id": "billie-jean",
+      "artist": "Michael Jackson",
+      "title": "Billie Jean",
+      "midiFile": "public/personally_owned_MIDI/50000midifiles/50000 MIDI FILES/By ARTIST/jackson_michael/billie_jean.mid",
+      "midiTempo": 120,
+      "midiTimeSignature": "4/4",
+      "youtubeUrl": "https://www.youtube.com/watch?v=Kr4EQDVETuA",
+      "meta": { "youtubeTime": 294 },
+      "notes": "120 BPM, 282s, 6267 notes, 20 tracks. Strong backbeat."
+    }
+  ]
+}

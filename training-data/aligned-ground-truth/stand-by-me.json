@@ -1,0 +1,2890 @@
+{
+  "id": "stand-by-me",
+  "artist": "Ben E. King",
+  "title": "Stand By Me",
+  "tempo": 120,
+  "tempoChanges": [
+    {
+      "time": 0,
+      "bpm": 120
+    }
+  ],
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "timeSignatureChanges": [
+    {
+      "time": 0,
+      "numerator": 4,
+      "denominator": 4
+    }
+  ],
+  "duration": 133.78353125000004,
+  "key": "E",
+  "barAnchors": [
+    {
+      "bar": 1,
+      "time": 20.4
+    },
+    {
+      "bar": 2,
+      "time": 22.424
+    },
+    {
+      "bar": 3,
+      "time": 24.448
+    },
+    {
+      "bar": 4,
+      "time": 26.472
+    },
+    {
+      "bar": 5,
+      "time": 28.496
+    },
+    {
+      "bar": 6,
+      "time": 30.52
+    },
+    {
+      "bar": 7,
+      "time": 32.544
+    },
+    {
+      "bar": 8,
+      "time": 34.568
+    },
+    {
+      "bar": 9,
+      "time": 36.592
+    },
+    {
+      "bar": 10,
+      "time": 38.616
+    },
+    {
+      "bar": 11,
+      "time": 40.64
+    },
+    {
+      "bar": 12,
+      "time": 42.664
+    },
+    {
+      "bar": 13,
+      "time": 44.688
+    },
+    {
+      "bar": 14,
+      "time": 46.712
+    },
+    {
+      "bar": 15,
+      "time": 48.736
+    },
+    {
+      "bar": 16,
+      "time": 50.76
+    },
+    {
+      "bar": 17,
+      "time": 52.784
+    },
+    {
+      "bar": 18,
+      "time": 54.808
+    },
+    {
+      "bar": 19,
+      "time": 56.832
+    },
+    {
+      "bar": 20,
+      "time": 58.856
+    },
+    {
+      "bar": 21,
+      "time": 60.88
+    },
+    {
+      "bar": 22,
+      "time": 62.904
+    },
+    {
+      "bar": 23,
+      "time": 64.928
+    },
+    {
+      "bar": 24,
+      "time": 66.952
+    },
+    {
+      "bar": 25,
+      "time": 68.976
+    },
+    {
+      "bar": 26,
+      "time": 71
+    },
+    {
+      "bar": 27,
+      "time": 73.024
+    },
+    {
+      "bar": 28,
+      "time": 75.048
+    },
+    {
+      "bar": 29,
+      "time": 77.072
+    },
+    {
+      "bar": 30,
+      "time": 79.096
+    },
+    {
+      "bar": 31,
+      "time": 81.12
+    },
+    {
+      "bar": 32,
+      "time": 83.144
+    },
+    {
+      "bar": 33,
+      "time": 85.168
+    },
+    {
+      "bar": 34,
+      "time": 87.192
+    },
+    {
+      "bar": 35,
+      "time": 89.216
+    },
+    {
+      "bar": 36,
+      "time": 91.24
+    },
+    {
+      "bar": 37,
+      "time": 93.264
+    },
+    {
+      "bar": 38,
+      "time": 95.288
+    },
+    {
+      "bar": 39,
+      "time": 97.312
+    },
+    {
+      "bar": 40,
+      "time": 99.336
+    },
+    {
+      "bar": 41,
+      "time": 101.36
+    },
+    {
+      "bar": 42,
+      "time": 103.384
+    },
+    {
+      "bar": 43,
+      "time": 105.408
+    },
+    {
+      "bar": 44,
+      "time": 107.432
+    },
+    {
+      "bar": 45,
+      "time": 109.456
+    },
+    {
+      "bar": 46,
+      "time": 111.48
+    },
+    {
+      "bar": 47,
+      "time": 113.504
+    },
+    {
+      "bar": 48,
+      "time": 115.528
+    },
+    {
+      "bar": 49,
+      "time": 117.552
+    },
+    {
+      "bar": 50,
+      "time": 119.576
+    },
+    {
+      "bar": 51,
+      "time": 121.6
+    },
+    {
+      "bar": 52,
+      "time": 123.624
+    },
+    {
+      "bar": 53,
+      "time": 125.648
+    },
+    {
+      "bar": 54,
+      "time": 127.672
+    },
+    {
+      "bar": 55,
+      "time": 129.696
+    },
+    {
+      "bar": 56,
+      "time": 131.72
+    },
+    {
+      "bar": 57,
+      "time": 133.744
+    }
+  ],
+  "beats": [
+    {
+      "bar": 1,
+      "beat": 1,
+      "time": 20.4
+    },
+    {
+      "bar": 1,
+      "beat": 2,
+      "time": 20.906
+    },
+    {
+      "bar": 1,
+      "beat": 3,
+      "time": 21.412
+    },
+    {
+      "bar": 1,
+      "beat": 4,
+      "time": 21.918
+    },
+    {
+      "bar": 2,
+      "beat": 1,
+      "time": 22.424
+    },
+    {
+      "bar": 2,
+      "beat": 2,
+      "time": 22.93
+    },
+    {
+      "bar": 2,
+      "beat": 3,
+      "time": 23.436
+    },
+    {
+      "bar": 2,
+      "beat": 4,
+      "time": 23.942
+    },
+    {
+      "bar": 3,
+      "beat": 1,
+      "time": 24.448
+    },
+    {
+      "bar": 3,
+      "beat": 2,
+      "time": 24.954
+    },
+    {
+      "bar": 3,
+      "beat": 3,
+      "time": 25.46
+    },
+    {
+      "bar": 3,
+      "beat": 4,
+      "time": 25.966
+    },
+    {
+      "bar": 4,
+      "beat": 1,
+      "time": 26.472
+    },
+    {
+      "bar": 4,
+      "beat": 2,
+      "time": 26.978
+    },
+    {
+      "bar": 4,
+      "beat": 3,
+      "time": 27.484
+    },
+    {
+      "bar": 4,
+      "beat": 4,
+      "time": 27.99
+    },
+    {
+      "bar": 5,
+      "beat": 1,
+      "time": 28.496
+    },
+    {
+      "bar": 5,
+      "beat": 2,
+      "time": 29.002
+    },
+    {
+      "bar": 5,
+      "beat": 3,
+      "time": 29.508
+    },
+    {
+      "bar": 5,
+      "beat": 4,
+      "time": 30.014
+    },
+    {
+      "bar": 6,
+      "beat": 1,
+      "time": 30.52
+    },
+    {
+      "bar": 6,
+      "beat": 2,
+      "time": 31.026
+    },
+    {
+      "bar": 6,
+      "beat": 3,
+      "time": 31.532
+    },
+    {
+      "bar": 6,
+      "beat": 4,
+      "time": 32.038
+    },
+    {
+      "bar": 7,
+      "beat": 1,
+      "time": 32.544
+    },
+    {
+      "bar": 7,
+      "beat": 2,
+      "time": 33.05
+    },
+    {
+      "bar": 7,
+      "beat": 3,
+      "time": 33.556
+    },
+    {
+      "bar": 7,
+      "beat": 4,
+      "time": 34.062
+    },
+    {
+      "bar": 8,
+      "beat": 1,
+      "time": 34.568
+    },
+    {
+      "bar": 8,
+      "beat": 2,
+      "time": 35.074
+    },
+    {
+      "bar": 8,
+      "beat": 3,
+      "time": 35.58
+    },
+    {
+      "bar": 8,
+      "beat": 4,
+      "time": 36.086
+    },
+    {
+      "bar": 9,
+      "beat": 1,
+      "time": 36.592
+    },
+    {
+      "bar": 9,
+      "beat": 2,
+      "time": 37.098
+    },
+    {
+      "bar": 9,
+      "beat": 3,
+      "time": 37.604
+    },
+    {
+      "bar": 9,
+      "beat": 4,
+      "time": 38.11
+    },
+    {
+      "bar": 10,
+      "beat": 1,
+      "time": 38.616
+    },
+    {
+      "bar": 10,
+      "beat": 2,
+      "time": 39.122
+    },
+    {
+      "bar": 10,
+      "beat": 3,
+      "time": 39.628
+    },
+    {
+      "bar": 10,
+      "beat": 4,
+      "time": 40.134
+    },
+    {
+      "bar": 11,
+      "beat": 1,
+      "time": 40.64
+    },
+    {
+      "bar": 11,
+      "beat": 2,
+      "time": 41.146
+    },
+    {
+      "bar": 11,
+      "beat": 3,
+      "time": 41.652
+    },
+    {
+      "bar": 11,
+      "beat": 4,
+      "time": 42.158
+    },
+    {
+      "bar": 12,
+      "beat": 1,
+      "time": 42.664
+    },
+    {
+      "bar": 12,
+      "beat": 2,
+      "time": 43.17
+    },
+    {
+      "bar": 12,
+      "beat": 3,
+      "time": 43.676
+    },
+    {
+      "bar": 12,
+      "beat": 4,
+      "time": 44.182
+    },
+    {
+      "bar": 13,
+      "beat": 1,
+      "time": 44.688
+    },
+    {
+      "bar": 13,
+      "beat": 2,
+      "time": 45.194
+    },
+    {
+      "bar": 13,
+      "beat": 3,
+      "time": 45.7
+    },
+    {
+      "bar": 13,
+      "beat": 4,
+      "time": 46.206
+    },
+    {
+      "bar": 14,
+      "beat": 1,
+      "time": 46.712
+    },
+    {
+      "bar": 14,
+      "beat": 2,
+      "time": 47.218
+    },
+    {
+      "bar": 14,
+      "beat": 3,
+      "time": 47.724
+    },
+    {
+      "bar": 14,
+      "beat": 4,
+      "time": 48.23
+    },
+    {
+      "bar": 15,
+      "beat": 1,
+      "time": 48.736
+    },
+    {
+      "bar": 15,
+      "beat": 2,
+      "time": 49.242
+    },
+    {
+      "bar": 15,
+      "beat": 3,
+      "time": 49.748
+    },
+    {
+      "bar": 15,
+      "beat": 4,
+      "time": 50.254
+    },
+    {
+      "bar": 16,
+      "beat": 1,
+      "time": 50.76
+    },
+    {
+      "bar": 16,
+      "beat": 2,
+      "time": 51.266
+    },
+    {
+      "bar": 16,
+      "beat": 3,
+      "time": 51.772
+    },
+    {
+      "bar": 16,
+      "beat": 4,
+      "time": 52.278
+    },
+    {
+      "bar": 17,
+      "beat": 1,
+      "time": 52.784
+    },
+    {
+      "bar": 17,
+      "beat": 2,
+      "time": 53.29
+    },
+    {
+      "bar": 17,
+      "beat": 3,
+      "time": 53.796
+    },
+    {
+      "bar": 17,
+      "beat": 4,
+      "time": 54.302
+    },
+    {
+      "bar": 18,
+      "beat": 1,
+      "time": 54.808
+    },
+    {
+      "bar": 18,
+      "beat": 2,
+      "time": 55.314
+    },
+    {
+      "bar": 18,
+      "beat": 3,
+      "time": 55.82
+    },
+    {
+      "bar": 18,
+      "beat": 4,
+      "time": 56.326
+    },
+    {
+      "bar": 19,
+      "beat": 1,
+      "time": 56.832
+    },
+    {
+      "bar": 19,
+      "beat": 2,
+      "time": 57.338
+    },
+    {
+      "bar": 19,
+      "beat": 3,
+      "time": 57.844
+    },
+    {
+      "bar": 19,
+      "beat": 4,
+      "time": 58.35
+    },
+    {
+      "bar": 20,
+      "beat": 1,
+      "time": 58.856
+    },
+    {
+      "bar": 20,
+      "beat": 2,
+      "time": 59.362
+    },
+    {
+      "bar": 20,
+      "beat": 3,
+      "time": 59.868
+    },
+    {
+      "bar": 20,
+      "beat": 4,
+      "time": 60.374
+    },
+    {
+      "bar": 21,
+      "beat": 1,
+      "time": 60.88
+    },
+    {
+      "bar": 21,
+      "beat": 2,
+      "time": 61.386
+    },
+    {
+      "bar": 21,
+      "beat": 3,
+      "time": 61.892
+    },
+    {
+      "bar": 21,
+      "beat": 4,
+      "time": 62.398
+    },
+    {
+      "bar": 22,
+      "beat": 1,
+      "time": 62.904
+    },
+    {
+      "bar": 22,
+      "beat": 2,
+      "time": 63.41
+    },
+    {
+      "bar": 22,
+      "beat": 3,
+      "time": 63.916
+    },
+    {
+      "bar": 22,
+      "beat": 4,
+      "time": 64.422
+    },
+    {
+      "bar": 23,
+      "beat": 1,
+      "time": 64.928
+    },
+    {
+      "bar": 23,
+      "beat": 2,
+      "time": 65.434
+    },
+    {
+      "bar": 23,
+      "beat": 3,
+      "time": 65.94
+    },
+    {
+      "bar": 23,
+      "beat": 4,
+      "time": 66.446
+    },
+    {
+      "bar": 24,
+      "beat": 1,
+      "time": 66.952
+    },
+    {
+      "bar": 24,
+      "beat": 2,
+      "time": 67.458
+    },
+    {
+      "bar": 24,
+      "beat": 3,
+      "time": 67.964
+    },
+    {
+      "bar": 24,
+      "beat": 4,
+      "time": 68.47
+    },
+    {
+      "bar": 25,
+      "beat": 1,
+      "time": 68.976
+    },
+    {
+      "bar": 25,
+      "beat": 2,
+      "time": 69.482
+    },
+    {
+      "bar": 25,
+      "beat": 3,
+      "time": 69.988
+    },
+    {
+      "bar": 25,
+      "beat": 4,
+      "time": 70.494
+    },
+    {
+      "bar": 26,
+      "beat": 1,
+      "time": 71
+    },
+    {
+      "bar": 26,
+      "beat": 2,
+      "time": 71.506
+    },
+    {
+      "bar": 26,
+      "beat": 3,
+      "time": 72.012
+    },
+    {
+      "bar": 26,
+      "beat": 4,
+      "time": 72.518
+    },
+    {
+      "bar": 27,
+      "beat": 1,
+      "time": 73.024
+    },
+    {
+      "bar": 27,
+      "beat": 2,
+      "time": 73.53
+    },
+    {
+      "bar": 27,
+      "beat": 3,
+      "time": 74.036
+    },
+    {
+      "bar": 27,
+      "beat": 4,
+      "time": 74.542
+    },
+    {
+      "bar": 28,
+      "beat": 1,
+      "time": 75.048
+    },
+    {
+      "bar": 28,
+      "beat": 2,
+      "time": 75.554
+    },
+    {
+      "bar": 28,
+      "beat": 3,
+      "time": 76.06
+    },
+    {
+      "bar": 28,
+      "beat": 4,
+      "time": 76.566
+    },
+    {
+      "bar": 29,
+      "beat": 1,
+      "time": 77.072
+    },
+    {
+      "bar": 29,
+      "beat": 2,
+      "time": 77.578
+    },
+    {
+      "bar": 29,
+      "beat": 3,
+      "time": 78.084
+    },
+    {
+      "bar": 29,
+      "beat": 4,
+      "time": 78.59
+    },
+    {
+      "bar": 30,
+      "beat": 1,
+      "time": 79.096
+    },
+    {
+      "bar": 30,
+      "beat": 2,
+      "time": 79.602
+    },
+    {
+      "bar": 30,
+      "beat": 3,
+      "time": 80.108
+    },
+    {
+      "bar": 30,
+      "beat": 4,
+      "time": 80.614
+    },
+    {
+      "bar": 31,
+      "beat": 1,
+      "time": 81.12
+    },
+    {
+      "bar": 31,
+      "beat": 2,
+      "time": 81.626
+    },
+    {
+      "bar": 31,
+      "beat": 3,
+      "time": 82.132
+    },
+    {
+      "bar": 31,
+      "beat": 4,
+      "time": 82.638
+    },
+    {
+      "bar": 32,
+      "beat": 1,
+      "time": 83.144
+    },
+    {
+      "bar": 32,
+      "beat": 2,
+      "time": 83.65
+    },
+    {
+      "bar": 32,
+      "beat": 3,
+      "time": 84.156
+    },
+    {
+      "bar": 32,
+      "beat": 4,
+      "time": 84.662
+    },
+    {
+      "bar": 33,
+      "beat": 1,
+      "time": 85.168
+    },
+    {
+      "bar": 33,
+      "beat": 2,
+      "time": 85.674
+    },
+    {
+      "bar": 33,
+      "beat": 3,
+      "time": 86.18
+    },
+    {
+      "bar": 33,
+      "beat": 4,
+      "time": 86.686
+    },
+    {
+      "bar": 34,
+      "beat": 1,
+      "time": 87.192
+    },
+    {
+      "bar": 34,
+      "beat": 2,
+      "time": 87.698
+    },
+    {
+      "bar": 34,
+      "beat": 3,
+      "time": 88.204
+    },
+    {
+      "bar": 34,
+      "beat": 4,
+      "time": 88.71
+    },
+    {
+      "bar": 35,
+      "beat": 1,
+      "time": 89.216
+    },
+    {
+      "bar": 35,
+      "beat": 2,
+      "time": 89.722
+    },
+    {
+      "bar": 35,
+      "beat": 3,
+      "time": 90.228
+    },
+    {
+      "bar": 35,
+      "beat": 4,
+      "time": 90.734
+    },
+    {
+      "bar": 36,
+      "beat": 1,
+      "time": 91.24
+    },
+    {
+      "bar": 36,
+      "beat": 2,
+      "time": 91.746
+    },
+    {
+      "bar": 36,
+      "beat": 3,
+      "time": 92.252
+    },
+    {
+      "bar": 36,
+      "beat": 4,
+      "time": 92.758
+    },
+    {
+      "bar": 37,
+      "beat": 1,
+      "time": 93.264
+    },
+    {
+      "bar": 37,
+      "beat": 2,
+      "time": 93.77
+    },
+    {
+      "bar": 37,
+      "beat": 3,
+      "time": 94.276
+    },
+    {
+      "bar": 37,
+      "beat": 4,
+      "time": 94.782
+    },
+    {
+      "bar": 38,
+      "beat": 1,
+      "time": 95.288
+    },
+    {
+      "bar": 38,
+      "beat": 2,
+      "time": 95.794
+    },
+    {
+      "bar": 38,
+      "beat": 3,
+      "time": 96.3
+    },
+    {
+      "bar": 38,
+      "beat": 4,
+      "time": 96.806
+    },
+    {
+      "bar": 39,
+      "beat": 1,
+      "time": 97.312
+    },
+    {
+      "bar": 39,
+      "beat": 2,
+      "time": 97.818
+    },
+    {
+      "bar": 39,
+      "beat": 3,
+      "time": 98.324
+    },
+    {
+      "bar": 39,
+      "beat": 4,
+      "time": 98.83
+    },
+    {
+      "bar": 40,
+      "beat": 1,
+      "time": 99.336
+    },
+    {
+      "bar": 40,
+      "beat": 2,
+      "time": 99.842
+    },
+    {
+      "bar": 40,
+      "beat": 3,
+      "time": 100.348
+    },
+    {
+      "bar": 40,
+      "beat": 4,
+      "time": 100.854
+    },
+    {
+      "bar": 41,
+      "beat": 1,
+      "time": 101.36
+    },
+    {
+      "bar": 41,
+      "beat": 2,
+      "time": 101.866
+    },
+    {
+      "bar": 41,
+      "beat": 3,
+      "time": 102.372
+    },
+    {
+      "bar": 41,
+      "beat": 4,
+      "time": 102.878
+    },
+    {
+      "bar": 42,
+      "beat": 1,
+      "time": 103.384
+    },
+    {
+      "bar": 42,
+      "beat": 2,
+      "time": 103.89
+    },
+    {
+      "bar": 42,
+      "beat": 3,
+      "time": 104.396
+    },
+    {
+      "bar": 42,
+      "beat": 4,
+      "time": 104.902
+    },
+    {
+      "bar": 43,
+      "beat": 1,
+      "time": 105.408
+    },
+    {
+      "bar": 43,
+      "beat": 2,
+      "time": 105.914
+    },
+    {
+      "bar": 43,
+      "beat": 3,
+      "time": 106.42
+    },
+    {
+      "bar": 43,
+      "beat": 4,
+      "time": 106.926
+    },
+    {
+      "bar": 44,
+      "beat": 1,
+      "time": 107.432
+    },
+    {
+      "bar": 44,
+      "beat": 2,
+      "time": 107.938
+    },
+    {
+      "bar": 44,
+      "beat": 3,
+      "time": 108.444
+    },
+    {
+      "bar": 44,
+      "beat": 4,
+      "time": 108.95
+    },
+    {
+      "bar": 45,
+      "beat": 1,
+      "time": 109.456
+    },
+    {
+      "bar": 45,
+      "beat": 2,
+      "time": 109.962
+    },
+    {
+      "bar": 45,
+      "beat": 3,
+      "time": 110.468
+    },
+    {
+      "bar": 45,
+      "beat": 4,
+      "time": 110.974
+    },
+    {
+      "bar": 46,
+      "beat": 1,
+      "time": 111.48
+    },
+    {
+      "bar": 46,
+      "beat": 2,
+      "time": 111.986
+    },
+    {
+      "bar": 46,
+      "beat": 3,
+      "time": 112.492
+    },
+    {
+      "bar": 46,
+      "beat": 4,
+      "time": 112.998
+    },
+    {
+      "bar": 47,
+      "beat": 1,
+      "time": 113.504
+    },
+    {
+      "bar": 47,
+      "beat": 2,
+      "time": 114.01
+    },
+    {
+      "bar": 47,
+      "beat": 3,
+      "time": 114.516
+    },
+    {
+      "bar": 47,
+      "beat": 4,
+      "time": 115.022
+    },
+    {
+      "bar": 48,
+      "beat": 1,
+      "time": 115.528
+    },
+    {
+      "bar": 48,
+      "beat": 2,
+      "time": 116.034
+    },
+    {
+      "bar": 48,
+      "beat": 3,
+      "time": 116.54
+    },
+    {
+      "bar": 48,
+      "beat": 4,
+      "time": 117.046
+    },
+    {
+      "bar": 49,
+      "beat": 1,
+      "time": 117.552
+    },
+    {
+      "bar": 49,
+      "beat": 2,
+      "time": 118.058
+    },
+    {
+      "bar": 49,
+      "beat": 3,
+      "time": 118.564
+    },
+    {
+      "bar": 49,
+      "beat": 4,
+      "time": 119.07
+    },
+    {
+      "bar": 50,
+      "beat": 1,
+      "time": 119.576
+    },
+    {
+      "bar": 50,
+      "beat": 2,
+      "time": 120.082
+    },
+    {
+      "bar": 50,
+      "beat": 3,
+      "time": 120.588
+    },
+    {
+      "bar": 50,
+      "beat": 4,
+      "time": 121.094
+    },
+    {
+      "bar": 51,
+      "beat": 1,
+      "time": 121.6
+    },
+    {
+      "bar": 51,
+      "beat": 2,
+      "time": 122.106
+    },
+    {
+      "bar": 51,
+      "beat": 3,
+      "time": 122.612
+    },
+    {
+      "bar": 51,
+      "beat": 4,
+      "time": 123.118
+    },
+    {
+      "bar": 52,
+      "beat": 1,
+      "time": 123.624
+    },
+    {
+      "bar": 52,
+      "beat": 2,
+      "time": 124.13
+    },
+    {
+      "bar": 52,
+      "beat": 3,
+      "time": 124.636
+    },
+    {
+      "bar": 52,
+      "beat": 4,
+      "time": 125.142
+    },
+    {
+      "bar": 53,
+      "beat": 1,
+      "time": 125.648
+    },
+    {
+      "bar": 53,
+      "beat": 2,
+      "time": 126.154
+    },
+    {
+      "bar": 53,
+      "beat": 3,
+      "time": 126.66
+    },
+    {
+      "bar": 53,
+      "beat": 4,
+      "time": 127.166
+    },
+    {
+      "bar": 54,
+      "beat": 1,
+      "time": 127.672
+    },
+    {
+      "bar": 54,
+      "beat": 2,
+      "time": 128.178
+    },
+    {
+      "bar": 54,
+      "beat": 3,
+      "time": 128.684
+    },
+    {
+      "bar": 54,
+      "beat": 4,
+      "time": 129.19
+    },
+    {
+      "bar": 55,
+      "beat": 1,
+      "time": 129.696
+    },
+    {
+      "bar": 55,
+      "beat": 2,
+      "time": 130.202
+    },
+    {
+      "bar": 55,
+      "beat": 3,
+      "time": 130.708
+    },
+    {
+      "bar": 55,
+      "beat": 4,
+      "time": 131.214
+    },
+    {
+      "bar": 56,
+      "beat": 1,
+      "time": 131.72
+    },
+    {
+      "bar": 56,
+      "beat": 2,
+      "time": 132.226
+    },
+    {
+      "bar": 56,
+      "beat": 3,
+      "time": 132.732
+    },
+    {
+      "bar": 56,
+      "beat": 4,
+      "time": 133.238
+    },
+    {
+      "bar": 57,
+      "beat": 1,
+      "time": 133.744
+    }
+  ],
+  "trackCount": 5,
+  "totalNotes": 482,
+  "melodyTrackIndex": 0,
+  "melodyNotes": [
+    {
+      "midi": 47,
+      "time": 22.212,
+      "duration": 0.33,
+      "velocity": 0.4881889763779528,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 22.444,
+      "duration": 0.233,
+      "velocity": 0.5433070866141733,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 22.697,
+      "duration": 0.162,
+      "velocity": 0.6141732283464567,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 23.447,
+      "duration": 0.714,
+      "velocity": 0.5905511811023622,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 24.211,
+      "duration": 0.319,
+      "velocity": 0.5118110236220472,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 24.457,
+      "duration": 0.153,
+      "velocity": 0.3858267716535433,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 24.7,
+      "duration": 0.145,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 25.452,
+      "duration": 0.721,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 26.241,
+      "duration": 0.236,
+      "velocity": 0.5669291338582677,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 26.474,
+      "duration": 0.181,
+      "velocity": 0.4881889763779528,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 26.751,
+      "duration": 0.191,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 27.465,
+      "duration": 0.736,
+      "velocity": 0.5748031496062992,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 28.239,
+      "duration": 0.397,
+      "velocity": 0.5039370078740157,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 28.706,
+      "duration": 0.127,
+      "velocity": 0.6062992125984252,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 29.438,
+      "duration": 0.685,
+      "velocity": 0.6299212598425197,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 30.191,
+      "duration": 0.25,
+      "velocity": 0.5039370078740157,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 30.446,
+      "duration": 0.16,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 30.71,
+      "duration": 0.274,
+      "velocity": 0.5433070866141733,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 31.481,
+      "duration": 0.65,
+      "velocity": 0.48031496062992124,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 32.229,
+      "duration": 0.259,
+      "velocity": 0.5275590551181102,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 32.474,
+      "duration": 0.199,
+      "velocity": 0.4251968503937008,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 32.733,
+      "duration": 0.166,
+      "velocity": 0.5511811023622047,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 33.506,
+      "duration": 0.745,
+      "velocity": 0.5748031496062992,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 34.33,
+      "duration": 0.268,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 34.581,
+      "duration": 0.229,
+      "velocity": 0.48031496062992124,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 34.852,
+      "duration": 0.176,
+      "velocity": 0.5354330708661418,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 35.602,
+      "duration": 0.717,
+      "velocity": 0.6062992125984252,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 36.408,
+      "duration": 0.266,
+      "velocity": 0.5039370078740157,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 36.653,
+      "duration": 0.161,
+      "velocity": 0.4881889763779528,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 36.902,
+      "duration": 0.165,
+      "velocity": 0.5354330708661418,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 37.662,
+      "duration": 0.771,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 38.478,
+      "duration": 0.289,
+      "velocity": 0.47244094488188976,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 38.719,
+      "duration": 0.184,
+      "velocity": 0.47244094488188976,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 38.972,
+      "duration": 0.218,
+      "velocity": 0.5748031496062992,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 39.715,
+      "duration": 0.788,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 40.546,
+      "duration": 0.339,
+      "velocity": 0.4409448818897638,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 40.807,
+      "duration": 0.197,
+      "velocity": 0.4094488188976378,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 41.066,
+      "duration": 0.187,
+      "velocity": 0.5118110236220472,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 41.812,
+      "duration": 0.697,
+      "velocity": 0.5354330708661418,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 42.611,
+      "duration": 0.194,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 42.843,
+      "duration": 0.162,
+      "velocity": 0.4881889763779528,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 43.094,
+      "duration": 0.17,
+      "velocity": 0.5669291338582677,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 43.786,
+      "duration": 0.76,
+      "velocity": 0.5433070866141733,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 44.571,
+      "duration": 0.398,
+      "velocity": 0.47244094488188976,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 45.053,
+      "duration": 0.139,
+      "velocity": 0.47244094488188976,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 45.774,
+      "duration": 0.719,
+      "velocity": 0.5433070866141733,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 46.565,
+      "duration": 0.225,
+      "velocity": 0.4566929133858268,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 46.799,
+      "duration": 0.273,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 47.057,
+      "duration": 0.118,
+      "velocity": 0.4881889763779528,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 47.801,
+      "duration": 0.631,
+      "velocity": 0.5511811023622047,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 48.528,
+      "duration": 0.256,
+      "velocity": 0.49606299212598426,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 48.778,
+      "duration": 0.205,
+      "velocity": 0.49606299212598426,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 49.025,
+      "duration": 0.184,
+      "velocity": 0.48031496062992124,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 49.736,
+      "duration": 0.663,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 50.518,
+      "duration": 0.241,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 50.734,
+      "duration": 0.19,
+      "velocity": 0.5354330708661418,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 51.017,
+      "duration": 0.159,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 51.746,
+      "duration": 0.69,
+      "velocity": 0.5354330708661418,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 52.535,
+      "duration": 0.281,
+      "velocity": 0.5118110236220472,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 52.776,
+      "duration": 0.142,
+      "velocity": 0.5118110236220472,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 53.044,
+      "duration": 0.152,
+      "velocity": 0.5905511811023622,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 53.756,
+      "duration": 0.723,
+      "velocity": 0.5590551181102362,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 54.575,
+      "duration": 0.269,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 54.791,
+      "duration": 0.143,
+      "velocity": 0.5275590551181102,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 55.074,
+      "duration": 0.152,
+      "velocity": 0.5669291338582677,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 55.798,
+      "duration": 0.635,
+      "velocity": 0.5826771653543307,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 56.547,
+      "duration": 0.259,
+      "velocity": 0.5039370078740157,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 56.753,
+      "duration": 0.194,
+      "velocity": 0.49606299212598426,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 57.025,
+      "duration": 0.187,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 57.739,
+      "duration": 0.684,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 58.517,
+      "duration": 0.205,
+      "velocity": 0.5905511811023622,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 58.764,
+      "duration": 0.125,
+      "velocity": 0.5275590551181102,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 59.007,
+      "duration": 0.14,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 59.694,
+      "duration": 0.746,
+      "velocity": 0.49606299212598426,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 60.476,
+      "duration": 0.371,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 60.95,
+      "duration": 0.149,
+      "velocity": 0.6141732283464567,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 61.669,
+      "duration": 0.693,
+      "velocity": 0.5433070866141733,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 62.425,
+      "duration": 0.235,
+      "velocity": 0.47244094488188976,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 62.665,
+      "duration": 0.289,
+      "velocity": 0.48031496062992124,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 62.903,
+      "duration": 0.125,
+      "velocity": 0.5669291338582677,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 63.601,
+      "duration": 0.679,
+      "velocity": 0.5275590551181102,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 64.363,
+      "duration": 0.25,
+      "velocity": 0.5748031496062992,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 64.59,
+      "duration": 0.197,
+      "velocity": 0.4645669291338583,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 64.835,
+      "duration": 0.143,
+      "velocity": 0.5748031496062992,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 65.529,
+      "duration": 0.679,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 66.287,
+      "duration": 0.257,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 66.51,
+      "duration": 0.173,
+      "velocity": 0.4409448818897638,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 66.766,
+      "duration": 0.176,
+      "velocity": 0.5590551181102362,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 67.49,
+      "duration": 0.667,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 68.26,
+      "duration": 0.283,
+      "velocity": 0.5118110236220472,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 68.486,
+      "duration": 0.158,
+      "velocity": 0.4409448818897638,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 68.75,
+      "duration": 0.148,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 69.468,
+      "duration": 0.756,
+      "velocity": 0.5748031496062992,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 70.275,
+      "duration": 0.265,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 70.5,
+      "duration": 0.181,
+      "velocity": 0.3543307086614173,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 70.771,
+      "duration": 0.18,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 71.505,
+      "duration": 0.745,
+      "velocity": 0.5039370078740157,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 72.311,
+      "duration": 0.268,
+      "velocity": 0.5196850393700787,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 72.535,
+      "duration": 0.186,
+      "velocity": 0.5511811023622047,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 72.798,
+      "duration": 0.168,
+      "velocity": 0.5354330708661418,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 73.522,
+      "duration": 0.718,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 74.309,
+      "duration": 0.19,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 74.555,
+      "duration": 0.138,
+      "velocity": 0.47244094488188976,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 74.798,
+      "duration": 0.187,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 75.522,
+      "duration": 0.734,
+      "velocity": 0.5433070866141733,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 76.287,
+      "duration": 0.432,
+      "velocity": 0.4881889763779528,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 76.753,
+      "duration": 0.137,
+      "velocity": 0.5984251968503937,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 77.483,
+      "duration": 0.665,
+      "velocity": 0.5275590551181102,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 78.233,
+      "duration": 0.193,
+      "velocity": 0.49606299212598426,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 78.466,
+      "duration": 0.205,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 78.703,
+      "duration": 0.225,
+      "velocity": 0.5275590551181102,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 79.411,
+      "duration": 0.716,
+      "velocity": 0.5196850393700787,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 80.175,
+      "duration": 0.281,
+      "velocity": 0.4330708661417323,
+      "name": "A2"
+    },
+    {
+      "midi": 51,
+      "time": 80.436,
+      "duration": 0.137,
+      "velocity": 0.4645669291338583,
+      "name": "D#3"
+    },
+    {
+      "midi": 47,
+      "time": 80.84,
+      "duration": 0.176,
+      "velocity": 0.33858267716535434,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 81.581,
+      "duration": 0.707,
+      "velocity": 0.5433070866141733,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 82.37,
+      "duration": 0.324,
+      "velocity": 0.5748031496062992,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 82.618,
+      "duration": 0.167,
+      "velocity": 0.4566929133858268,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 82.844,
+      "duration": 0.191,
+      "velocity": 0.5196850393700787,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 83.573,
+      "duration": 0.71,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 84.37,
+      "duration": 0.282,
+      "velocity": 0.5039370078740157,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 84.628,
+      "duration": 0.146,
+      "velocity": 0.4409448818897638,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 84.876,
+      "duration": 0.157,
+      "velocity": 0.4330708661417323,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 85.617,
+      "duration": 0.753,
+      "velocity": 0.5590551181102362,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 86.441,
+      "duration": 0.318,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 86.67,
+      "duration": 0.205,
+      "velocity": 0.4251968503937008,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 86.906,
+      "duration": 0.183,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 87.648,
+      "duration": 0.755,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 88.45,
+      "duration": 0.31,
+      "velocity": 0.49606299212598426,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 88.683,
+      "duration": 0.169,
+      "velocity": 0.44881889763779526,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 88.926,
+      "duration": 0.193,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 89.688,
+      "duration": 0.707,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 90.49,
+      "duration": 0.209,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 90.723,
+      "duration": 0.173,
+      "velocity": 0.4881889763779528,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 90.985,
+      "duration": 0.2,
+      "velocity": 0.5433070866141733,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 91.701,
+      "duration": 0.759,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 92.478,
+      "duration": 0.406,
+      "velocity": 0.5669291338582677,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 92.952,
+      "duration": 0.197,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 93.673,
+      "duration": 0.705,
+      "velocity": 0.5275590551181102,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 94.45,
+      "duration": 0.229,
+      "velocity": 0.5039370078740157,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 94.687,
+      "duration": 0.305,
+      "velocity": 0.5196850393700787,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 94.927,
+      "duration": 0.147,
+      "velocity": 0.6141732283464567,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 95.672,
+      "duration": 0.669,
+      "velocity": 0.5905511811023622,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 96.45,
+      "duration": 0.24,
+      "velocity": 0.48031496062992124,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 96.672,
+      "duration": 0.225,
+      "velocity": 0.4881889763779528,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 96.92,
+      "duration": 0.256,
+      "velocity": 0.5118110236220472,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 97.609,
+      "duration": 0.653,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 98.376,
+      "duration": 0.323,
+      "velocity": 0.4409448818897638,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 98.637,
+      "duration": 0.206,
+      "velocity": 0.5039370078740157,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 98.893,
+      "duration": 0.152,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 99.607,
+      "duration": 0.669,
+      "velocity": 0.5905511811023622,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 100.393,
+      "duration": 0.29,
+      "velocity": 0.5196850393700787,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 100.632,
+      "duration": 0.188,
+      "velocity": 0.4409448818897638,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 100.867,
+      "duration": 0.181,
+      "velocity": 0.5669291338582677,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 101.613,
+      "duration": 0.722,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 102.415,
+      "duration": 0.34,
+      "velocity": 0.4566929133858268,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 102.663,
+      "duration": 0.186,
+      "velocity": 0.33070866141732286,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 102.923,
+      "duration": 0.181,
+      "velocity": 0.6377952755905512,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 103.669,
+      "duration": 0.704,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 104.475,
+      "duration": 0.288,
+      "velocity": 0.4645669291338583,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 104.704,
+      "duration": 0.158,
+      "velocity": 0.47244094488188976,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 104.954,
+      "duration": 0.182,
+      "velocity": 0.5748031496062992,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 105.677,
+      "duration": 0.669,
+      "velocity": 0.5196850393700787,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 106.45,
+      "duration": 0.207,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 106.711,
+      "duration": 0.135,
+      "velocity": 0.49606299212598426,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 106.946,
+      "duration": 0.172,
+      "velocity": 0.5511811023622047,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 107.649,
+      "duration": 0.675,
+      "velocity": 0.5905511811023622,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 108.37,
+      "duration": 0.349,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 108.834,
+      "duration": 0.123,
+      "velocity": 0.6535433070866141,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 109.57,
+      "duration": 0.634,
+      "velocity": 0.5984251968503937,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 110.337,
+      "duration": 0.217,
+      "velocity": 0.5275590551181102,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 110.591,
+      "duration": 0.206,
+      "velocity": 0.4566929133858268,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 110.845,
+      "duration": 0.123,
+      "velocity": 0.5275590551181102,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 111.565,
+      "duration": 0.587,
+      "velocity": 0.5590551181102362,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 112.33,
+      "duration": 0.236,
+      "velocity": 0.5196850393700787,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 112.57,
+      "duration": 0.212,
+      "velocity": 0.5669291338582677,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 112.802,
+      "duration": 0.188,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 113.482,
+      "duration": 0.686,
+      "velocity": 0.5275590551181102,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 114.295,
+      "duration": 0.255,
+      "velocity": 0.5118110236220472,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 114.537,
+      "duration": 0.187,
+      "velocity": 0.5511811023622047,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 114.781,
+      "duration": 0.162,
+      "velocity": 0.6220472440944882,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 115.477,
+      "duration": 0.646,
+      "velocity": 0.5590551181102362,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 116.27,
+      "duration": 0.298,
+      "velocity": 0.4409448818897638,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 116.512,
+      "duration": 0.142,
+      "velocity": 0.4881889763779528,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 116.754,
+      "duration": 0.157,
+      "velocity": 0.5511811023622047,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 117.499,
+      "duration": 0.671,
+      "velocity": 0.5118110236220472,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 118.277,
+      "duration": 0.346,
+      "velocity": 0.4251968503937008,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 118.532,
+      "duration": 0.137,
+      "velocity": 0.4015748031496063,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 118.766,
+      "duration": 0.158,
+      "velocity": 0.5905511811023622,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 119.521,
+      "duration": 0.697,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 120.315,
+      "duration": 0.279,
+      "velocity": 0.4881889763779528,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 120.568,
+      "duration": 0.132,
+      "velocity": 0.3937007874015748,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 120.768,
+      "duration": 0.167,
+      "velocity": 0.5196850393700787,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 121.525,
+      "duration": 0.593,
+      "velocity": 0.5275590551181102,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 122.238,
+      "duration": 0.191,
+      "velocity": 0.5118110236220472,
+      "name": "E3"
+    },
+    {
+      "midi": 51,
+      "time": 122.479,
+      "duration": 0.135,
+      "velocity": 0.5354330708661418,
+      "name": "D#3"
+    },
+    {
+      "midi": 49,
+      "time": 122.727,
+      "duration": 0.168,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 123.437,
+      "duration": 0.733,
+      "velocity": 0.5669291338582677,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 124.193,
+      "duration": 0.395,
+      "velocity": 0.5590551181102362,
+      "name": "B2"
+    },
+    {
+      "midi": 49,
+      "time": 124.659,
+      "duration": 0.15,
+      "velocity": 0.5590551181102362,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 125.385,
+      "duration": 0.662,
+      "velocity": 0.5118110236220472,
+      "name": "C#3"
+    },
+    {
+      "midi": 49,
+      "time": 126.169,
+      "duration": 0.215,
+      "velocity": 0.48031496062992124,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 126.41,
+      "duration": 0.151,
+      "velocity": 0.5433070866141733,
+      "name": "B2"
+    },
+    {
+      "midi": 45,
+      "time": 126.678,
+      "duration": 0.123,
+      "velocity": 0.5984251968503937,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 127.404,
+      "duration": 0.723,
+      "velocity": 0.5984251968503937,
+      "name": "A2"
+    },
+    {
+      "midi": 45,
+      "time": 128.226,
+      "duration": 0.255,
+      "velocity": 0.5039370078740157,
+      "name": "A2"
+    },
+    {
+      "midi": 49,
+      "time": 128.469,
+      "duration": 0.222,
+      "velocity": 0.5118110236220472,
+      "name": "C#3"
+    },
+    {
+      "midi": 47,
+      "time": 128.741,
+      "duration": 0.231,
+      "velocity": 0.4566929133858268,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 129.479,
+      "duration": 0.706,
+      "velocity": 0.5511811023622047,
+      "name": "B2"
+    },
+    {
+      "midi": 47,
+      "time": 130.277,
+      "duration": 0.313,
+      "velocity": 0.5354330708661418,
+      "name": "B2"
+    },
+    {
+      "midi": 51,
+      "time": 130.525,
+      "duration": 0.15,
+      "velocity": 0.5118110236220472,
+      "name": "D#3"
+    },
+    {
+      "midi": 52,
+      "time": 130.782,
+      "duration": 0.152,
+      "velocity": 0.5590551181102362,
+      "name": "E3"
+    },
+    {
+      "midi": 52,
+      "time": 131.514,
+      "duration": 0.639,
+      "velocity": 0.5433070866141733,
+      "name": "E3"
+    },
+    {
+      "midi": 47,
+      "time": 132.375,
+      "duration": 0.082,
+      "velocity": 0.4251968503937008,
+      "name": "B2"
+    }
+  ],
+  "alignmentModel": "affine",
+  "alignmentParams": {
+    "a": 20.400000000000027,
+    "b": 1.012
+  }
+}

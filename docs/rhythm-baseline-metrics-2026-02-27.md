@@ -1,43 +1,16 @@
 # Rhythm Detection Baseline Metrics
-Generated: 2026-02-27T20:53:11.887Z
+Generated: 2026-02-28T20:36:58.133Z
 
 ## Aggregate
 
 | Metric | Value |
 |--------|-------|
-| Mean Beat F1 | 0.160 |
-| Mean Downbeat F1 | 0.306 |
-| Mean Root Accuracy | 11.7% |
-| Mean Full Accuracy | 10.8% |
-| Mean Drift (median) | 32414.5 ms |
-| Mean False Changes /32 bars | 3.6 |
-
-## Wings - Mull Of Kintyre (`mull-of-kintyre`)
-
-### Beat Detection
-- **F1**: 0.427 (P=0.284, R=0.856)
-- Matched: 125 / 146 GT, 440 predicted
-
-### Downbeat Detection
-- **F1**: 0.853 (P=0.850, R=0.856)
-- Matched: 125 / 146 GT, 147 predicted
-
-### Bar Drift
-- Median: 46.4 ms
-- P95: 89.2 ms
-- Bars evaluated: 146
-
-### Chord Accuracy
-- Root: 0.0%
-- Full: 0.0%
-- Bars evaluated: 0
-
-### False Chord Changes
-- Per 32 bars: 0.0
-- Total: 0 / 0 transitions
-
-### Determinism
-- *Not evaluated (single run)*
+| Mean Beat F1 | 0.032 |
+| Mean Downbeat F1 | 0.036 |
+| Mean Root Accuracy | 18.1% |
+| Mean Full Accuracy | 16.8% |
+| Mean Drift (median) | 4044.9 ms |
+| Mean False Changes /32 bars | 5.4 |
 
 ## Hey Jude - The Beatles (`hey-jude`)
 
@@ -69,21 +42,21 @@ Generated: 2026-02-27T20:53:11.887Z
 ## Canon in D - Pachelbel (`canon-in-d`)
 
 ### Beat Detection
-- **F1**: 0.044 (P=0.028, R=0.111)
-- Matched: 9 / 81 GT, 324 predicted
+- **F1**: 0.054 (P=0.030, R=0.235)
+- Matched: 19 / 81 GT, 623 predicted
 
 ### Downbeat Detection
-- **F1**: 0.037 (P=0.037, R=0.037)
-- Matched: 3 / 81 GT, 81 predicted
+- **F1**: 0.042 (P=0.032, R=0.062)
+- Matched: 5 / 81 GT, 156 predicted
 
 ### Bar Drift
-- Median: 96797.8 ms
-- P95: 183915.3 ms
+- Median: 7690.6 ms
+- P95: 14612.1 ms
 - Bars evaluated: 81
 
 ### Chord Accuracy
-- Root: 23.5%
-- Full: 23.5%
+- Root: 24.7%
+- Full: 24.7%
 - Bars evaluated: 81
 
 ### False Chord Changes

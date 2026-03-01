@@ -1,0 +1,45 @@
+{
+  "songId": "bohemian-rhapsody",
+  "status": "aligned_ok",
+  "tier": 1,
+  "model": "piecewise_affine",
+  "params": {
+    "a": 35.20000000000017,
+    "b": 1.1
+  },
+  "segments": [
+    {
+      "midiStart": 0,
+      "midiEnd": 227.692376,
+      "a": 35.20000000000017,
+      "b": 1.1
+    },
+    {
+      "midiStart": 227.692376,
+      "midiEnd": 315.38471,
+      "a": 40.73386350400031,
+      "b": 0.846
+    },
+    {
+      "midiStart": 315.38471,
+      "midiEnd": 327.8771635,
+      "a": -45.97385037599827,
+      "b": 1.074
+    }
+  ],
+  "segment": {
+    "midiStart": 0,
+    "midiEnd": 327.8771635,
+    "youtubeStart": 35.20000000000017,
+    "youtubeEnd": 306.16622322300174
+  },
+  "quality": {
+    "anchorsCovered": 208,
+    "anchorsTotal": 214,
+    "coverage": 0.9719626168224299,
+    "medianMs": 69.99999999999318,
+    "p95Ms": 189.99999999999773,
+    "energyScore": 0.9719626168224299
+  },
+  "reason": null
+}
