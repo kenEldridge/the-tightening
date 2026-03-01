@@ -1,33 +1,42 @@
 {
-  "songId": "imagine",
-  "status": "aligned_ok",
-  "tier": 1,
   "model": "piecewise_affine",
   "params": {
     "a": 22.83922976100003,
     "b": 1.028
   },
-  "segments": [
-    {
-      "midiStart": 3.26923175,
-      "midiEnd": 171.9231285,
-      "a": 22.83922976100003,
-      "b": 1.028
-    }
-  ],
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 177.37288900000001,
-    "youtubeStart": 22.83922976100003,
-    "youtubeEnd": 205.17855965300006
-  },
   "quality": {
     "anchorsCovered": 48,
     "anchorsTotal": 58,
     "coverage": 0.9230769230769231,
+    "energyScore": 0.9230769230769231,
+    "matchToleranceSec": 0.2,
     "medianMs": 74.99999999999574,
     "p95Ms": 199.99999999998863,
-    "energyScore": 0.9230769230769231
+    "thresholdProximity": {
+      "coverageMargin": 0.22307692307692317,
+      "medianMarginMs": 75.00000000000426,
+      "p95MarginMs": 200.00000000001137
+    }
   },
-  "reason": null
+  "qualityMode": "piecewise_energy_peak",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 177.37288900000001,
+    "midiStart": 0,
+    "youtubeEnd": 205.17855965300006,
+    "youtubeStart": 22.83922976100003
+  },
+  "segments": [
+    {
+      "a": 22.83922976100003,
+      "b": 1.028,
+      "midiEnd": 171.9231285,
+      "midiStart": 3.26923175
+    }
+  ],
+  "songId": "imagine",
+  "status": "aligned_ok",
+  "tier": 1,
+  "version": "align-v3"
 }

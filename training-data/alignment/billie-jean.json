@@ -1,24 +1,33 @@
 {
-  "songId": "billie-jean",
-  "status": "aligned_ok",
-  "tier": 1,
   "model": "affine",
   "params": {
     "a": 4.1857133272268605,
     "b": 1.0211880460335414
   },
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 281.890625,
-    "youtubeStart": 4.1857133272268605,
-    "youtubeEnd": 292.0490498661506
-  },
   "quality": {
     "anchorsCovered": 141,
     "anchorsTotal": 141,
     "coverage": 1,
+    "matchToleranceSec": 0.2,
     "medianMs": 8.935263942802862,
-    "p95Ms": 58.652666948319165
+    "p95Ms": 58.652666948319165,
+    "thresholdProximity": {
+      "coverageMargin": 0.09999999999999998,
+      "medianMarginMs": 111.06473605719714,
+      "p95MarginMs": 241.34733305168083
+    }
   },
-  "reason": null
+  "qualityMode": "analysis_downbeat",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 281.890625,
+    "midiStart": 0,
+    "youtubeEnd": 292.0490498661506,
+    "youtubeStart": 4.1857133272268605
+  },
+  "songId": "billie-jean",
+  "status": "aligned_ok",
+  "tier": 1,
+  "version": "align-v3"
 }

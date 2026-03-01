@@ -11,7 +11,7 @@
 
 import * as Tone from 'tone';
 import { SplendidGrandPiano } from 'smplr';
-import type { ChordTimelineArtifact, ChordEvent } from './rhythmTypes';
+import type { ChordTimelineArtifact, ChordEvent, GuideMelodyNote } from './rhythmTypes';
 import { CHORD_VOICINGS } from '../data/chordProgressions';
 
 export type PreviewMode = 'generated' | 'source';
@@ -33,6 +33,7 @@ export class RhythmPreviewPlayer {
   private piano: SplendidGrandPiano | null = null;
   private bassPart: Tone.Part | null = null;
   private chordPart: Tone.Part | null = null;
+  private melodyPart: Tone.Part | null = null;
   private audioContext: AudioContext | null = null;
   private initialized = false;
 
@@ -207,10 +208,33 @@ export class RhythmPreviewPlayer {
       }
     }, chordEvents);
 
-    // Compute duration from last chord end or beat grid
+    // Optional guide melody line for recognizability
+    const melodyEvents = (timeline.guideMelody || [])
+      .filter((m): m is GuideMelodyNote => Number.isFinite(m.time) && Number.isFinite(m.duration) && Number.isFinite(m.midi))
+      .map(m => ({
+        time: m.time,
+        note: m.midi,
+        duration: Math.max(0.05, Math.min(1.5, m.duration)),
+        velocity: Math.max(0.12, Math.min(0.55, m.velocity)),
+      }));
+
+    if (melodyEvents.length > 0) {
+      this.melodyPart = new Tone.Part((time, event) => {
+        piano.start({
+          note: event.note,
+          velocity: Math.round(event.velocity * 127),
+          duration: event.duration,
+          time,
+        });
+      }, melodyEvents);
+      this.melodyPart.loop = false;
+    }
+
+    // Compute duration from last chord end, beat grid, or guide melody
     const lastChordEnd = chords.length > 0 ? chords[chords.length - 1].endTime : 0;
     const lastBeatTime = beats.length > 0 ? beats[beats.length - 1].time : 0;
-    this.duration = Math.max(lastChordEnd, lastBeatTime + 1);
+    const lastMelodyEnd = (timeline.guideMelody || []).reduce((max, n) => Math.max(max, n.time + n.duration), 0);
+    this.duration = Math.max(lastChordEnd, lastBeatTime + 1, lastMelodyEnd);
 
     // Configure looping on generated parts
     this.bassPart.loop = false;
@@ -221,6 +245,7 @@ export class RhythmPreviewPlayer {
       skippedChords: this.skippedChords,
       bassEvents: bassEvents.length,
       chordEvents: chordEvents.length,
+      melodyEvents: melodyEvents.length,
       duration: this.duration.toFixed(1),
       tempo: timeline.beatGrid.tempo,
     });
@@ -447,6 +472,7 @@ export class RhythmPreviewPlayer {
     if (this.mode === 'generated') {
       if (this.bassPart) this.bassPart.start(0);
       if (this.chordPart) this.chordPart.start(0);
+      if (this.melodyPart) this.melodyPart.start(0);
       if (Tone.Transport.state !== 'started') {
         Tone.Transport.start();
       }
@@ -469,6 +495,7 @@ export class RhythmPreviewPlayer {
     // Stop generated
     if (this.bassPart) this.bassPart.stop();
     if (this.chordPart) this.chordPart.stop();
+    if (this.melodyPart) this.melodyPart.stop();
     if (this.piano) this.piano.stop();
     if (Tone.Transport.state !== 'stopped') {
       Tone.Transport.stop();
@@ -526,6 +553,11 @@ export class RhythmPreviewPlayer {
       this.chordPart.stop();
       this.chordPart.dispose();
       this.chordPart = null;
+    }
+    if (this.melodyPart) {
+      this.melodyPart.stop();
+      this.melodyPart.dispose();
+      this.melodyPart = null;
     }
   }
 

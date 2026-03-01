@@ -17,6 +17,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:node": "vitest run --config vitest.node.config.ts",
     "analyze": "tsx scripts/run-headless-analysis.ts",
+    "analyze:song": "npx tsx scripts/run-on-demand-alignment.ts",
     "build-index": "node scripts/build-song-index.js"
   },
   "dependencies": {

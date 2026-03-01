@@ -1,45 +1,60 @@
 {
-  "songId": "fur-elise",
-  "status": "aligned_ok",
-  "tier": 1,
+  "baseline": {
+    "coverage": 0.9029126213592233,
+    "medianMs": 69.99999999999318,
+    "p95Ms": 200.00000000000284,
+    "qualityMode": "piecewise_energy_peak"
+  },
   "model": "piecewise_affine",
   "params": {
     "a": 34.600000000000094,
     "b": 1.1440000000000001
   },
-  "segments": [
-    {
-      "midiStart": 0,
-      "midiEnd": 36.2137894,
-      "a": 34.600000000000094,
-      "b": 1.1440000000000001
-    },
-    {
-      "midiStart": 36.2137894,
-      "midiEnd": 55.597412000000006,
-      "a": 65.02797220639965,
-      "b": 1.088
-    },
-    {
-      "midiStart": 55.597412000000006,
-      "midiEnd": 131.09667836666665,
-      "a": 46.08319291039954,
-      "b": 1.096
-    }
-  ],
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 131.09667836666665,
-    "youtubeStart": 34.600000000000094,
-    "youtubeEnd": 189.7651524002662
-  },
   "quality": {
     "anchorsCovered": 93,
     "anchorsTotal": 116,
     "coverage": 0.9029126213592233,
+    "energyScore": 0.9029126213592233,
+    "matchToleranceSec": 0.2,
     "medianMs": 69.99999999999318,
     "p95Ms": 200.00000000000284,
-    "energyScore": 0.9029126213592233
+    "thresholdProximity": {
+      "coverageMargin": 0.2029126213592234,
+      "medianMarginMs": 80.00000000000682,
+      "p95MarginMs": 199.99999999999716
+    }
   },
-  "reason": null
+  "qualityMode": "piecewise_energy_peak",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 131.09667836666665,
+    "midiStart": 0,
+    "youtubeEnd": 189.7651524002662,
+    "youtubeStart": 34.600000000000094
+  },
+  "segments": [
+    {
+      "a": 34.600000000000094,
+      "b": 1.1440000000000001,
+      "midiEnd": 36.2137894,
+      "midiStart": 0
+    },
+    {
+      "a": 65.02797220639965,
+      "b": 1.088,
+      "midiEnd": 55.597412000000006,
+      "midiStart": 36.2137894
+    },
+    {
+      "a": 46.08319291039954,
+      "b": 1.096,
+      "midiEnd": 131.09667836666665,
+      "midiStart": 55.597412000000006
+    }
+  ],
+  "songId": "fur-elise",
+  "status": "aligned_ok",
+  "tier": 2,
+  "version": "align-v3"
 }

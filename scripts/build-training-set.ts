@@ -50,6 +50,7 @@ interface MidiGroundTruth {
   totalNotes: number;
   melodyTrackIndex: number;
   melodyNotes: Array<{ midi: number; time: number; duration: number; velocity: number; name: string }>;
+  allNotes: Array<{ midi: number; time: number; duration: number; velocity: number; name: string; track: number; channel: number }>;
 }
 
 const TRAINING_DIR = path.join(ROOT, 'training-data');
@@ -108,6 +109,25 @@ function extractGroundTruth(song: ManifestSong): MidiGroundTruth {
     name: n.name,
   }));
 
+  // Collect pitched notes from all non-drum tracks for richer harmonic reduction.
+  const allNotes: Array<{ midi: number; time: number; duration: number; velocity: number; name: string; track: number; channel: number }> = [];
+  for (let t = 0; t < midi.tracks.length; t++) {
+    const track = midi.tracks[t];
+    if (track.channel === 9) continue; // skip drums
+    for (const n of track.notes) {
+      allNotes.push({
+        midi: n.midi,
+        time: n.time,
+        duration: n.duration,
+        velocity: n.velocity,
+        name: n.name,
+        track: t,
+        channel: track.channel,
+      });
+    }
+  }
+  allNotes.sort((a, b) => a.time - b.time);
+
   // Normalize unusual time signatures to standard ones
   // 16/16 → 4/4, 2/4 stays as-is, etc.
   const normalizedTs = { ...primaryTs };
@@ -165,9 +185,10 @@ function extractGroundTruth(song: ManifestSong): MidiGroundTruth {
     barAnchors,
     beats,
     trackCount: midi.tracks.length,
-    totalNotes: midi.tracks.reduce((s, t) => s + t.notes.length, 0),
+    totalNotes: allNotes.length,
     melodyTrackIndex,
     melodyNotes,
+    allNotes,
   };
 }
 

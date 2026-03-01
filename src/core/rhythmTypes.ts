@@ -91,6 +91,17 @@ export interface ChordVoicingData {
   notes: number[];   // MIDI notes for right hand chord
 }
 
+export interface GuideMelodyNote {
+  /** Time in seconds from audio start */
+  time: number;
+  /** MIDI pitch */
+  midi: number;
+  /** Duration in seconds */
+  duration: number;
+  /** Velocity 0-1 */
+  velocity: number;
+}
+
 // ============================================
 // Beat Grid
 // ============================================
@@ -123,6 +134,8 @@ export interface ChordTimelineArtifact {
   keyRoot?: number;
   /** Chord events */
   chords: ChordEvent[];
+  /** Optional recognizable top-line guide melody for generated playback */
+  guideMelody?: GuideMelodyNote[];
   /** Edit history (lightweight for Phase 1) */
   edits: TimelineEdit[];
   /** When this analysis was created */

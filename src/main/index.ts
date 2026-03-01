@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { createRequire } from 'module';
-import { execSync } from 'child_process';
+import { execSync, spawn } from 'child_process';
 import { initializeLogger, loggers } from '../utils/logger';
 import log from 'electron-log';
 import { getYouTubeExtractor, type ExtractionProgress } from './YouTubeExtractor';
@@ -52,6 +52,96 @@ loggers.main.info('The Tightening starting...', {
 
 let mainWindow: BrowserWindow | null = null;
 let midiInput: any = null;
+const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
+interface TrainingManifestSong {
+  id: string;
+  title: string;
+  artist: string;
+  youtubeUrl: string;
+}
+
+interface TrainingManifest {
+  songs: TrainingManifestSong[];
+}
+
+function getTrainingManifestPath(): string {
+  return path.join(REPO_ROOT, 'training-data', 'manifest.json');
+}
+
+function loadTrainingManifest(): TrainingManifest | null {
+  const manifestPath = getTrainingManifestPath();
+  if (!fs.existsSync(manifestPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as TrainingManifest;
+  } catch {
+    return null;
+  }
+}
+
+function extractYouTubeVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) return match[1];
+  }
+  return null;
+}
+
+function resolveTrainingSongIdBySourceUri(sourceUri: string): string | null {
+  const manifest = loadTrainingManifest();
+  if (!manifest) return null;
+  const normalized = sourceUri.trim();
+  const sourceVideoId = extractYouTubeVideoId(normalized);
+
+  for (const song of manifest.songs) {
+    if (song.youtubeUrl === normalized) return song.id;
+    const songVideoId = extractYouTubeVideoId(song.youtubeUrl);
+    if (sourceVideoId && songVideoId && sourceVideoId === songVideoId) return song.id;
+  }
+  return null;
+}
+
+function runCommand(command: string, args: string[], cwd: string): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    const child = process.platform === 'win32'
+      ? spawn('cmd.exe', ['/d', '/s', '/c', command, ...args], {
+        cwd,
+        windowsHide: true,
+      })
+      : spawn(command, args, {
+        cwd,
+        windowsHide: true,
+      });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    const finish = (result: { code: number; stdout: string; stderr: string }) => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
+    child.stdout.on('data', (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on('error', (err) => {
+      finish({
+        code: 1,
+        stdout,
+        stderr: `${stderr}\n${(err as Error).message}`.trim(),
+      });
+    });
+    child.on('close', (code) => {
+      finish({ code: code ?? 1, stdout, stderr });
+    });
+  });
+}
 
 // Initialize MIDI in main process
 const initializeMidi = () => {
@@ -564,6 +654,74 @@ ipcMain.handle(
     return saveProjectHints(projectId, hints);
   },
 );
+
+// ============================================
+// On-Demand Alignment IPC Handlers
+// ============================================
+
+ipcMain.handle('training-resolve-song', async (_event, sourceUri: string) => {
+  const songId = resolveTrainingSongIdBySourceUri(sourceUri);
+  return { ok: true, songId };
+});
+
+ipcMain.handle(
+  'training-run-on-demand',
+  async (
+    _event,
+    input: { songId?: string; sourceUri?: string; reuseAnalysis?: boolean; download?: boolean; tier1Only?: boolean },
+  ) => {
+    const manifest = loadTrainingManifest();
+    if (!manifest) {
+      return { ok: false, error: 'training_manifest_not_found' };
+    }
+
+    const songId = input.songId ?? (input.sourceUri ? resolveTrainingSongIdBySourceUri(input.sourceUri) : null);
+    if (!songId) {
+      return { ok: false, error: 'song_not_in_training_manifest' };
+    }
+
+    const args = ['tsx', 'scripts/run-on-demand-alignment.ts', '--song', songId];
+    if (input.reuseAnalysis !== false) args.push('--reuse-analysis');
+    if (input.download) args.push('--download');
+    if (input.tier1Only) args.push('--tier1-only');
+
+    loggers.main.info('[OnDemand] Starting on-demand pipeline', { songId, args: args.join(' ') });
+    const run = await runCommand('npx', args, REPO_ROOT);
+
+    const alignmentPath = path.join(REPO_ROOT, 'training-data', 'alignment', `${songId}.json`);
+    const alignedGtPath = path.join(REPO_ROOT, 'training-data', 'aligned-ground-truth', `${songId}.json`);
+    const alignment = fs.existsSync(alignmentPath) ? JSON.parse(fs.readFileSync(alignmentPath, 'utf8')) : null;
+    const alignedGroundTruth = fs.existsSync(alignedGtPath) ? JSON.parse(fs.readFileSync(alignedGtPath, 'utf8')) : null;
+
+    const ok = run.code === 0;
+    loggers.main.info('[OnDemand] Pipeline finished', {
+      songId,
+      ok,
+      code: run.code,
+      alignmentStatus: alignment?.status ?? null,
+    });
+
+    return {
+      ok,
+      songId,
+      code: run.code,
+      stdoutTail: run.stdout.slice(-8000),
+      stderrTail: run.stderr.slice(-4000),
+      alignment,
+      alignedGroundTruth,
+    };
+  },
+);
+
+ipcMain.handle('training-load-aligned-ground-truth', async (_event, songId: string) => {
+  const alignedGtPath = path.join(REPO_ROOT, 'training-data', 'aligned-ground-truth', `${songId}.json`);
+  if (!fs.existsSync(alignedGtPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(alignedGtPath, 'utf8'));
+  } catch {
+    return null;
+  }
+});
 
 // ---- Lyrics Fetch ----
 

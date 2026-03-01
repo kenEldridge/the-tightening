@@ -11,10 +11,10 @@ import { createTimeline, applyEdit } from '../core/timelineEditor';
 import { buildPracticePayload, validateChordPress, createEmptyStats } from '../core/rhythmTrainer';
 import { RhythmPreviewPlayer, type PreviewMode, type HearItState } from '../core/RhythmPreviewPlayer';
 import { applyLyricsToTimeline, parseArtistTitle, applyLyricCorrections, buildLineTargetKey, generateTimelineFingerprints, generateSectionFingerprint } from '../core/lyricsAlign';
+import { applyVoiceLedVoicings, buildGuideMelody, reduceAlignedMidiToChords } from '../core/pianoArranger';
 import type {
   PracticeProjectLite,
   ChordTimelineArtifact,
-  ChordEvent,
   TimelineEditOp,
   RhythmPracticePayload,
   ChordValidationStats,
@@ -40,6 +40,84 @@ interface ProjectSummary {
 
 interface RhythmPageProps {
   onClose: () => void;
+}
+
+interface CanonicalAlignedGroundTruth {
+  tempo: number;
+  timeSignature: { numerator: number; denominator: number };
+  beats: Array<{ bar: number; beat: number; time: number }>;
+  key?: string;
+  melodyNotes?: Array<{ midi: number; time: number; duration: number; velocity: number; name?: string }>;
+  allNotes?: Array<{ midi: number; time: number; duration: number; velocity: number; name?: string }>;
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+function buildCanonicalBeatGrid(gt: CanonicalAlignedGroundTruth): import('../core/rhythmTypes').BeatGrid | null {
+  if (!gt.beats || gt.beats.length === 0) return null;
+  const beats = [...gt.beats].sort((a, b) => a.time - b.time);
+  const intervals: number[] = [];
+  for (let i = 1; i < beats.length; i++) {
+    const dt = beats[i].time - beats[i - 1].time;
+    if (dt > 1e-4) intervals.push(dt);
+  }
+  const globalTempo = intervals.length > 0 ? 60 / median(intervals) : gt.tempo;
+  const beatEvents: import('../core/rhythmTypes').BeatEvent[] = beats.map((b, i) => {
+    const prev = i > 0 ? beats[i - 1] : b;
+    const next = i + 1 < beats.length ? beats[i + 1] : b;
+    const localDt = i > 0 ? b.time - prev.time : (next.time - b.time);
+    const tempoLocal = localDt > 1e-4 ? 60 / localDt : globalTempo;
+    return {
+      time: b.time,
+      bar: b.bar,
+      beatInBar: b.beat,
+      tempoLocal,
+      confidence: 1,
+      strength: 1,
+    };
+  });
+  return {
+    tempo: globalTempo > 0 ? globalTempo : gt.tempo,
+    timeSignature: gt.timeSignature,
+    beats: beatEvents,
+    barCount: Math.max(...beatEvents.map(b => b.bar)),
+  };
+}
+
+function remapChordsToBeatGrid(
+  chords: import('../core/rhythmTypes').ChordEvent[],
+  beatEvents: import('../core/rhythmTypes').BeatEvent[],
+): import('../core/rhythmTypes').ChordEvent[] {
+  if (beatEvents.length === 0) return chords;
+  const beats = [...beatEvents].sort((a, b) => a.time - b.time);
+  const findBarAtTime = (timeSec: number): number => {
+    let bar = beats[0].bar;
+    for (const beat of beats) {
+      if (beat.time <= timeSec) bar = beat.bar;
+      else break;
+    }
+    return bar;
+  };
+  return chords.map(chord => {
+    const barStart = findBarAtTime(chord.startTime);
+    const barEnd = Math.max(barStart, findBarAtTime(Math.max(chord.startTime, chord.endTime - 1e-3)));
+    return { ...chord, barStart, barEnd };
+  });
+}
+
+function isHighConfidenceAlignment(alignment: any): boolean {
+  if (!alignment || alignment.status !== 'aligned_ok') return false;
+  const coverage = Number(alignment.quality?.coverage ?? 0);
+  const medianMs = Number(alignment.quality?.medianMs ?? Number.POSITIVE_INFINITY);
+  const p95Ms = Number(alignment.quality?.p95Ms ?? Number.POSITIVE_INFINITY);
+  return coverage >= 0.9 && medianMs <= 120 && p95Ms <= 350;
 }
 
 export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
@@ -215,12 +293,140 @@ export const RhythmPage: React.FC<RhythmPageProps> = ({ onClose }) => {
         window.electronAPI.projectSaveHints?.(project.id, hintsToSave);
       }
 
+      let canonicalSongId: string | null = null;
+      let canonicalGt: CanonicalAlignedGroundTruth | null = null;
+      let canonicalAlignment: any = null;
+      let canonicalHighConfidence = false;
+
+      if (
+        project.source.type === 'youtube' &&
+        window.electronAPI?.trainingResolveSong &&
+        window.electronAPI?.trainingRunOnDemand
+      ) {
+        try {
+          setAnalysisProgress('Checking canonical alignment...');
+          const resolved = await window.electronAPI.trainingResolveSong(project.source.uri);
+          canonicalSongId = resolved?.ok ? resolved.songId : null;
+
+          if (canonicalSongId) {
+            setAnalysisProgress(`Running canonical alignment (${canonicalSongId})...`);
+            const onDemand = await window.electronAPI.trainingRunOnDemand({
+              songId: canonicalSongId,
+              sourceUri: project.source.uri,
+              reuseAnalysis: true,
+            });
+            canonicalAlignment = onDemand.alignment ?? null;
+            canonicalHighConfidence = isHighConfidenceAlignment(canonicalAlignment);
+            const alignmentStatus = canonicalAlignment?.status;
+            if (onDemand.ok && alignmentStatus === 'aligned_ok') {
+              const inlineGt = onDemand.alignedGroundTruth as CanonicalAlignedGroundTruth | undefined;
+              if (inlineGt?.beats?.length) {
+                canonicalGt = inlineGt;
+              } else if (window.electronAPI?.trainingLoadAlignedGroundTruth) {
+                const loadedGt = await window.electronAPI.trainingLoadAlignedGroundTruth(canonicalSongId);
+                if (loadedGt?.beats?.length) canonicalGt = loadedGt as CanonicalAlignedGroundTruth;
+              }
+              if (canonicalGt) {
+                console.log('[RhythmPage] Canonical alignment available', {
+                  songId: canonicalSongId,
+                  beats: canonicalGt.beats.length,
+                  highConfidence: canonicalHighConfidence,
+                  quality: canonicalAlignment?.quality,
+                });
+              } else {
+                console.warn('[RhythmPage] Alignment succeeded but aligned ground truth is unavailable', {
+                  songId: canonicalSongId,
+                });
+              }
+            } else {
+              console.warn('[RhythmPage] Canonical alignment unavailable; using analyzer output only', {
+                songId: canonicalSongId,
+                ok: onDemand.ok,
+                code: onDemand.code,
+                alignmentStatus,
+                stderrTail: onDemand.stderrTail?.slice(-400),
+              });
+            }
+          } else {
+            console.log('[RhythmPage] Source not found in training manifest; using analyzer output only');
+          }
+        } catch (canonicalErr) {
+          console.warn('[RhythmPage] Canonical alignment step failed; using analyzer output only', canonicalErr);
+        }
+      }
+
+      setAnalysisProgress('Running rhythm analysis...');
       const result = await analyzer.analyze(project.audioPath, analyzerOptions);
 
-      let tl = createTimeline(result.beatGrid, result.chords, {
+      let beatGrid = result.beatGrid;
+      let chords = result.chords;
+      let guideMelody: import('../core/rhythmTypes').GuideMelodyNote[] | undefined;
+      let arrangementSource = 'audio_analyzer';
+      if (canonicalGt) {
+        const canonicalBeatGrid = buildCanonicalBeatGrid(canonicalGt);
+        if (canonicalBeatGrid) {
+          beatGrid = canonicalBeatGrid;
+          chords = remapChordsToBeatGrid(chords, canonicalBeatGrid.beats);
+          console.log('[RhythmPage] Applied canonical beat grid to timeline', {
+            songId: canonicalSongId,
+            beats: canonicalBeatGrid.beats.length,
+            bars: canonicalBeatGrid.barCount,
+          });
+        } else {
+          console.warn('[RhythmPage] Failed to build canonical beat grid; using analyzer output only', {
+            songId: canonicalSongId,
+          });
+        }
+      }
+
+      const harmonyNotes = canonicalGt?.allNotes?.length
+        ? canonicalGt.allNotes
+        : (canonicalGt?.melodyNotes ?? []);
+      const melodyNotes = canonicalGt?.melodyNotes ?? [];
+
+      if (canonicalGt && canonicalHighConfidence && harmonyNotes.length > 0) {
+        setAnalysisProgress('Building MIDI reduction...');
+        const midiReduction = reduceAlignedMidiToChords(
+          beatGrid,
+          harmonyNotes,
+          melodyNotes.length > 0 ? melodyNotes : undefined,
+          canonicalGt.key,
+        );
+        if (midiReduction.chords.length > 0) {
+          chords = midiReduction.chords;
+          guideMelody = midiReduction.guideMelody;
+          arrangementSource = 'aligned_midi_reduction';
+          console.log('[RhythmPage] Using aligned MIDI reduction for harmony', {
+            songId: canonicalSongId,
+            chords: chords.length,
+            guideMelody: guideMelody.length,
+          });
+        }
+      }
+
+      if (arrangementSource !== 'aligned_midi_reduction') {
+        chords = applyVoiceLedVoicings(
+          chords,
+          melodyNotes.length > 0 ? melodyNotes : undefined,
+        );
+      }
+
+      if (!guideMelody && melodyNotes.length > 0) {
+        guideMelody = buildGuideMelody(melodyNotes);
+      }
+
+      let tl = createTimeline(beatGrid, chords, {
         analysisVersion: result.meta.analysisVersion,
         configHash: result.meta.configHash,
         keyRoot: result.meta.keyRoot,
+      });
+      if (guideMelody && guideMelody.length > 0) {
+        tl = { ...tl, guideMelody };
+      }
+      console.log('[RhythmPage] Arrangement built', {
+        source: arrangementSource,
+        chords: tl.chords.length,
+        guideMelody: tl.guideMelody?.length ?? 0,
       });
 
       // Carry over lyric_correction edits from previous timeline (intent preservation)

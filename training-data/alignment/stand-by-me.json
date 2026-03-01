@@ -1,25 +1,39 @@
 {
-  "songId": "stand-by-me",
-  "status": "aligned_ok",
-  "tier": 2,
+  "baseline": {
+    "coverage": 0.9824561403508771,
+    "medianMs": 135.00000000000156,
+    "p95Ms": 200.00000000000284,
+    "qualityMode": "energy_peak"
+  },
   "model": "affine",
   "params": {
     "a": 20.400000000000027,
     "b": 1.012
   },
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 112.0390625,
-    "youtubeStart": 20.400000000000027,
-    "youtubeEnd": 133.78353125000004
-  },
   "quality": {
     "anchorsCovered": 57,
     "anchorsTotal": 57,
     "coverage": 1,
+    "matchToleranceSec": 0.2,
     "medianMs": 40.00000000000625,
     "p95Ms": 200.00000000000284,
-    "energyScore": 1
+    "thresholdProximity": {
+      "coverageMargin": 0.30000000000000004,
+      "medianMarginMs": 109.99999999999375,
+      "p95MarginMs": 199.99999999999716
+    }
   },
-  "reason": null
+  "qualityMode": "energy_peak",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 112.0390625,
+    "midiStart": 0,
+    "youtubeEnd": 133.78353125000004,
+    "youtubeStart": 20.400000000000027
+  },
+  "songId": "stand-by-me",
+  "status": "aligned_ok",
+  "tier": 2,
+  "version": "align-v3"
 }

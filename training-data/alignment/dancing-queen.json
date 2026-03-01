@@ -1,24 +1,33 @@
 {
-  "songId": "dancing-queen",
-  "status": "aligned_ok",
-  "tier": 1,
   "model": "affine",
   "params": {
     "a": 0.012958685219373716,
     "b": 1.0099797808593756
   },
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 236.64733489583332,
-    "youtubeStart": 0.012958685219373716,
-    "youtubeEnd": 239.02198212426836
-  },
   "quality": {
     "anchorsCovered": 97,
     "anchorsTotal": 99,
     "coverage": 0.9797979797979798,
+    "matchToleranceSec": 0.2,
     "medianMs": 11.541907635081117,
-    "p95Ms": 60.11931033484075
+    "p95Ms": 60.11931033484075,
+    "thresholdProximity": {
+      "coverageMargin": 0.07979797979797976,
+      "medianMarginMs": 108.45809236491888,
+      "p95MarginMs": 239.88068966515925
+    }
   },
-  "reason": null
+  "qualityMode": "analysis_downbeat",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 236.64733489583332,
+    "midiStart": 0,
+    "youtubeEnd": 239.02198212426836,
+    "youtubeStart": 0.012958685219373716
+  },
+  "songId": "dancing-queen",
+  "status": "aligned_ok",
+  "tier": 1,
+  "version": "align-v3"
 }

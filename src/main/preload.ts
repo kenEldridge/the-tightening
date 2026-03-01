@@ -182,6 +182,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('project-set-audio-path', projectId, audioPath),
 
   // ============================================
+  // On-Demand Alignment API
+  // ============================================
+
+  // Resolve a training-manifest song by source URI (typically YouTube URL)
+  trainingResolveSong: (sourceUri: string) =>
+    ipcRenderer.invoke('training-resolve-song', sourceUri),
+
+  // Run build+align+eval pipeline for a song
+  trainingRunOnDemand: (input: {
+    songId?: string;
+    sourceUri?: string;
+    reuseAnalysis?: boolean;
+    download?: boolean;
+    tier1Only?: boolean;
+  }) => ipcRenderer.invoke('training-run-on-demand', input),
+
+  // Load aligned ground truth artifact
+  trainingLoadAlignedGroundTruth: (songId: string) =>
+    ipcRenderer.invoke('training-load-aligned-ground-truth', songId),
+
+  // ============================================
   // Lyrics API
   // ============================================
 

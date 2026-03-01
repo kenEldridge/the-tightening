@@ -33,13 +33,17 @@ export function buildPracticePayload(
     const voicing = chord.voicing || getDefaultVoicing(chord.symbol);
     if (!voicing) continue;
 
-    // Find the beat for this chord start
-    const beat = timeline.beatGrid.beats.find(b => b.bar === chord.barStart && b.beatInBar === 1);
+    // Find the nearest beat at or before the chord start
+    let beat = timeline.beatGrid.beats[0];
+    for (const b of timeline.beatGrid.beats) {
+      if (b.time <= chord.startTime + 1e-3) beat = b;
+      else break;
+    }
 
     changes.push({
       time: chord.startTime,
-      bar: chord.barStart,
-      beat: 1,
+      bar: beat?.bar ?? chord.barStart,
+      beat: beat?.beatInBar ?? 1,
       symbol: chord.symbol,
       voicing,
       duration: chord.endTime - chord.startTime,

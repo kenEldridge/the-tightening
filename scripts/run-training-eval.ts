@@ -14,10 +14,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import type { AnalysisOptions } from '../src/core/rhythmTypes';
-import type { BarAnchor, ChordLabel, SongEvalResult, EvalReport } from '../src/eval/evaluationTypes';
+import type { AnalysisOptions, BeatEvent, ChordEvent } from '../src/core/rhythmTypes';
+import type { BarAnchor, BeatAnchor, ChordLabel, SongEvalResult, EvalReport } from '../src/eval/evaluationTypes';
 import { evaluateSong, runFullEvaluation } from '../src/eval/evaluationHarness';
-import { reportToJSON, reportToMarkdown } from '../src/eval/reportGenerator';
+import { reportToMarkdown } from '../src/eval/reportGenerator';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,11 +49,13 @@ interface AlignmentArtifact {
   songId: string;
   status: 'aligned_ok' | 'unaligned' | 'unaligned_partial';
   tier: 1 | 2;
-  model: string;
+  model: 'affine' | 'piecewise_affine';
   params: { a: number; b: number };
   segment: { midiStart: number; midiEnd: number; youtubeStart: number; youtubeEnd: number };
+  qualityMode: 'analysis_downbeat' | 'energy_peak' | 'piecewise_energy_peak' | 'token_local_align';
   quality: { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number };
   reason: string | null;
+  reasonDetail?: string | null;
 }
 
 interface AlignedGroundTruth {
@@ -69,6 +71,54 @@ interface AlignedGroundTruth {
   melodyNotes: Array<{ midi: number; time: number; duration: number; velocity: number; name: string }>;
   alignmentModel: string;
   alignmentParams: { a: number; b: number };
+}
+
+type AlignmentReasonCode =
+  | 'audio_not_found'
+  | 'audio_too_short'
+  | 'analysis_too_few_beats'
+  | 'duration_ratio_too_high'
+  | 'insufficient_seeds'
+  | 'coverage_too_low'
+  | 'median_error_too_high'
+  | 'p95_error_too_high'
+  | 'slope_out_of_range'
+  | 'no_valid_tempo_segments'
+  | 'no_segments_aligned'
+  | 'error_runtime'
+  | 'multi_match_ambiguous'
+  | 'extraction_quality_low';
+
+function parseReason(reason: string | null): { reason: AlignmentReasonCode | null; reasonDetail: string | null } {
+  if (!reason) return { reason: null, reasonDetail: null };
+  const [code, ...rest] = reason.split(':');
+  const normalized = code === 'error' ? 'error_runtime' : code;
+  const canonical = new Set<AlignmentReasonCode>([
+    'audio_not_found',
+    'audio_too_short',
+    'analysis_too_few_beats',
+    'duration_ratio_too_high',
+    'insufficient_seeds',
+    'coverage_too_low',
+    'median_error_too_high',
+    'p95_error_too_high',
+    'slope_out_of_range',
+    'no_valid_tempo_segments',
+    'no_segments_aligned',
+    'error_runtime',
+    'multi_match_ambiguous',
+    'extraction_quality_low',
+  ]);
+  if (canonical.has(normalized as AlignmentReasonCode)) {
+    return {
+      reason: normalized as AlignmentReasonCode,
+      reasonDetail: rest.length > 0 ? rest.join(':') : null,
+    };
+  }
+  return {
+    reason: 'error_runtime',
+    reasonDetail: reason,
+  };
 }
 
 // ============================================
@@ -126,13 +176,54 @@ function alignedToBarAnchors(
  * This prevents extra beats from inflating the predicted count.
  */
 function filterBeatsToSegment(
-  beats: Array<{ bar: number; beatInBar: number; time: number; [k: string]: any }>,
+  beats: BeatEvent[],
   segment: { youtubeStart: number; youtubeEnd: number },
   margin: number = 5, // seconds of slack
-): typeof beats {
+): BeatEvent[] {
   const start = segment.youtubeStart - margin;
   const end = segment.youtubeEnd + margin;
   return beats.filter(b => b.time >= start && b.time <= end);
+}
+
+function alignedToBeatAnchors(gt: AlignedGroundTruth): { anchors: BeatAnchor[]; approximate: boolean } {
+  if (gt.beats.length > 0) {
+    return {
+      anchors: gt.beats
+        .map(b => ({
+          bar: b.bar,
+          beatInBar: b.beat,
+          timeSec: b.time,
+          source: 'midi_beat' as const,
+          approximate: false,
+        }))
+        .sort((a, b) => a.timeSec - b.timeSec),
+      approximate: false,
+    };
+  }
+
+  const numerator = Math.max(1, gt.timeSignature?.numerator ?? 4);
+  const bars = [...gt.barAnchors].sort((a, b) => a.time - b.time);
+  const anchors: BeatAnchor[] = [];
+
+  for (let i = 0; i < bars.length; i++) {
+    const barStart = bars[i].time;
+    const prevBarStart = i > 0 ? bars[i - 1].time : barStart;
+    const nextBarStart = i + 1 < bars.length
+      ? bars[i + 1].time
+      : barStart + Math.max(0.001, barStart - prevBarStart);
+    const beatDur = Math.max(0.001, (nextBarStart - barStart) / numerator);
+    for (let beatInBar = 1; beatInBar <= numerator; beatInBar++) {
+      anchors.push({
+        bar: bars[i].bar,
+        beatInBar,
+        timeSec: barStart + (beatInBar - 1) * beatDur,
+        source: 'derived_from_bar',
+        approximate: true,
+      });
+    }
+  }
+
+  return { anchors, approximate: true };
 }
 
 function alignedToChordLabels(_gt: AlignedGroundTruth): ChordLabel[] {
@@ -178,26 +269,31 @@ async function runAnalysis(
 // ============================================
 
 interface TrainingEvalReport extends EvalReport {
+  aggregate: EvalReport['aggregate'] & {
+    meanAllBeatF1?: number;
+  };
   alignmentSummary: {
     totalSongs: number;
     alignedCount: number;
     skippedCount: number;
-    skippedSongs: Array<{ songId: string; reason: string }>;
+    skippedSongs: Array<{ songId: string; reason: string; reasonDetail?: string }>;
   };
   perSongAlignment: Array<{
     songId: string;
-    tier: number;
-    model: string;
-    coverage: number;
-    medianMs: number;
-    p95Ms: number;
+    status: AlignmentArtifact['status'];
+    tier: 1 | 2;
+    model: AlignmentArtifact['model'];
+    qualityMode: AlignmentArtifact['qualityMode'];
+    coverage?: number;
+    medianMs?: number;
+    p95Ms?: number;
   }>;
 }
 
 function generateTrainingReport(
   results: SongEvalResult[],
   alignments: AlignmentArtifact[],
-  skipped: Array<{ songId: string; reason: string }>,
+  skipped: Array<{ songId: string; reason: string; reasonDetail?: string }>,
 ): TrainingEvalReport {
   const baseReport = runFullEvaluation(results);
 
@@ -210,14 +306,15 @@ function generateTrainingReport(
       skippedSongs: skipped,
     },
     perSongAlignment: alignments
-      .filter(a => a.status === 'aligned_ok')
       .map(a => ({
         songId: a.songId,
+        status: a.status,
         tier: a.tier,
         model: a.model,
-        coverage: a.quality.coverage,
-        medianMs: a.quality.medianMs,
-        p95Ms: a.quality.p95Ms,
+        qualityMode: a.qualityMode,
+        coverage: a.status === 'aligned_ok' ? a.quality.coverage : undefined,
+        medianMs: a.status === 'aligned_ok' ? a.quality.medianMs : undefined,
+        p95Ms: a.status === 'aligned_ok' ? a.quality.p95Ms : undefined,
       })),
   };
 }
@@ -234,16 +331,18 @@ function trainingReportToMarkdown(report: TrainingEvalReport): string {
     `- Total songs: ${report.alignmentSummary.totalSongs}`,
     `- Aligned: ${report.alignmentSummary.alignedCount}`,
     `- Skipped: ${report.alignmentSummary.skippedCount}`,
+    `- Mean Downbeat F1: ${report.aggregate.meanDownbeatF1.toFixed(3)}`,
+    `- Mean All-Beat F1: ${report.aggregate.meanAllBeatF1 !== undefined ? report.aggregate.meanAllBeatF1.toFixed(3) : 'n/a'}`,
     '',
   ];
 
   if (report.alignmentSummary.skippedSongs.length > 0) {
     lines.push('### Skipped Songs');
     lines.push('');
-    lines.push('| Song | Reason |');
-    lines.push('|------|--------|');
+    lines.push('| Song | Reason | Detail |');
+    lines.push('|------|--------|--------|');
     for (const s of report.alignmentSummary.skippedSongs) {
-      lines.push(`| ${s.songId} | ${s.reason} |`);
+      lines.push(`| ${s.songId} | ${s.reason} | ${s.reasonDetail ?? ''} |`);
     }
     lines.push('');
   }
@@ -251,10 +350,13 @@ function trainingReportToMarkdown(report: TrainingEvalReport): string {
   if (report.perSongAlignment.length > 0) {
     lines.push('### Alignment Quality');
     lines.push('');
-    lines.push('| Song | Tier | Coverage | Median (ms) | P95 (ms) |');
-    lines.push('|------|------|----------|-------------|----------|');
+    lines.push('| Song | Status | Tier | Model | Quality Mode | Coverage | Median (ms) | P95 (ms) |');
+    lines.push('|------|--------|------|-------|--------------|----------|-------------|----------|');
     for (const a of report.perSongAlignment) {
-      lines.push(`| ${a.songId} | ${a.tier} | ${(a.coverage * 100).toFixed(0)}% | ${a.medianMs.toFixed(0)} | ${a.p95Ms.toFixed(0)} |`);
+      const coverage = a.coverage !== undefined ? `${(a.coverage * 100).toFixed(0)}%` : '';
+      const median = a.medianMs !== undefined ? a.medianMs.toFixed(0) : '';
+      const p95 = a.p95Ms !== undefined ? a.p95Ms.toFixed(0) : '';
+      lines.push(`| ${a.songId} | ${a.status} | ${a.tier} | ${a.model} | ${a.qualityMode} | ${coverage} | ${median} | ${p95} |`);
     }
     lines.push('');
   }
@@ -290,7 +392,7 @@ async function main() {
 
   const results: SongEvalResult[] = [];
   const alignments: AlignmentArtifact[] = [];
-  const skipped: Array<{ songId: string; reason: string }> = [];
+  const skipped: Array<{ songId: string; reason: string; reasonDetail?: string }> = [];
 
   console.log(`Evaluating ${songs.length} songs from training set...\n`);
 
@@ -311,7 +413,12 @@ async function main() {
 
     if (alignment.status !== 'aligned_ok') {
       console.log(`  Skipping — alignment status: ${alignment.status} (${alignment.reason})`);
-      skipped.push({ songId: song.id, reason: `${alignment.status}:${alignment.reason}` });
+      const parsed = parseReason(alignment.reason);
+      skipped.push({
+        songId: song.id,
+        reason: parsed.reason ?? alignment.status,
+        reasonDetail: alignment.reasonDetail ?? parsed.reasonDetail ?? undefined,
+      });
       console.log();
       continue;
     }
@@ -342,22 +449,23 @@ async function main() {
       timeSignatureHint: { numerator: num, denominator: den },
     }, reuseAnalysis);
 
-    const allBeats = analysisResult.beatGrid.beats;
-    const allChords = analysisResult.chords;
+    const allBeats = analysisResult.beatGrid.beats as BeatEvent[];
+    const allChords = analysisResult.chords as ChordEvent[];
 
     // Filter analysis to aligned segment window (critical for Tier 2 / partial songs)
     const beats = filterBeatsToSegment(allBeats, alignment.segment);
-    const chords = allChords.filter(c =>
+    const chords = allChords.filter((c: ChordEvent) =>
       c.startTime >= alignment.segment.youtubeStart - 5 &&
       c.startTime <= alignment.segment.youtubeEnd + 5
     );
 
-    // Remap bar numbers using time proximity to analysis downbeats
+    // Remap bar numbers using time proximity to analysis downbeats.
     const anchors = alignedToBarAnchors(alignedGt, beats);
+    const beatAnchorInfo = alignedToBeatAnchors(alignedGt);
     const labels = alignedToChordLabels(alignedGt);
 
     console.log(`  Beats: ${beats.length}/${allBeats.length} (in segment), Chords: ${chords.length}`);
-    console.log(`  GT anchors: ${anchors.length}, GT labels: ${labels.length}`);
+    console.log(`  GT downbeats: ${anchors.length}, GT all-beat anchors: ${beatAnchorInfo.anchors.length}${beatAnchorInfo.approximate ? ' (approx)' : ''}`);
     console.log(`  Alignment: tier=${alignment.tier}, coverage=${(alignment.quality.coverage * 100).toFixed(0)}%, median=${alignment.quality.medianMs.toFixed(0)}ms`);
     console.log(`  Segment: yt ${alignment.segment.youtubeStart.toFixed(1)}-${alignment.segment.youtubeEnd.toFixed(1)}s`);
 
@@ -369,11 +477,15 @@ async function main() {
       anchors,
       labels,
       null, // no determinism snapshots
+      {
+        beatAnchors: beatAnchorInfo.anchors,
+        allBeatApproximate: beatAnchorInfo.approximate,
+      },
     );
 
     results.push(result);
 
-    console.log(`  Beat F1: ${result.beat.f1.toFixed(3)}`);
+    console.log(`  All-beat F1: ${result.beat.f1.toFixed(3)}${result.allBeatApproximate ? ' (approx)' : ''}`);
     console.log(`  Downbeat F1: ${result.downbeat.f1.toFixed(3)}`);
     console.log(`  Drift median: ${result.drift.medianMs.toFixed(1)}ms`);
     if (labels.length > 0) {
@@ -405,7 +517,7 @@ async function main() {
   console.log(`\n=== Evaluation Summary ===`);
   console.log(`Songs evaluated: ${results.length}`);
   console.log(`Songs skipped: ${skipped.length}`);
-  console.log(`Mean Beat F1: ${report.aggregate.meanBeatF1.toFixed(3)}`);
+  console.log(`Mean All-beat F1: ${report.aggregate.meanAllBeatF1 !== undefined ? report.aggregate.meanAllBeatF1.toFixed(3) : 'n/a'}`);
   console.log(`Mean Downbeat F1: ${report.aggregate.meanDownbeatF1.toFixed(3)}`);
   console.log(`Mean Drift: ${report.aggregate.meanDriftMedianMs.toFixed(1)}ms`);
 }

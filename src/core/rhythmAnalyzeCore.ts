@@ -930,50 +930,6 @@ function detectChordsPerBeat(
 }
 
 // ============================================
-// Chord Pitch-Class Helpers
-// ============================================
-
-/** Get the set of pitch classes (0-11) for a chord symbol */
-function chordPitchClasses(symbol: string): Set<number> {
-  // Parse root
-  let root: string;
-  let suffix: string;
-  if (symbol.length >= 2 && (symbol[1] === '#' || symbol[1] === 'b')) {
-    root = symbol.slice(0, 2);
-    suffix = symbol.slice(2);
-  } else if (symbol.length >= 1) {
-    root = symbol[0];
-    suffix = symbol.slice(1);
-  } else {
-    return new Set();
-  }
-
-  const rootPc = noteToPitchClass(root);
-  if (rootPc < 0) return new Set();
-
-  const pcs = new Set<number>();
-  pcs.add(rootPc);
-
-  if (suffix === 'm' || suffix === 'min') {
-    pcs.add((rootPc + 3) % 12); // minor 3rd
-    pcs.add((rootPc + 7) % 12); // perfect 5th
-  } else if (suffix === '7') {
-    pcs.add((rootPc + 4) % 12); // major 3rd
-    pcs.add((rootPc + 7) % 12); // perfect 5th
-    pcs.add((rootPc + 10) % 12); // minor 7th
-  } else if (suffix === 'dim') {
-    pcs.add((rootPc + 3) % 12); // minor 3rd
-    pcs.add((rootPc + 6) % 12); // diminished 5th
-  } else {
-    // Major triad
-    pcs.add((rootPc + 4) % 12); // major 3rd
-    pcs.add((rootPc + 7) % 12); // perfect 5th
-  }
-
-  return pcs;
-}
-
-// ============================================
 // Chord Smoothing (with music theory)
 // ============================================
 
@@ -988,147 +944,142 @@ function smoothChords(
 ): ChordEvent[] {
   if (rawChords.length === 0) return [];
 
-  // Group by bar
-  const barGroups = new Map<number, typeof rawChords>();
-  for (const chord of rawChords) {
-    const group = barGroups.get(chord.bar) || [];
-    group.push(chord);
-    barGroups.set(chord.bar, group);
+  const ordered = [...rawChords].sort((a, b) => a.time - b.time);
+  const beatTimes = [...beatGrid.beats].sort((a, b) => a.time - b.time).map(b => b.time);
+  const beatIntervals: number[] = [];
+  for (let i = 1; i < beatTimes.length; i++) {
+    const dt = beatTimes[i] - beatTimes[i - 1];
+    if (dt > 1e-4) beatIntervals.push(dt);
   }
+  const fallbackBeat = beatIntervals.length > 0 ? median(beatIntervals) : (60 / Math.max(1, beatGrid.tempo));
 
-  // Majority vote per bar (with diatonic tiebreaker)
-  const barChords: Array<{ bar: number; symbol: string; confidence: number; time: number; endTime: number }> = [];
+  const beatRows = ordered.map((c, i) => {
+    const nextTime = i + 1 < ordered.length ? ordered[i + 1].time : c.time + fallbackBeat;
+    return {
+      ...c,
+      endTime: Math.max(c.time + 1e-3, nextTime),
+    };
+  });
 
-  for (const [bar, group] of barGroups) {
-    // Weighted vote by confidence
-    const votes = new Map<string, number>();
-    for (const { symbol, confidence } of group) {
-      votes.set(symbol, (votes.get(symbol) || 0) + confidence);
-    }
-
-    // Find top two candidates
-    const sorted = [...votes.entries()].sort((a, b) => b[1] - a[1]);
-    let bestSymbol = sorted[0]?.[0] || 'N';
-
-    // If top two are close (within 15%) and one is diatonic, prefer the diatonic one
-    if (sorted.length >= 2 && diatonicChords) {
-      const [sym1, score1] = sorted[0];
-      const [sym2, score2] = sorted[1];
-      if (score2 > score1 * 0.85) {
-        const sym1Diatonic = diatonicChords.has(sym1) || diatonicChords.has(normalizeChordSymbol(sym1));
-        const sym2Diatonic = diatonicChords.has(sym2) || diatonicChords.has(normalizeChordSymbol(sym2));
-        if (!sym1Diatonic && sym2Diatonic) {
-          bestSymbol = sym2;
+  if (diatonicChords) {
+    for (let i = 0; i < beatRows.length; i++) {
+      if (beatRows[i].confidence >= 0.45) continue;
+      const localVotes = new Map<string, number>();
+      for (let j = Math.max(0, i - 1); j <= Math.min(beatRows.length - 1, i + 1); j++) {
+        const row = beatRows[j];
+        const weight = row.confidence * (j === i ? 1 : 0.8);
+        localVotes.set(row.symbol, (localVotes.get(row.symbol) || 0) + weight);
+      }
+      const ranked = [...localVotes.entries()].sort((a, b) => b[1] - a[1]);
+      if (ranked.length > 0) {
+        const [candidate] = ranked[0];
+        const cNorm = normalizeChordSymbol(candidate);
+        const candidateDiatonic = diatonicChords.has(candidate) || diatonicChords.has(cNorm);
+        const currentNorm = normalizeChordSymbol(beatRows[i].symbol);
+        const currentDiatonic = diatonicChords.has(beatRows[i].symbol) || diatonicChords.has(currentNorm);
+        if (candidateDiatonic && !currentDiatonic) {
+          beatRows[i].symbol = candidate;
+          beatRows[i].confidence = Math.max(beatRows[i].confidence, 0.42);
         }
       }
     }
-
-    const bestVotes = votes.get(bestSymbol) || 0;
-    const avgConf = bestVotes / group.length;
-    const startTime = group[0].time;
-    const beatDuration = 60 / beatGrid.tempo;
-    const endTime = startTime + beatGrid.timeSignature.numerator * beatDuration;
-
-    barChords.push({ bar, symbol: bestSymbol, confidence: avgConf, time: startTime, endTime });
   }
 
-  // Sort by bar
-  barChords.sort((a, b) => a.bar - b.bar);
-
-  // Absorb single-bar anomalies: if a bar chord differs from both neighbors
-  // and its confidence is below its neighbors' average, replace it
-  for (let i = 1; i < barChords.length - 1; i++) {
-    const prev = barChords[i - 1];
-    const curr = barChords[i];
-    const next = barChords[i + 1];
-
+  for (let i = 1; i < beatRows.length - 1; i++) {
+    const prev = beatRows[i - 1];
+    const curr = beatRows[i];
+    const next = beatRows[i + 1];
     if (prev.symbol === next.symbol && curr.symbol !== prev.symbol) {
-      // Current bar disagrees with both neighbors
-      const neighborAvgConf = (prev.confidence + next.confidence) / 2;
-      if (curr.confidence < neighborAvgConf * 1.1) {
-        // Absorb: replace with neighbor chord
-        barChords[i] = { ...curr, symbol: prev.symbol, confidence: neighborAvgConf * 0.9 };
+      const neighborConf = (prev.confidence + next.confidence) / 2;
+      if (curr.confidence < neighborConf * 1.12) {
+        beatRows[i] = {
+          ...curr,
+          symbol: prev.symbol,
+          confidence: Math.min(1, neighborConf * 0.9),
+        };
       }
     }
   }
 
-  // ---- Chord Consolidation ----
-  // Most pop/folk songs use 3-6 chords. Rare chords are almost certainly
-  // detection errors. Find the "core" set and replace outliers.
-  const chordBarCount = new Map<string, number>();
-  for (const bc of barChords) {
-    chordBarCount.set(bc.symbol, (chordBarCount.get(bc.symbol) || 0) + 1);
-  }
-  const totalBars = barChords.length;
-  const MIN_FREQUENCY = 0.05; // Must appear in at least 5% of bars to be "core"
-  const coreChords = new Set<string>();
-  for (const [sym, count] of chordBarCount) {
-    if (count / totalBars >= MIN_FREQUENCY) {
-      coreChords.add(sym);
-    }
-  }
+  const merged: Array<{
+    barStart: number;
+    beatStart: number;
+    barEnd: number;
+    beatEnd: number;
+    startTime: number;
+    endTime: number;
+    symbol: string;
+    confidence: number;
+  }> = [];
 
-  if (coreChords.size > 0 && coreChords.size < chordBarCount.size) {
-    // Replace rare chords with nearest core chord (by shared pitch classes)
-    const coreArray = [...coreChords];
-
-    console.log('[RhythmAnalyzer] Consolidating chords', {
-      total: chordBarCount.size,
-      core: coreArray.join(', '),
-      removed: [...chordBarCount.keys()].filter(s => !coreChords.has(s)).join(', '),
-    });
-
-    for (let i = 0; i < barChords.length; i++) {
-      if (!coreChords.has(barChords[i].symbol)) {
-        // Find nearest core chord by pitch-class overlap
-        const rarePcs = chordPitchClasses(barChords[i].symbol);
-        let bestCore = coreArray[0];
-        let bestOverlap = -1;
-        for (const core of coreArray) {
-          const corePcs = chordPitchClasses(core);
-          let overlap = 0;
-          for (const pc of rarePcs) {
-            if (corePcs.has(pc)) overlap++;
-          }
-          if (overlap > bestOverlap) {
-            bestOverlap = overlap;
-            bestCore = core;
-          }
-        }
-        barChords[i] = { ...barChords[i], symbol: bestCore, confidence: barChords[i].confidence * 0.8 };
-      }
-    }
-  }
-
-  // One chord event per bar (no merging — preserves visual inspection)
-  const result: ChordEvent[] = [];
-  for (let i = 0; i < barChords.length; i++) {
-    result.push(toChordEvent(barChords[i], i + 1, beatGrid));
-  }
-
-  return result;
-}
-
-function toChordEvent(
-  raw: { bar: number; symbol: string; confidence: number; time: number; endTime: number },
-  id: number,
-  beatGrid: BeatGrid,
-): ChordEvent {
-  const beatDuration = 60 / beatGrid.tempo;
-  const barDuration = beatDuration * beatGrid.timeSignature.numerator;
-  const barSpan = Math.max(1, Math.round((raw.endTime - raw.time) / barDuration));
-
-  return {
-    id: `chord_${id}`,
-    startTime: raw.time,
-    endTime: raw.endTime,
-    barStart: raw.bar,
-    barEnd: raw.bar + barSpan - 1,
-    symbol: raw.symbol,
-    confidence: raw.confidence,
-    source: 'audio',
-    voicing: lookupVoicing(raw.symbol),
+  let cursor = {
+    barStart: beatRows[0].bar,
+    beatStart: beatRows[0].beat,
+    barEnd: beatRows[0].bar,
+    beatEnd: beatRows[0].beat,
+    startTime: beatRows[0].time,
+    endTime: beatRows[0].endTime,
+    symbol: beatRows[0].symbol,
+    confidenceSum: beatRows[0].confidence,
+    confidenceCount: 1,
   };
+
+  for (let i = 1; i < beatRows.length; i++) {
+    const row = beatRows[i];
+    const canMerge = row.symbol === cursor.symbol && (row.confidence >= 0.40 || (cursor.confidenceSum / cursor.confidenceCount) >= 0.40);
+    if (canMerge) {
+      cursor.barEnd = row.bar;
+      cursor.beatEnd = row.beat;
+      cursor.endTime = row.endTime;
+      cursor.confidenceSum += row.confidence;
+      cursor.confidenceCount += 1;
+      continue;
+    }
+    merged.push({
+      barStart: cursor.barStart,
+      beatStart: cursor.beatStart,
+      barEnd: cursor.barEnd,
+      beatEnd: cursor.beatEnd,
+      startTime: cursor.startTime,
+      endTime: cursor.endTime,
+      symbol: cursor.symbol,
+      confidence: cursor.confidenceSum / cursor.confidenceCount,
+    });
+    cursor = {
+      barStart: row.bar,
+      beatStart: row.beat,
+      barEnd: row.bar,
+      beatEnd: row.beat,
+      startTime: row.time,
+      endTime: row.endTime,
+      symbol: row.symbol,
+      confidenceSum: row.confidence,
+      confidenceCount: 1,
+    };
+  }
+
+  merged.push({
+    barStart: cursor.barStart,
+    beatStart: cursor.beatStart,
+    barEnd: cursor.barEnd,
+    beatEnd: cursor.beatEnd,
+    startTime: cursor.startTime,
+    endTime: cursor.endTime,
+    symbol: cursor.symbol,
+    confidence: cursor.confidenceSum / cursor.confidenceCount,
+  });
+
+  return merged.map((m, idx) => ({
+    id: `chord_${idx + 1}`,
+    startTime: m.startTime,
+    endTime: m.endTime,
+    barStart: m.barStart,
+    barEnd: m.barEnd,
+    symbol: m.symbol,
+    confidence: m.confidence,
+    source: 'audio',
+    voicing: lookupVoicing(m.symbol),
+  }));
 }
 
 function lookupVoicing(symbol: string): ChordVoicingData | null {

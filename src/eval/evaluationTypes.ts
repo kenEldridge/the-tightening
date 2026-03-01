@@ -18,6 +18,19 @@ export interface BarAnchor {
   source: 'computed' | 'ear';
 }
 
+export interface BeatAnchor {
+  /** Bar number (1-indexed) */
+  bar: number;
+  /** Beat within bar (1-indexed) */
+  beatInBar: number;
+  /** Time in seconds */
+  timeSec: number;
+  /** Primary anchor source */
+  source: 'midi_beat' | 'derived_from_bar';
+  /** True when beat anchors were approximated from bars */
+  approximate: boolean;
+}
+
 export interface ChordLabel {
   /** Bar number (1-indexed) */
   bar: number;
@@ -79,7 +92,12 @@ export interface DeterminismResult {
 export interface SongEvalResult {
   songId: string;
   songName: string;
+  /** Legacy slot used by existing reports; training eval may set this to all-beat F1. */
   beat: BeatMetrics;
+  /** Explicit all-beat metric path (optional for legacy callers). */
+  allBeat?: BeatMetrics;
+  /** True when all-beat anchors were derived from bars instead of MIDI beats. */
+  allBeatApproximate?: boolean;
   downbeat: DownbeatMetrics;
   drift: BarDriftResult;
   chordAccuracy: ChordAccuracyResult;
@@ -92,6 +110,7 @@ export interface EvalReport {
   songs: SongEvalResult[];
   aggregate: {
     meanBeatF1: number;
+    meanAllBeatF1?: number;
     meanDownbeatF1: number;
     meanRootAccuracy: number;
     meanFullAccuracy: number;

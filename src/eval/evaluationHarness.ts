@@ -10,6 +10,7 @@
 import type { BeatEvent, ChordEvent, ChordTimelineArtifact } from '../core/rhythmTypes';
 import type {
   BarAnchor,
+  BeatAnchor,
   ChordLabel,
   BeatMetrics,
   DownbeatMetrics,
@@ -89,6 +90,29 @@ export function computeDownbeatFMeasure(
     f1: fScore(matched, downbeats.length, groundTruth.length),
     matched,
     predicted: downbeats.length,
+    groundTruth: groundTruth.length,
+  };
+}
+
+/**
+ * Compute true all-beat F1 against beat-level anchors.
+ */
+export function computeAllBeatFMeasure(
+  beats: BeatEvent[],
+  beatAnchors: BeatAnchor[],
+  toleranceMs: number = 70
+): BeatMetrics {
+  const toleranceSec = toleranceMs / 1000;
+  const predicted = beats.map(b => b.time).sort((a, b) => a - b);
+  const groundTruth = beatAnchorsToTimes(beatAnchors);
+  const matched = greedyMatch(predicted, groundTruth, toleranceSec);
+
+  return {
+    precision: predicted.length > 0 ? matched / predicted.length : 0,
+    recall: groundTruth.length > 0 ? matched / groundTruth.length : 0,
+    f1: fScore(matched, predicted.length, groundTruth.length),
+    matched,
+    predicted: predicted.length,
     groundTruth: groundTruth.length,
   };
 }
@@ -272,13 +296,21 @@ export function evaluateSong(
   chords: ChordEvent[],
   anchors: BarAnchor[],
   labels: ChordLabel[],
-  runs: ChordTimelineArtifact[] | null
+  runs: ChordTimelineArtifact[] | null,
+  options?: { beatAnchors?: BeatAnchor[]; allBeatApproximate?: boolean }
 ): SongEvalResult {
+  const downbeat = computeDownbeatFMeasure(beats, anchors);
+  const allBeat = options?.beatAnchors
+    ? computeAllBeatFMeasure(beats, options.beatAnchors)
+    : undefined;
+
   return {
     songId,
     songName,
-    beat: computeBeatFMeasure(beats, anchors),
-    downbeat: computeDownbeatFMeasure(beats, anchors),
+    beat: allBeat ?? computeBeatFMeasure(beats, anchors),
+    allBeat,
+    allBeatApproximate: options?.allBeatApproximate,
+    downbeat,
     drift: computeBarDrift(beats, anchors),
     chordAccuracy: computeChordAccuracy(chords, labels),
     falseChordChange: computeFalseChordChangeRate(chords, labels),
@@ -288,11 +320,16 @@ export function evaluateSong(
 
 export function runFullEvaluation(songs: SongEvalResult[]): EvalReport {
   const n = songs.length || 1;
+  const withAllBeat = songs.filter(s => s.allBeat !== undefined);
+  const nAllBeat = withAllBeat.length || 1;
   return {
     generatedAt: new Date().toISOString(),
     songs,
     aggregate: {
       meanBeatF1: songs.reduce((s, r) => s + r.beat.f1, 0) / n,
+      meanAllBeatF1: withAllBeat.length > 0
+        ? withAllBeat.reduce((s, r) => s + (r.allBeat?.f1 ?? 0), 0) / nAllBeat
+        : undefined,
       meanDownbeatF1: songs.reduce((s, r) => s + r.downbeat.f1, 0) / n,
       meanRootAccuracy: songs.reduce((s, r) => s + r.chordAccuracy.rootAccuracy, 0) / n,
       meanFullAccuracy: songs.reduce((s, r) => s + r.chordAccuracy.fullAccuracy, 0) / n,
@@ -307,6 +344,10 @@ export function runFullEvaluation(songs: SongEvalResult[]): EvalReport {
 // ============================================
 
 function anchorsToDownbeatTimes(anchors: BarAnchor[]): number[] {
+  return anchors.map(a => a.timeSec).sort((a, b) => a - b);
+}
+
+function beatAnchorsToTimes(anchors: BeatAnchor[]): number[] {
   return anchors.map(a => a.timeSec).sort((a, b) => a - b);
 }
 

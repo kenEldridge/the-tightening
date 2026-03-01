@@ -1,25 +1,39 @@
 {
-  "songId": "piano-man",
-  "status": "aligned_ok",
-  "tier": 2,
+  "baseline": {
+    "coverage": 0.9368421052631579,
+    "medianMs": 100.00000000000142,
+    "p95Ms": 200.00000000000284,
+    "qualityMode": "energy_peak"
+  },
   "model": "affine",
   "params": {
     "a": 140.59999999999948,
     "b": 1.108
   },
-  "segment": {
-    "midiStart": 0,
-    "midiEnd": 169.96499999999997,
-    "youtubeStart": 140.59999999999948,
-    "youtubeEnd": 328.9212199999995
-  },
   "quality": {
     "anchorsCovered": 92,
     "anchorsTotal": 95,
     "coverage": 0.968421052631579,
+    "matchToleranceSec": 0.2,
     "medianMs": 50.00000000001137,
     "p95Ms": 189.99999999999773,
-    "energyScore": 0.968421052631579
+    "thresholdProximity": {
+      "coverageMargin": 0.268421052631579,
+      "medianMarginMs": 99.99999999998863,
+      "p95MarginMs": 210.00000000000227
+    }
   },
-  "reason": null
+  "qualityMode": "energy_peak",
+  "reason": null,
+  "reasonDetail": null,
+  "segment": {
+    "midiEnd": 169.96499999999997,
+    "midiStart": 0,
+    "youtubeEnd": 328.9212199999995,
+    "youtubeStart": 140.59999999999948
+  },
+  "songId": "piano-man",
+  "status": "aligned_ok",
+  "tier": 2,
+  "version": "align-v3"
 }

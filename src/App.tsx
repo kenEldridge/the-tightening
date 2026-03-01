@@ -47,6 +47,24 @@ declare global {
       projectImportLocalMedia: () => Promise<any>;
       normalizeAudioToWav: (inputPath: string, projectId: string) => Promise<any>;
       projectSetAudioPath: (projectId: string, audioPath: string) => Promise<boolean>;
+      // On-demand canonical alignment
+      trainingResolveSong: (sourceUri: string) => Promise<{ ok: boolean; songId: string | null }>;
+      trainingRunOnDemand: (input: {
+        songId?: string;
+        sourceUri?: string;
+        reuseAnalysis?: boolean;
+        download?: boolean;
+        tier1Only?: boolean;
+      }) => Promise<{
+        ok: boolean;
+        songId?: string;
+        code?: number;
+        stdoutTail?: string;
+        stderrTail?: string;
+        alignment?: any;
+        alignedGroundTruth?: any;
+      }>;
+      trainingLoadAlignedGroundTruth: (songId: string) => Promise<any | null>;
       projectSaveLyrics: (
         projectId: string,
         lyricsData: string | { lyrics?: string; syncedLyrics?: string; lyricsBarOffset?: number }

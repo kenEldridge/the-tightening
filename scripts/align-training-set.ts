@@ -17,6 +17,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { loadWav } from '../src/node/wavLoader';
+import {
+  buildAudioTokens,
+  buildMidiTokens,
+  extractAudioFeatures,
+  type AudioFeatures,
+} from './alignment/logTokens';
+import { enumerateSeedPairs, enumerateSeedPairsPitchOnly } from './alignment/seedIndex';
+import { localAlign, type LocalAlignResult } from './alignment/localAlign';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,6 +68,74 @@ interface MidiGroundTruth {
   totalNotes: number;
   melodyTrackIndex: number;
   melodyNotes: Array<{ midi: number; time: number; duration: number; velocity: number; name: string }>;
+  allNotes?: Array<{ midi: number; time: number; duration: number; velocity: number; name: string; track: number; channel: number }>;
+}
+
+type AlignmentReasonCode =
+  | 'audio_not_found'
+  | 'audio_too_short'
+  | 'analysis_too_few_beats'
+  | 'duration_ratio_too_high'
+  | 'insufficient_seeds'
+  | 'coverage_too_low'
+  | 'median_error_too_high'
+  | 'p95_error_too_high'
+  | 'slope_out_of_range'
+  | 'no_valid_tempo_segments'
+  | 'no_segments_aligned'
+  | 'error_runtime'
+  | 'multi_match_ambiguous'
+  | 'extraction_quality_low';
+
+const CANONICAL_REASON_CODES: readonly AlignmentReasonCode[] = [
+  'audio_not_found',
+  'audio_too_short',
+  'analysis_too_few_beats',
+  'duration_ratio_too_high',
+  'insufficient_seeds',
+  'coverage_too_low',
+  'median_error_too_high',
+  'p95_error_too_high',
+  'slope_out_of_range',
+  'no_valid_tempo_segments',
+  'no_segments_aligned',
+  'error_runtime',
+  'multi_match_ambiguous',
+  'extraction_quality_low',
+];
+
+function isAlignmentReasonCode(value: string): value is AlignmentReasonCode {
+  return (CANONICAL_REASON_CODES as readonly string[]).includes(value);
+}
+
+type QualityMode = 'analysis_downbeat' | 'energy_peak' | 'piecewise_energy_peak' | 'token_local_align';
+
+interface AlignmentQuality {
+  anchorsCovered: number;
+  anchorsTotal: number;
+  coverage: number;
+  medianMs: number;
+  p95Ms: number;
+  matchToleranceSec: number;
+  thresholdProximity: {
+    coverageMargin: number;
+    medianMarginMs: number;
+    p95MarginMs: number;
+  };
+}
+
+interface PiecewiseSegment {
+  midiStart: number;
+  midiEnd: number;
+  a: number;
+  b: number;
+}
+
+interface BaselineSnapshot {
+  qualityMode: 'energy_peak' | 'piecewise_energy_peak';
+  coverage: number;
+  medianMs: number;
+  p95Ms: number;
 }
 
 interface AlignmentArtifact {
@@ -68,11 +144,14 @@ interface AlignmentArtifact {
   tier: 1 | 2;
   model: 'affine' | 'piecewise_affine';
   params: { a: number; b: number };
-  /** For piecewise: per-segment params */
-  segments?: Array<{ midiStart: number; midiEnd: number; a: number; b: number }>;
+  segments?: PiecewiseSegment[];
   segment: { midiStart: number; midiEnd: number; youtubeStart: number; youtubeEnd: number };
-  quality: { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number };
-  reason: string | null;
+  qualityMode: QualityMode;
+  quality: AlignmentQuality;
+  baseline?: BaselineSnapshot;
+  reason: AlignmentReasonCode | null;
+  reasonDetail: string | null;
+  version: 'align-v3';
 }
 
 interface AlignedGroundTruth extends MidiGroundTruth {
@@ -274,6 +353,107 @@ function percentile(arr: number[], p: number): number {
   return sorted[Math.max(0, idx)];
 }
 
+interface RawQuality {
+  anchorsCovered: number;
+  anchorsTotal: number;
+  coverage: number;
+  medianMs: number;
+  p95Ms: number;
+}
+
+interface GateThresholds {
+  coverageMin: number;
+  medianMax: number;
+  p95Max: number;
+}
+
+const DEFAULT_MATCH_TOLERANCE_SEC = 0.2;
+
+function withQualityMeta(raw: RawQuality, thresholds: GateThresholds): AlignmentQuality {
+  return {
+    ...raw,
+    matchToleranceSec: DEFAULT_MATCH_TOLERANCE_SEC,
+    thresholdProximity: {
+      coverageMargin: raw.coverage - thresholds.coverageMin,
+      medianMarginMs: thresholds.medianMax - raw.medianMs,
+      p95MarginMs: thresholds.p95Max - raw.p95Ms,
+    },
+  };
+}
+
+function stableSortObject(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(stableSortObject);
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => [k, stableSortObject(v)] as const);
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of entries) out[k] = v;
+    return out;
+  }
+  return value;
+}
+
+function stableStringify(value: unknown): string {
+  return JSON.stringify(stableSortObject(value), null, 2);
+}
+
+function validateArtifactSchema(artifact: AlignmentArtifact): string[] {
+  const errors: string[] = [];
+  if (!artifact.songId) errors.push('songId missing');
+  if (!['aligned_ok', 'unaligned', 'unaligned_partial'].includes(artifact.status)) errors.push('invalid status');
+  if (!['affine', 'piecewise_affine'].includes(artifact.model)) errors.push('invalid model');
+  if (!artifact.qualityMode) errors.push('qualityMode missing');
+  if (artifact.quality.matchToleranceSec !== DEFAULT_MATCH_TOLERANCE_SEC) errors.push('matchToleranceSec mismatch');
+  if (!artifact.reason && artifact.reasonDetail) errors.push('reasonDetail present without reason');
+  if (artifact.tier === 2 && !artifact.baseline) errors.push('tier2 baseline missing');
+  return errors;
+}
+
+function parseReasonWithDetail(input: string): { reason: AlignmentReasonCode; reasonDetail: string | null } {
+  const [rawCode, ...rest] = input.split(':');
+  const code = rawCode === 'error' ? 'error_runtime' : rawCode;
+  if (isAlignmentReasonCode(code)) {
+    return {
+      reason: code,
+      reasonDetail: rest.length > 0 ? rest.join(':') : null,
+    };
+  }
+  return {
+    reason: 'error_runtime',
+    reasonDetail: input,
+  };
+}
+
+function fitAffineFromPairs(pairs: Array<{ midiTimeSec: number; audioTimeSec: number }>): { a: number; b: number } | null {
+  if (pairs.length < 3) return null;
+  const n = pairs.length;
+  let sumX = 0;
+  let sumY = 0;
+  let sumXX = 0;
+  let sumXY = 0;
+  for (const p of pairs) {
+    sumX += p.midiTimeSec;
+    sumY += p.audioTimeSec;
+    sumXX += p.midiTimeSec * p.midiTimeSec;
+    sumXY += p.midiTimeSec * p.audioTimeSec;
+  }
+  const denom = n * sumXX - sumX * sumX;
+  if (Math.abs(denom) < 1e-10) return null;
+  const a = (sumY * sumXX - sumX * sumXY) / denom;
+  const b = (n * sumXY - sumX * sumY) / denom;
+  return { a, b };
+}
+
+function passesPreAlignmentExtractionGate(features: AudioFeatures): boolean {
+  if (features.onsets.length < 30) return false;
+  if (features.medianPitchConfidence < 0.45) return false;
+  if (features.onsetDensity < 0.4 || features.onsetDensity > 6.0) return false;
+  return true;
+}
+
 // ============================================
 // Affine Refinement (Least Squares)
 // ============================================
@@ -337,47 +517,13 @@ function validateAlignment(
   ytDownbeats: number[],
   a: number,
   b: number,
-): { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number } {
+): RawQuality {
   const errors: number[] = [];
   let covered = 0;
-  const matchTolerance = 1.0;
+  const matchTolerance = DEFAULT_MATCH_TOLERANCE_SEC;
 
   for (const mt of midiDownbeats) {
     const predicted = a + b * mt;
-    let bestDist = Infinity;
-    for (const yt of ytDownbeats) {
-      const dist = Math.abs(yt - predicted);
-      if (dist < bestDist) bestDist = dist;
-    }
-    if (bestDist <= matchTolerance) {
-      covered++;
-      errors.push(bestDist * 1000);
-    }
-  }
-
-  return {
-    anchorsCovered: covered,
-    anchorsTotal: midiDownbeats.length,
-    coverage: midiDownbeats.length > 0 ? covered / midiDownbeats.length : 0,
-    medianMs: errors.length > 0 ? median(errors) : Infinity,
-    p95Ms: errors.length > 0 ? percentile(errors, 95) : Infinity,
-  };
-}
-
-/**
- * Validate piecewise alignment: use the correct segment params for each MIDI anchor.
- */
-function validatePiecewiseAlignment(
-  midiDownbeats: number[],
-  ytDownbeats: number[],
-  segments: Array<{ midiStart: number; midiEnd: number; a: number; b: number }>,
-): { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number } {
-  const errors: number[] = [];
-  let covered = 0;
-  const matchTolerance = 1.0;
-
-  for (const mt of midiDownbeats) {
-    const predicted = piecewiseTransform(mt, segments);
     let bestDist = Infinity;
     for (const yt of ytDownbeats) {
       const dist = Math.abs(yt - predicted);
@@ -417,7 +563,7 @@ function validateAlignmentByEnergy(
   audioDuration: number,
   a: number,
   b: number,
-): { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number; energyScore: number } {
+): RawQuality & { energyScore: number } {
   let onBeatCount = 0;
   let totalValid = 0;
   const onsetErrors: number[] = [];
@@ -481,8 +627,8 @@ function validatePiecewiseByEnergy(
   samples: Float32Array,
   sampleRate: number,
   audioDuration: number,
-  segments: Array<{ midiStart: number; midiEnd: number; a: number; b: number }>,
-): { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number; energyScore: number } {
+  segments: PiecewiseSegment[],
+): RawQuality & { energyScore: number } {
   let onBeatCount = 0;
   let totalValid = 0;
   const onsetErrors: number[] = [];
@@ -534,7 +680,7 @@ function validatePiecewiseByEnergy(
   };
 }
 
-function piecewiseTransform(t: number, segments: Array<{ midiStart: number; midiEnd: number; a: number; b: number }>): number {
+function piecewiseTransform(t: number, segments: PiecewiseSegment[]): number {
   // Find the segment this time falls in
   for (const seg of segments) {
     if (t >= seg.midiStart && t <= seg.midiEnd) {
@@ -569,6 +715,7 @@ async function alignTier1(
   song: ManifestSong,
   gt: MidiGroundTruth,
 ): Promise<AlignmentArtifact> {
+  const gate1Thresholds: GateThresholds = { coverageMin: 0.90, medianMax: 120, p95Max: 300 };
   const audioPath = path.join(AUDIO_DIR, `${song.id}.wav`);
 
   if (!fs.existsSync(audioPath)) {
@@ -616,35 +763,56 @@ async function alignTier1(
   console.log(`  Refined params: a=${a.toFixed(3)}, b=${bRefined.toFixed(4)}`);
 
   // Step 4: Validate
-  const quality = validateAlignment(midiDownbeats, ytDownbeats, a, bRefined);
-  console.log(`  Quality: coverage=${(quality.coverage * 100).toFixed(0)}%, median=${quality.medianMs.toFixed(0)}ms, p95=${quality.p95Ms.toFixed(0)}ms`);
+  const qualityRaw = validateAlignment(midiDownbeats, ytDownbeats, a, bRefined);
+  console.log(`  Quality: coverage=${(qualityRaw.coverage * 100).toFixed(0)}%, median=${qualityRaw.medianMs.toFixed(0)}ms, p95=${qualityRaw.p95Ms.toFixed(0)}ms`);
 
   // Gate 1 criteria
-  if (quality.coverage < 0.90) {
-    return makeUnaligned(song.id, 1, `coverage_too_low:${(quality.coverage * 100).toFixed(0)}%`, a, bRefined, quality, gt.duration, wav.duration);
+  if (qualityRaw.coverage < gate1Thresholds.coverageMin) {
+    return makeUnaligned(song.id, 1, `coverage_too_low:${(qualityRaw.coverage * 100).toFixed(0)}%`, {
+      a,
+      b: bRefined,
+      qualityRaw,
+      thresholds: gate1Thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'analysis_downbeat',
+    });
   }
-  if (quality.medianMs > 120) {
-    return makeUnaligned(song.id, 1, `median_error_too_high:${quality.medianMs.toFixed(0)}ms`, a, bRefined, quality, gt.duration, wav.duration);
+  if (qualityRaw.medianMs > gate1Thresholds.medianMax) {
+    return makeUnaligned(song.id, 1, `median_error_too_high:${qualityRaw.medianMs.toFixed(0)}ms`, {
+      a,
+      b: bRefined,
+      qualityRaw,
+      thresholds: gate1Thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'analysis_downbeat',
+    });
   }
-  if (quality.p95Ms > 300) {
-    return makeUnaligned(song.id, 1, `p95_error_too_high:${quality.p95Ms.toFixed(0)}ms`, a, bRefined, quality, gt.duration, wav.duration);
+  if (qualityRaw.p95Ms > gate1Thresholds.p95Max) {
+    return makeUnaligned(song.id, 1, `p95_error_too_high:${qualityRaw.p95Ms.toFixed(0)}ms`, {
+      a,
+      b: bRefined,
+      qualityRaw,
+      thresholds: gate1Thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'analysis_downbeat',
+    });
   }
 
-  return {
-    songId: song.id,
-    status: 'aligned_ok',
-    tier: 1,
-    model: 'affine',
-    params: { a, b: bRefined },
-    segment: {
+  return makeAligned(
+    song.id,
+    1,
+    'affine',
+    { a, b: bRefined },
+    {
       midiStart: 0,
       midiEnd: gt.duration,
       youtubeStart: a,
       youtubeEnd: a + bRefined * gt.duration,
     },
-    quality,
-    reason: null,
-  };
+    'analysis_downbeat',
+    qualityRaw,
+    gate1Thresholds,
+  );
 }
 
 // ============================================
@@ -655,7 +823,10 @@ async function alignPiecewise(
   song: ManifestSong,
   gt: MidiGroundTruth,
   wav: { samples: Float32Array; sampleRate: number; duration: number },
+  tier: 1 | 2 = 1,
+  baseline?: BaselineSnapshot,
 ): Promise<AlignmentArtifact> {
+  const thresholds: GateThresholds = { coverageMin: 0.70, medianMax: 150, p95Max: 400 };
   // Build tempo segments from tempoChanges
   // Filter to significant changes (>20% tempo shift) to avoid rubato noise
   const significantChanges: Array<{ time: number; bpm: number }> = [gt.tempoChanges[0]];
@@ -681,7 +852,12 @@ async function alignPiecewise(
   }
 
   if (tempoSegments.length === 0) {
-    return makeUnaligned(song.id, 1, 'no_valid_tempo_segments');
+    return makeUnaligned(song.id, tier, 'no_valid_tempo_segments', {
+      midiDuration: gt.duration,
+      qualityMode: 'piecewise_energy_peak',
+      thresholds,
+      baseline: tier === 2 ? baseline : undefined,
+    });
   }
 
   // Align segments sequentially — each segment's search starts from where
@@ -765,61 +941,189 @@ async function alignPiecewise(
   }
 
   if (alignedSegments.length === 0) {
-    return makeUnaligned(song.id, 1, 'no_segments_aligned');
+    return makeUnaligned(song.id, tier, 'no_segments_aligned', {
+      midiDuration: gt.duration,
+      qualityMode: 'piecewise_energy_peak',
+      thresholds,
+      baseline: tier === 2 ? baseline : undefined,
+    });
   }
 
   // Validate piecewise alignment using energy
   const midiDownbeats = gt.barAnchors.map(a => a.time);
-  const quality = validatePiecewiseByEnergy(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, alignedSegments);
-  console.log(`  Piecewise quality: coverage=${(quality.coverage * 100).toFixed(0)}%, median=${quality.medianMs.toFixed(0)}ms, p95=${quality.p95Ms.toFixed(0)}ms, energyScore=${(quality.energyScore * 100).toFixed(0)}%`);
+  const qualityRaw = validatePiecewiseByEnergy(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, alignedSegments);
+  const tier2Baseline = tier === 2
+    ? (baseline ?? {
+      qualityMode: 'piecewise_energy_peak',
+      coverage: qualityRaw.coverage,
+      medianMs: qualityRaw.medianMs,
+      p95Ms: qualityRaw.p95Ms,
+    })
+    : undefined;
+  console.log(`  Piecewise quality: coverage=${(qualityRaw.coverage * 100).toFixed(0)}%, median=${qualityRaw.medianMs.toFixed(0)}ms, p95=${qualityRaw.p95Ms.toFixed(0)}ms, energyScore=${(qualityRaw.energyScore * 100).toFixed(0)}%`);
 
   // Gates for piecewise (complex songs get relaxed thresholds)
-  if (quality.coverage < 0.70) {
-    return makeUnaligned(song.id, 1, `pw_coverage_too_low:${(quality.coverage * 100).toFixed(0)}%`, 0, 1, quality, gt.duration, wav.duration);
+  if (qualityRaw.coverage < thresholds.coverageMin) {
+    return makeUnaligned(song.id, tier, `coverage_too_low:piecewise:${(qualityRaw.coverage * 100).toFixed(0)}%`, {
+      a: 0,
+      b: 1,
+      qualityRaw,
+      thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'piecewise_energy_peak',
+      model: 'piecewise_affine',
+      segments: alignedSegments,
+      baseline: tier2Baseline,
+    });
   }
-  if (quality.medianMs > 150) {
-    return makeUnaligned(song.id, 1, `pw_median_error_too_high:${quality.medianMs.toFixed(0)}ms`, 0, 1, quality, gt.duration, wav.duration);
+  if (qualityRaw.medianMs > thresholds.medianMax) {
+    return makeUnaligned(song.id, tier, `median_error_too_high:piecewise:${qualityRaw.medianMs.toFixed(0)}ms`, {
+      a: 0,
+      b: 1,
+      qualityRaw,
+      thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'piecewise_energy_peak',
+      model: 'piecewise_affine',
+      segments: alignedSegments,
+      baseline: tier2Baseline,
+    });
+  }
+  if (qualityRaw.p95Ms > thresholds.p95Max) {
+    return makeUnaligned(song.id, tier, `p95_error_too_high:piecewise:${qualityRaw.p95Ms.toFixed(0)}ms`, {
+      a: 0,
+      b: 1,
+      qualityRaw,
+      thresholds,
+      midiDuration: gt.duration,
+      qualityMode: 'piecewise_energy_peak',
+      model: 'piecewise_affine',
+      segments: alignedSegments,
+      baseline: tier2Baseline,
+    });
   }
 
   const firstSeg = alignedSegments[0];
 
-  return {
-    songId: song.id,
-    status: 'aligned_ok',
-    tier: 1,
-    model: 'piecewise_affine',
-    params: { a: firstSeg.a, b: firstSeg.b },
-    segments: alignedSegments,
-    segment: {
+  return makeAligned(
+    song.id,
+    tier,
+    'piecewise_affine',
+    { a: firstSeg.a, b: firstSeg.b },
+    {
       midiStart: 0,
       midiEnd: gt.duration,
       youtubeStart: firstSeg.a + firstSeg.b * 0,
       youtubeEnd: piecewiseTransform(gt.duration, alignedSegments),
     },
-    quality,
-    reason: null,
-  };
+    'piecewise_energy_peak',
+    qualityRaw,
+    thresholds,
+    {
+      segments: alignedSegments,
+      baseline: tier2Baseline,
+    },
+  );
 }
 
 // ============================================
 // Tier 2: Energy Cross-Correlation with Tempo Scaling
 // ============================================
 
+function toBaselineSnapshot(qualityMode: BaselineSnapshot['qualityMode'], qualityRaw: RawQuality): BaselineSnapshot {
+  return {
+    qualityMode,
+    coverage: qualityRaw.coverage,
+    medianMs: qualityRaw.medianMs,
+    p95Ms: qualityRaw.p95Ms,
+  };
+}
+
+function evaluateDeltaVsBaseline(
+  candidate: RawQuality,
+  baseline: BaselineSnapshot,
+): {
+  improves: boolean;
+  regressionOk: boolean;
+  deltas: { coverageDelta: number; medianDeltaMs: number; p95DeltaMs: number };
+} {
+  const coverageDelta = candidate.coverage - baseline.coverage;
+  const medianDeltaMs = candidate.medianMs - baseline.medianMs;
+  const p95DeltaMs = candidate.p95Ms - baseline.p95Ms;
+  const improves =
+    coverageDelta >= 0.05 ||
+    medianDeltaMs <= -20 ||
+    p95DeltaMs <= -40;
+  const regressionOk =
+    coverageDelta >= -0.02 &&
+    medianDeltaMs <= 20 &&
+    p95DeltaMs <= 40;
+  return {
+    improves,
+    regressionOk,
+    deltas: { coverageDelta, medianDeltaMs, p95DeltaMs },
+  };
+}
+
+function qualityFailureReason(quality: RawQuality, thresholds: GateThresholds): string | null {
+  if (quality.coverage < thresholds.coverageMin) {
+    return `coverage_too_low:${(quality.coverage * 100).toFixed(0)}%`;
+  }
+  if (quality.medianMs > thresholds.medianMax) {
+    return `median_error_too_high:${quality.medianMs.toFixed(0)}ms`;
+  }
+  if (quality.p95Ms > thresholds.p95Max) {
+    return `p95_error_too_high:${quality.p95Ms.toFixed(0)}ms`;
+  }
+  return null;
+}
+
+function computeTier2CoarseBaseline(
+  midiDownbeats: number[],
+  wav: { samples: Float32Array; sampleRate: number; duration: number },
+  midiDuration: number,
+): { a: number; b: number; qualityRaw: RawQuality } {
+  const coarse = findBestOffset(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, midiDuration);
+  const a = coarse.offset;
+  const b = 1.0;
+  const quality = validateAlignmentByEnergy(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, a, b);
+  return {
+    a,
+    b,
+    qualityRaw: {
+      anchorsCovered: quality.anchorsCovered,
+      anchorsTotal: quality.anchorsTotal,
+      coverage: quality.coverage,
+      medianMs: quality.medianMs,
+      p95Ms: quality.p95Ms,
+    },
+  };
+}
+
 async function alignTier2(
   song: ManifestSong,
   gt: MidiGroundTruth,
 ): Promise<AlignmentArtifact> {
+  const thresholds: GateThresholds = { coverageMin: 0.70, medianMax: 150, p95Max: 400 };
   const audioPath = path.join(AUDIO_DIR, `${song.id}.wav`);
 
   if (!fs.existsSync(audioPath)) {
-    return makeUnaligned(song.id, 2, 'audio_not_found');
+    return makeUnaligned(song.id, 2, 'audio_not_found', {
+      midiDuration: gt.duration,
+      qualityMode: 'energy_peak',
+      thresholds,
+    });
   }
 
   console.log(`  Loading audio...`);
   const wav = loadWav(audioPath);
 
   if (wav.duration < 30) {
-    return makeUnaligned(song.id, 2, 'audio_too_short');
+    return makeUnaligned(song.id, 2, 'audio_too_short', {
+      midiDuration: gt.duration,
+      qualityMode: 'energy_peak',
+      thresholds,
+    });
   }
 
   const midiDownbeats = gt.barAnchors.map(a => a.time);
@@ -828,52 +1132,251 @@ async function alignTier2(
   // Check for multi-tempo — use piecewise if needed
   if (hasMultipleTempos(gt)) {
     console.log(`  Multi-tempo Tier 2 — using piecewise affine`);
-    return alignPiecewise(song, gt, wav);
+    return alignPiecewise(song, gt, wav, 2, undefined);
   }
 
-  // Step 1: 2D grid search over (offset, tempoScale) using energy
-  console.log(`  Searching offset + tempo scale grid...`);
+  const coarseBaseline = computeTier2CoarseBaseline(midiDownbeats, wav, gt.duration);
+  console.log(
+    `  Baseline coarse: offset=${coarseBaseline.a.toFixed(2)}s, scale=${coarseBaseline.b.toFixed(3)}, coverage=${(coarseBaseline.qualityRaw.coverage * 100).toFixed(0)}%, median=${coarseBaseline.qualityRaw.medianMs.toFixed(0)}ms, p95=${coarseBaseline.qualityRaw.p95Ms.toFixed(0)}ms`,
+  );
+
+  // Baseline: current energy search candidate.
+  console.log(`  Baseline energy search: offset + tempo scale grid...`);
   const { offset, tempoScale, score } = findBestOffsetAndScale(
     midiDownbeats, wav.samples, wav.sampleRate, wav.duration, gt.duration
   );
-  console.log(`  Best: offset=${offset.toFixed(2)}s, scale=${tempoScale.toFixed(3)}, energy=${score.toFixed(4)}`);
+  console.log(`  Baseline: offset=${offset.toFixed(2)}s, scale=${tempoScale.toFixed(3)}, energy=${score.toFixed(4)}`);
 
-  // Use offset and scale directly as affine params: t_yt = offset + scale * t_midi
-  const a = offset;
-  const b = tempoScale;
-
-  // Gate 2: slope within sane range
-  if (b < 0.80 || b > 1.30) {
-    return makeUnaligned(song.id, 2, `slope_out_of_range:${b.toFixed(3)}`);
-  }
-
-  // Validate using audio energy (not analysis downbeats)
-  const quality = validateAlignmentByEnergy(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, a, b);
-  console.log(`  Energy quality: coverage=${(quality.coverage * 100).toFixed(0)}%, median=${quality.medianMs.toFixed(0)}ms, p95=${quality.p95Ms.toFixed(0)}ms, energyScore=${(quality.energyScore * 100).toFixed(0)}%`);
-
-  // Gate 2 criteria
-  if (quality.coverage < 0.60) {
-    return makeUnaligned(song.id, 2, `coverage_too_low:${(quality.coverage * 100).toFixed(0)}%`, a, b, quality, gt.duration, wav.duration);
-  }
-  if (quality.medianMs > 150) {
-    return makeUnaligned(song.id, 2, `median_error_too_high:${quality.medianMs.toFixed(0)}ms`, a, b, quality, gt.duration, wav.duration);
-  }
-
-  return {
-    songId: song.id,
-    status: 'aligned_ok',
-    tier: 2,
-    model: 'affine',
-    params: { a, b },
-    segment: {
-      midiStart: 0,
-      midiEnd: gt.duration,
-      youtubeStart: a,
-      youtubeEnd: a + b * gt.duration,
-    },
-    quality,
-    reason: null,
+  const baselineQuality = validateAlignmentByEnergy(midiDownbeats, wav.samples, wav.sampleRate, wav.duration, offset, tempoScale);
+  const fallbackQualityRaw: RawQuality = {
+    anchorsCovered: baselineQuality.anchorsCovered,
+    anchorsTotal: baselineQuality.anchorsTotal,
+    coverage: baselineQuality.coverage,
+    medianMs: baselineQuality.medianMs,
+    p95Ms: baselineQuality.p95Ms,
   };
+  const baselineForDelta = toBaselineSnapshot('energy_peak', coarseBaseline.qualityRaw);
+  // Enforce Gate 2 deltas even on a cold run so first and second runs are identical.
+  const requireImprovementGate = true;
+
+  // Token-local candidate path.
+  let tokenCandidate:
+    | {
+      params: { a: number; b: number };
+      qualityRaw: RawQuality;
+      local: LocalAlignResult;
+    }
+    | null = null;
+  let tokenFailureReason: AlignmentReasonCode | null = null;
+  let tokenFailureDetail: string | null = null;
+
+  const audioFeatures = extractAudioFeatures(wav.samples, wav.sampleRate);
+  console.log(
+    `  Token features: onsets=${audioFeatures.onsets.length}, medianPitchConfidence=${audioFeatures.medianPitchConfidence.toFixed(3)}, onsetDensity=${audioFeatures.onsetDensity.toFixed(3)}`,
+  );
+  if (!passesPreAlignmentExtractionGate(audioFeatures)) {
+    tokenFailureReason = 'extraction_quality_low';
+    tokenFailureDetail = `onsets=${audioFeatures.onsets.length}, medianPitchConfidence=${audioFeatures.medianPitchConfidence.toFixed(3)}, onsetDensity=${audioFeatures.onsetDensity.toFixed(3)}`;
+  } else {
+    const midiTokens = buildMidiTokens(gt);
+    const audioTokens = buildAudioTokens(audioFeatures);
+    console.log(`  Token counts: midi=${midiTokens.length}, audio=${audioTokens.length}`);
+    let kUsed = 4;
+    let seedMode: 'full' | 'pitch_only' = 'full';
+    let seedPairs = enumerateSeedPairs(midiTokens, audioTokens, 4);
+    if (seedPairs.length < 12) {
+      kUsed = 3;
+      seedPairs = enumerateSeedPairs(midiTokens, audioTokens, 3);
+    }
+    if (seedPairs.length < 8) {
+      seedMode = 'pitch_only';
+      kUsed = 3;
+      seedPairs = enumerateSeedPairsPitchOnly(midiTokens, audioTokens, 3);
+    }
+    console.log(`  Seed search: mode=${seedMode}, k=${kUsed}, pairs=${seedPairs.length}`);
+
+    if (seedPairs.length < 8) {
+      tokenFailureReason = 'insufficient_seeds';
+      tokenFailureDetail = `mode=${seedMode}, k=${kUsed}, seeds=${seedPairs.length}, midiTokens=${midiTokens.length}, audioTokens=${audioTokens.length}`;
+    } else {
+      const local = localAlign(midiTokens, audioTokens, seedPairs);
+      console.log(
+        `  Local align: score=${local.score.toFixed(2)}, secondBest=${local.secondBestScore.toFixed(2)}, blocks=${local.blockCount}, matches=${local.matches.length}, confidence=${local.confidence.toFixed(3)}`,
+      );
+      const eligible = local.confidence >= 0.40 && local.blockCount >= 2 && local.matches.length >= 12;
+      const ambiguous = local.secondBestScore > 0 && local.score < 1.30 * local.secondBestScore;
+
+      if (!eligible) {
+        tokenFailureReason = 'insufficient_seeds';
+        tokenFailureDetail = `confidence=${local.confidence.toFixed(3)}, blocks=${local.blockCount}, matches=${local.matches.length}`;
+      } else if (ambiguous) {
+        tokenFailureReason = 'multi_match_ambiguous';
+        tokenFailureDetail = `score=${local.score.toFixed(2)}, secondBest=${local.secondBestScore.toFixed(2)}`;
+      } else {
+        const fit = fitAffineFromPairs(local.matches.map(m => ({
+          midiTimeSec: m.midiTimeSec,
+          audioTimeSec: m.audioTimeSec,
+        })));
+        if (!fit) {
+          tokenFailureReason = 'insufficient_seeds';
+          tokenFailureDetail = `matches=${local.matches.length} but affine fit failed`;
+        } else if (fit.b < 0.80 || fit.b > 1.30) {
+          tokenFailureReason = 'slope_out_of_range';
+          tokenFailureDetail = fit.b.toFixed(3);
+        } else {
+          const tokenQuality = validateAlignmentByEnergy(
+            midiDownbeats,
+            wav.samples,
+            wav.sampleRate,
+            wav.duration,
+            fit.a,
+            fit.b,
+          );
+          tokenCandidate = {
+            params: { a: fit.a, b: fit.b },
+            qualityRaw: {
+              anchorsCovered: tokenQuality.anchorsCovered,
+              anchorsTotal: tokenQuality.anchorsTotal,
+              coverage: tokenQuality.coverage,
+              medianMs: tokenQuality.medianMs,
+              p95Ms: tokenQuality.p95Ms,
+            },
+            local,
+          };
+          console.log(
+            `  Token candidate: a=${fit.a.toFixed(3)}, b=${fit.b.toFixed(4)}, coverage=${(tokenCandidate.qualityRaw.coverage * 100).toFixed(0)}%, median=${tokenCandidate.qualityRaw.medianMs.toFixed(0)}ms, p95=${tokenCandidate.qualityRaw.p95Ms.toFixed(0)}ms`,
+          );
+        }
+      }
+    }
+  }
+
+  if (tokenCandidate) {
+    const qualityFail = qualityFailureReason(tokenCandidate.qualityRaw, thresholds);
+    const delta = evaluateDeltaVsBaseline(tokenCandidate.qualityRaw, baselineForDelta);
+    console.log(
+      `  Token deltas: coverage=${delta.deltas.coverageDelta.toFixed(3)}, median=${delta.deltas.medianDeltaMs.toFixed(1)}ms, p95=${delta.deltas.p95DeltaMs.toFixed(1)}ms, improves=${delta.improves}, regressionOk=${delta.regressionOk}`,
+    );
+    const deltaPass = delta.regressionOk && (!requireImprovementGate || delta.improves);
+    if (!qualityFail && deltaPass) {
+      console.log(
+        `  Token-local accepted: coverage=${(tokenCandidate.qualityRaw.coverage * 100).toFixed(0)}%, median=${tokenCandidate.qualityRaw.medianMs.toFixed(0)}ms, p95=${tokenCandidate.qualityRaw.p95Ms.toFixed(0)}ms`,
+      );
+      return makeAligned(
+        song.id,
+        2,
+        'affine',
+        tokenCandidate.params,
+        {
+          midiStart: 0,
+          midiEnd: gt.duration,
+          youtubeStart: tokenCandidate.params.a,
+          youtubeEnd: tokenCandidate.params.a + tokenCandidate.params.b * gt.duration,
+        },
+        'token_local_align',
+        tokenCandidate.qualityRaw,
+        thresholds,
+        {
+          baseline: baselineForDelta,
+        },
+      );
+    }
+    tokenFailureReason = tokenFailureReason ?? (qualityFail ? parseReasonWithDetail(qualityFail).reason : 'coverage_too_low');
+    tokenFailureDetail =
+      tokenFailureDetail ??
+      (qualityFail
+        ? qualityFail
+        : `delta coverage=${delta.deltas.coverageDelta.toFixed(3)}, median=${delta.deltas.medianDeltaMs.toFixed(1)}ms, p95=${delta.deltas.p95DeltaMs.toFixed(1)}ms`);
+  }
+
+  const fallbackReason = qualityFailureReason(fallbackQualityRaw, thresholds);
+  const fallbackDelta = evaluateDeltaVsBaseline(fallbackQualityRaw, baselineForDelta);
+  console.log(
+    `  Fallback deltas: coverage=${fallbackDelta.deltas.coverageDelta.toFixed(3)}, median=${fallbackDelta.deltas.medianDeltaMs.toFixed(1)}ms, p95=${fallbackDelta.deltas.p95DeltaMs.toFixed(1)}ms, improves=${fallbackDelta.improves}, regressionOk=${fallbackDelta.regressionOk}`,
+  );
+  const fallbackDeltaPass = fallbackDelta.regressionOk && (!requireImprovementGate || fallbackDelta.improves);
+  const fallbackSlopeOk = tempoScale >= 0.80 && tempoScale <= 1.30;
+  if (fallbackSlopeOk && !fallbackReason && fallbackDeltaPass) {
+    console.log(
+      `  Fallback energy accepted: coverage=${(fallbackQualityRaw.coverage * 100).toFixed(0)}%, median=${fallbackQualityRaw.medianMs.toFixed(0)}ms, p95=${fallbackQualityRaw.p95Ms.toFixed(0)}ms`,
+    );
+    return makeAligned(
+      song.id,
+      2,
+      'affine',
+      { a: offset, b: tempoScale },
+      {
+        midiStart: 0,
+        midiEnd: gt.duration,
+        youtubeStart: offset,
+        youtubeEnd: offset + tempoScale * gt.duration,
+      },
+      'energy_peak',
+      fallbackQualityRaw,
+      thresholds,
+      {
+        baseline: baselineForDelta,
+      },
+    );
+  }
+
+  if (tokenFailureReason === 'multi_match_ambiguous') {
+    console.log(`  Token failure: ${tokenFailureReason}${tokenFailureDetail ? ` (${tokenFailureDetail})` : ''}`);
+    return makeUnaligned(song.id, 2, 'multi_match_ambiguous', {
+      a: offset,
+      b: tempoScale,
+      midiDuration: gt.duration,
+      qualityRaw: fallbackQualityRaw,
+      thresholds,
+      qualityMode: 'energy_peak',
+      baseline: baselineForDelta,
+    });
+  }
+
+  if (!fallbackSlopeOk) {
+    console.log(`  Fallback failure: slope_out_of_range (${tempoScale.toFixed(3)})`);
+    return makeUnaligned(song.id, 2, `slope_out_of_range:${tempoScale.toFixed(3)}`, {
+      a: offset,
+      b: tempoScale,
+      midiDuration: gt.duration,
+      qualityRaw: fallbackQualityRaw,
+      thresholds,
+      qualityMode: 'energy_peak',
+      baseline: baselineForDelta,
+    });
+  }
+
+  const fallbackFailure = fallbackReason
+    ?? `coverage_too_low:delta coverage=${fallbackDelta.deltas.coverageDelta.toFixed(3)}, median=${fallbackDelta.deltas.medianDeltaMs.toFixed(1)}ms, p95=${fallbackDelta.deltas.p95DeltaMs.toFixed(1)}ms`;
+  if (tokenFailureReason === 'extraction_quality_low' && !fallbackReason) {
+    console.log(`  Token failure: ${tokenFailureReason}${tokenFailureDetail ? ` (${tokenFailureDetail})` : ''}`);
+    return makeUnaligned(song.id, 2, `extraction_quality_low:${tokenFailureDetail ?? 'token pre-gate failed'}`, {
+      a: offset,
+      b: tempoScale,
+      midiDuration: gt.duration,
+      qualityRaw: fallbackQualityRaw,
+      thresholds,
+      qualityMode: 'energy_peak',
+      baseline: baselineForDelta,
+    });
+  }
+
+  if (tokenFailureReason) {
+    console.log(`  Token failure: ${tokenFailureReason}${tokenFailureDetail ? ` (${tokenFailureDetail})` : ''}`);
+  }
+  if (fallbackReason) {
+    console.log(`  Fallback failure: ${fallbackReason}`);
+  }
+
+  return makeUnaligned(song.id, 2, fallbackFailure, {
+    a: offset,
+    b: tempoScale,
+    midiDuration: gt.duration,
+    qualityRaw: fallbackQualityRaw,
+    thresholds,
+    qualityMode: 'energy_peak',
+    baseline: baselineForDelta,
+  });
 }
 
 // ============================================
@@ -883,27 +1386,85 @@ async function alignTier2(
 function makeUnaligned(
   songId: string,
   tier: 1 | 2,
-  reason: string,
-  a?: number,
-  b?: number,
-  quality?: { anchorsCovered: number; anchorsTotal: number; coverage: number; medianMs: number; p95Ms: number },
-  midiDuration?: number,
-  audioDuration?: number,
+  reasonInput: AlignmentReasonCode | string,
+  options: {
+    a?: number;
+    b?: number;
+    qualityRaw?: RawQuality;
+    thresholds?: GateThresholds;
+    midiDuration?: number;
+    qualityMode?: QualityMode;
+    baseline?: BaselineSnapshot;
+    model?: 'affine' | 'piecewise_affine';
+    segments?: PiecewiseSegment[];
+  } = {},
 ): AlignmentArtifact {
+  const parsed = parseReasonWithDetail(String(reasonInput));
+  const reason = parsed.reason;
+  const reasonDetail = parsed.reasonDetail;
+  const a = options.a ?? 0;
+  const b = options.b ?? 1;
+  const midiDuration = options.midiDuration ?? 0;
+  const raw = options.qualityRaw ?? {
+    anchorsCovered: 0,
+    anchorsTotal: 0,
+    coverage: 0,
+    medianMs: Infinity,
+    p95Ms: Infinity,
+  };
+  const thresholds = options.thresholds ?? {
+    coverageMin: 0,
+    medianMax: Number.POSITIVE_INFINITY,
+    p95Max: Number.POSITIVE_INFINITY,
+  };
+
   return {
     songId,
     status: tier === 1 ? 'unaligned' : 'unaligned_partial',
     tier,
-    model: 'affine',
-    params: { a: a ?? 0, b: b ?? 1 },
+    model: options.model ?? 'affine',
+    params: { a, b },
+    segments: options.segments,
     segment: {
       midiStart: 0,
-      midiEnd: midiDuration ?? 0,
-      youtubeStart: a ?? 0,
-      youtubeEnd: (a ?? 0) + (b ?? 1) * (midiDuration ?? 0),
+      midiEnd: midiDuration,
+      youtubeStart: a,
+      youtubeEnd: a + b * midiDuration,
     },
-    quality: quality ?? { anchorsCovered: 0, anchorsTotal: 0, coverage: 0, medianMs: Infinity, p95Ms: Infinity },
+    qualityMode: options.qualityMode ?? (tier === 1 ? 'analysis_downbeat' : 'energy_peak'),
+    quality: withQualityMeta(raw, thresholds),
+    baseline: tier === 2 ? options.baseline : undefined,
     reason,
+    reasonDetail,
+    version: 'align-v3',
+  };
+}
+
+function makeAligned(
+  songId: string,
+  tier: 1 | 2,
+  model: 'affine' | 'piecewise_affine',
+  params: { a: number; b: number },
+  segment: { midiStart: number; midiEnd: number; youtubeStart: number; youtubeEnd: number },
+  qualityMode: QualityMode,
+  qualityRaw: RawQuality,
+  thresholds: GateThresholds,
+  extras?: { segments?: PiecewiseSegment[]; baseline?: BaselineSnapshot },
+): AlignmentArtifact {
+  return {
+    songId,
+    status: 'aligned_ok',
+    tier,
+    model,
+    params,
+    segments: extras?.segments,
+    segment,
+    qualityMode,
+    quality: withQualityMeta(qualityRaw, thresholds),
+    baseline: tier === 2 ? extras?.baseline : undefined,
+    reason: null,
+    reasonDetail: null,
+    version: 'align-v3',
   };
 }
 
@@ -940,6 +1501,11 @@ function generateAlignedGroundTruth(
       time: Math.round(transform(beat.time) * 1000) / 1000,
     })),
     melodyNotes: gt.melodyNotes.map(note => ({
+      ...note,
+      time: Math.round(transform(note.time) * 1000) / 1000,
+      duration: Math.round(note.duration * avgB * 1000) / 1000,
+    })),
+    allNotes: gt.allNotes?.map(note => ({
       ...note,
       time: Math.round(transform(note.time) * 1000) / 1000,
       duration: Math.round(note.duration * avgB * 1000) / 1000,
@@ -1020,14 +1586,19 @@ async function main() {
 
     results.push(alignment);
 
+    const schemaErrors = validateArtifactSchema(alignment);
+    if (schemaErrors.length > 0) {
+      throw new Error(`schema_invalid:${song.id}:${schemaErrors.join(';')}`);
+    }
+
     const alignPath = path.join(ALIGNMENT_DIR, `${song.id}.json`);
-    fs.writeFileSync(alignPath, JSON.stringify(alignment, null, 2));
+    fs.writeFileSync(alignPath, `${stableStringify(alignment)}\n`);
     console.log(`  Status: ${alignment.status}${alignment.reason ? ` (${alignment.reason})` : ''}`);
 
     if (alignment.status === 'aligned_ok') {
       const alignedGt = generateAlignedGroundTruth(gt, alignment);
       const alignedGtPath = path.join(ALIGNED_GT_DIR, `${song.id}.json`);
-      fs.writeFileSync(alignedGtPath, JSON.stringify(alignedGt, null, 2));
+      fs.writeFileSync(alignedGtPath, `${stableStringify(alignedGt)}\n`);
       console.log(`  Aligned ground truth written`);
     }
 
