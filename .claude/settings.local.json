@@ -93,7 +93,14 @@
       "Bash(npx vite build:*)",
       "Bash(npx vitest:*)",
       "Bash(npx tsx:*)",
-      "WebFetch(domain:keneldridge.github.io)"
+      "WebFetch(domain:keneldridge.github.io)",
+      "Bash(done)",
+      "Bash(git status:*)",
+      "Bash(wc:*)",
+      "Bash(yt-dlp:*)",
+      "Bash(pip show:*)",
+      "Bash(python -m yt_dlp:*)",
+      "Bash(ffmpeg:*)"
     ],
     "deny": [],
     "ask": []
