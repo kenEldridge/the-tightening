@@ -12,7 +12,7 @@ interface Props {
 const allChords = getAllChordNames();
 
 export default function WalkMode({ walkState, onWalkStateChange }: Props) {
-  const { fromChord, toChord, options, path, currentStep, completed } = walkState;
+  const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted } = walkState;
 
   const updateAndFindPath = useCallback(
     (updates: Partial<WalkState>) => {
@@ -22,14 +22,25 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
       const to = updates.toChord ?? next.toChord;
       const opts = updates.options ?? next.options;
       if (from && to && from !== to) {
-        const result = findChordPath(from, to, opts);
-        if (result) {
-          next.path = {
-            chordNames: result.chordNames,
-            edgeTypes: result.edgeTypes,
-            explanations: result.explanations,
-            totalWeight: result.totalWeight,
-          };
+        const outbound = findChordPath(from, to, opts);
+        if (outbound) {
+          let chordNames = outbound.chordNames;
+          let edgeTypes = outbound.edgeTypes;
+          let explanations = outbound.explanations;
+          let totalWeight = outbound.totalWeight;
+
+          if (opts.returnTrip) {
+            const returnPath = findChordPath(to, from, opts);
+            if (returnPath) {
+              // Concatenate: skip first chord of return (it's the last of outbound)
+              chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
+              edgeTypes = [...edgeTypes, ...returnPath.edgeTypes];
+              explanations = [...explanations, ...returnPath.explanations];
+              totalWeight += returnPath.totalWeight;
+            }
+          }
+
+          next.path = { chordNames, edgeTypes, explanations, totalWeight };
         } else {
           next.path = null;
         }
@@ -64,6 +75,14 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
     },
     [updateAndFindPath, options],
   );
+
+  const handleReturnTrip = useCallback(() => {
+    updateAndFindPath({ options: { ...options, returnTrip: !options.returnTrip } });
+  }, [updateAndFindPath, options]);
+
+  const handleEndless = useCallback(() => {
+    updateAndFindPath({ options: { ...options, endless: !options.endless } });
+  }, [updateAndFindPath, options]);
 
   const handleReset = useCallback(() => {
     onWalkStateChange({ ...walkState, currentStep: 0, completed: false });
@@ -103,6 +122,17 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
         </div>
       </div>
 
+      <div className="walk-section">
+        <label className="walk-toggle">
+          <input type="checkbox" checked={options.returnTrip} onChange={handleReturnTrip} />
+          <span>Return trip</span>
+        </label>
+        <label className="walk-toggle">
+          <input type="checkbox" checked={options.endless} onChange={handleEndless} />
+          <span>Endless mode</span>
+        </label>
+      </div>
+
       {fromChord && toChord && fromChord === toChord && (
         <div className="walk-info">Pick two different chords.</div>
       )}
@@ -122,6 +152,9 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
           />
           {currentStep > 0 && !completed && (
             <button className="walk-reset-btn" onClick={handleReset}>Reset progress</button>
+          )}
+          {pathsCompleted > 0 && (
+            <div className="walk-score">Paths completed: {pathsCompleted}</div>
           )}
         </>
       )}

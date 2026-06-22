@@ -75,6 +75,8 @@ export interface WalkState {
     relative: boolean;
     iiVI: boolean;
     leadingTone: boolean;
+    returnTrip: boolean;
+    endless: boolean;
   };
   /** Current path result (null if not yet computed or no path exists) */
   path: WalkPathResult | null;
@@ -82,6 +84,8 @@ export interface WalkState {
   currentStep: number;
   /** Whether the full path has been completed */
   completed: boolean;
+  /** Number of paths completed in this session (for endless mode) */
+  pathsCompleted: number;
 }
 
 export interface WalkPathResult {

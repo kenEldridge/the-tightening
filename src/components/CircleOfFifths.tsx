@@ -107,7 +107,7 @@ export default function CircleOfFifths({ walkPath, matchedChords }: Props) {
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg viewBox="0 0 600 600" style={{ width: '100%', maxWidth: 600, maxHeight: '100%' }}>
+      <svg viewBox="0 0 600 600" style={{ width: '100%', height: '100%' }}>
         {/* Ring guide circles */}
         <circle cx={CX} cy={CY} r={R_MAJOR} fill="none" stroke="#21262d" strokeWidth={1} />
         <circle cx={CX} cy={CY} r={R_MINOR} fill="none" stroke="#21262d" strokeWidth={1} />

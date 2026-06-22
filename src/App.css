@@ -276,6 +276,12 @@ body {
   border-color: var(--text-secondary);
 }
 
+.walk-score {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* ── Path strip ── */
 
 .path-strip {

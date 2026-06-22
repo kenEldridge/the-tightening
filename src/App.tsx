@@ -8,7 +8,7 @@ import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
-import { getTheoryChordNodes } from './core/chordPathfinder';
+import { getTheoryChordNodes, getAllChordNames, findChordPath } from './core/chordPathfinder';
 import CircleOfFifths from './components/CircleOfFifths';
 
 export default function App() {
@@ -19,10 +19,11 @@ export default function App() {
   const [walkState, setWalkState] = useState<WalkState>({
     fromChord: '',
     toChord: '',
-    options: { relative: true, iiVI: false, leadingTone: false },
+    options: { relative: true, iiVI: false, leadingTone: false, returnTrip: false, endless: false },
     path: null,
     currentStep: 0,
     completed: false,
+    pathsCompleted: 0,
   });
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
@@ -190,9 +191,56 @@ export default function App() {
         ...prev,
         currentStep: nextStep,
         completed: isComplete,
+        pathsCompleted: isComplete ? prev.pathsCompleted + 1 : prev.pathsCompleted,
       }));
     }
   }, [matchedChords, mode, walkState.path, walkState.currentStep, walkState.completed]);
+
+  // Endless mode: auto-pick next destination after completing a path
+  useEffect(() => {
+    if (!walkState.completed || !walkState.options.endless) return;
+    if (!walkState.path) return;
+
+    const allChords = getAllChordNames();
+    const allNames = [...allChords.major, ...allChords.minor, ...allChords.dim];
+    const lastChord = walkState.path.chordNames[walkState.path.chordNames.length - 1];
+
+    const timer = setTimeout(() => {
+      // Pick a random chord that's different from the last one
+      const candidates = allNames.filter(c => c !== lastChord);
+      const nextTo = candidates[Math.floor(Math.random() * candidates.length)];
+      const opts = walkState.options;
+
+      const outbound = findChordPath(lastChord, nextTo, opts);
+      if (!outbound) return;
+
+      let chordNames = outbound.chordNames;
+      let edgeTypes = outbound.edgeTypes;
+      let explanations = outbound.explanations;
+      let totalWeight = outbound.totalWeight;
+
+      if (opts.returnTrip) {
+        const returnPath = findChordPath(nextTo, lastChord, opts);
+        if (returnPath) {
+          chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
+          edgeTypes = [...edgeTypes, ...returnPath.edgeTypes];
+          explanations = [...explanations, ...returnPath.explanations];
+          totalWeight += returnPath.totalWeight;
+        }
+      }
+
+      setWalkState(prev => ({
+        ...prev,
+        fromChord: lastChord,
+        toChord: nextTo,
+        path: { chordNames, edgeTypes, explanations, totalWeight },
+        currentStep: 0,
+        completed: false,
+      }));
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [walkState.completed, walkState.options.endless]);
 
   // Add default G→D→A→G on mount
   useEffect(() => {
