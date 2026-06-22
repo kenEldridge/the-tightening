@@ -1,1365 +1,220 @@
-/**
- * Music Learning App - Main Application
- *
- * Integrates all components for the adaptive key mapping piano learning experience
- */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { GraphState, SaveData } from './types/index';
+import { parseChordInput } from './core/chordParser';
+import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
+import { detectChords } from './core/chordDetection';
+import ChordGraph from './components/ChordGraph';
+import ProgressionInput from './components/ProgressionInput';
+import MidiStatus from './components/MidiStatus';
+import HeldNotes from './components/HeldNotes';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import './App.css';
-
-// Type declaration for Electron API exposed via preload
-declare global {
-  interface Window {
-    electronAPI: {
-      platform: string;
-      // MIDI
-      onMidiNoteOn: (callback: (data: { note: number; velocity: number; channel: number }) => void) => void;
-      onMidiNoteOff: (callback: (data: { note: number }) => void) => void;
-      onMidiStatus: (callback: (data: { connected: boolean; message: string }) => void) => void;
-      removeMidiListeners: () => void;
-      // YouTube extraction
-      youtubeGetInfo: (url: string) => Promise<{ title: string; duration: number; thumbnail?: string; uploader?: string } | null>;
-      youtubeExtractAudio: (url: string) => Promise<string | null>;
-      onYoutubeProgress: (callback: (progress: { status: string; progress?: number; message?: string; outputPath?: string }) => void) => void;
-      removeYoutubeProgressListener: () => void;
-      youtubeGetOutputDir: () => Promise<string>;
-      youtubeCleanup: (maxAgeHours?: number) => Promise<boolean>;
-      // Analysis cache
-      analysisCacheSave: (videoId: string, data: any) => Promise<boolean>;
-      analysisCacheLoad: (videoId: string) => Promise<any | null>;
-      analysisCacheExists: (videoId: string) => Promise<boolean>;
-      // File access
-      readAudioFile: (filePath: string) => Promise<string | null>;
-      readImageFile: (filePath: string) => Promise<string | null>;
-      // Video & Frame extraction
-      youtubeDownloadVideo: (url: string) => Promise<string | null>;
-      extractFrames: (videoPath: string, timestamps: number[]) => Promise<string[]>;
-      getVideoPath: (url: string) => Promise<string | null>;
-    };
-  }
-}
-
-// Logging
-// TEMPORARILY DISABLED - Testing if this blocks rendering
-// import { initializeLogger, loggers } from './utils/logger';
-
-// Configuration
-import type { AppConfig } from './config/AppConfig';
-import { loadConfig, saveConfig } from './config/AppConfig';
-
-// Core components
-import type { KeyMappingResult } from './components/AdaptiveKeyMapper';
-import { AdaptiveKeyMapper } from './components/AdaptiveKeyMapper';
-import { AudioEngine } from './components/AudioEngine';
-import { AccompanimentPlayer } from './components/AccompanimentPlayer';
-import { ReferenceMelodyPlayer } from './components/ReferenceMelody';
-import type { PerformanceStats } from './components/ProgressTracker';
-import { ProgressTracker } from './components/ProgressTracker';
-
-// Microphone input for pitch detection
-import { MicrophoneInput, type NoteEvent, type AudioCaptureStatus } from './core/MicrophoneInput';
-
-// Comparison engine for note matching
-import { ComparisonEngine, type ComparisonStats, type NoteComparisonResult } from './core/ComparisonEngine';
-
-// UI components
-import { FallingNotesCanvas } from './components/FallingNotesCanvas';
-import { VisualKeyboard } from './components/VisualKeyboard';
-import { PracticeControls } from './components/PracticeControls';
-import { TheTighteningLogo } from './components/TheTighteningLogo';
-import { LyricsDisplay } from './components/LyricsDisplay';
-import { YouTubeImporter, type PassageSelection } from './components/YouTubeImporter';
-import { PracticeFrameDisplay } from './components/PracticeFrameDisplay';
-import type { DetectedNoteEvent } from './core/VideoAnalyzer';
-import type { MelodyNote } from './utils/midiParser';
-
-// Data
-import { loadSong, getLrcData, SONG_LIBRARY, loadSongByPath, type SongIndexEntry } from './data/loadSongs';
-import type { SongData, SongSegment } from './utils/midiParser';
-import type { LrcLine } from './utils/lrcParser';
-
-// Startup diagnostic
-console.log('[App] Module loading - if you see this, console capture is working!');
-
-function App() {
-  // Configuration - use lazy initializer to only load config once on mount
-  const [config, setConfig] = useState<AppConfig>(() => loadConfig());
-
-  // System state
-  const [midiStatus, setMidiStatus] = useState<string>('Initializing MIDI...');
-  const [audioStatus, setAudioStatus] = useState<string>('Not initialized');
-  const [songData, setSongData] = useState<SongData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [samplesLoaded, setSamplesLoaded] = useState<boolean>(false);
-
-  // Input mode state (MIDI vs Microphone)
-  const [inputMode, setInputMode] = useState<'midi' | 'microphone'>('midi');
-  const [micStatus, setMicStatus] = useState<AudioCaptureStatus>('uninitialized');
-  const [lastDetectedNote, setLastDetectedNote] = useState<{ midi: number; noteName: string; clarity: number } | null>(null);
-
-  // Comparison engine state (for microphone mode)
-  const [comparisonStats, setComparisonStats] = useState<ComparisonStats | null>(null);
-  const [lastComparisonResult, setLastComparisonResult] = useState<NoteComparisonResult | null>(null);
-
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [currentTime, setCurrentTime] = useState<number>(0);
-  const [currentNoteIndex, setCurrentNoteIndex] = useState<number>(0);
-
-  // Performance state
-  const [stats, setStats] = useState<PerformanceStats>({
-    totalNotes: 0,
-    averageAccuracy: 0,
-    recentAccuracy: 0,
-    currentStreak: 0,
-    bestStreak: 0,
-    practiceTime: 0,
-    progress: 0,
-    confusionMatrix: { hits: 0, misses: 0, extras: 0 },
+export default function App() {
+  const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
+  const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
+  const [matchedChords, setMatchedChords] = useState<string[]>([]);
+  const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
+    connected: false,
+    message: 'Requesting MIDI access...',
   });
 
-  // Visual state
-  const [pressedKeys, setPressedKeys] = useState<Set<number>>(new Set());
-  const [currentCorrectNote, setCurrentCorrectNote] = useState<number | null>(null);
+  // Debounce timer ref for chord detection
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Song and segment state
-  const [currentSongId, setCurrentSongId] = useState<string>(config.gameplay.currentSong);
-  const [currentSongName, setCurrentSongName] = useState<string>('');
-  const [currentSegment, setCurrentSegment] = useState<SongSegment | null>(null);
-  const [isSegmentLoopEnabled, setIsSegmentLoopEnabled] = useState<boolean>(false);
-  const [lrcLines, setLrcLines] = useState<LrcLine[]>([]);
+  // Ref to latest graphState for menu-save callback
+  const graphStateRef = useRef(graphState);
+  graphStateRef.current = graphState;
 
-  // UI state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const mainAreaRef = useRef<HTMLDivElement>(null);
-  const [mainAreaWidth, setMainAreaWidth] = useState<number>(800);
+  // Ref to get current node positions from the simulation
+  const positionsRef = useRef<(() => Map<string, { x: number; y: number }>) | null>(null);
 
-  // YouTube importer state
-  const [showYouTubeImporter, setShowYouTubeImporter] = useState<boolean>(false);
-  const [youtubeExtractedNotes, setYoutubeExtractedNotes] = useState<DetectedNoteEvent[]>([]);
-  const [practiceFrames, setPracticeFrames] = useState<Map<number, string> | null>(null);
-  const [practiceAudioUrl, setPracticeAudioUrl] = useState<string | null>(null);
-  const [practiceStartTime, setPracticeStartTime] = useState<number>(0); // Segment start in full audio
-
-  // Component instances (refs to maintain state)
-  const keyMapperRef = useRef<AdaptiveKeyMapper | null>(null);
-  const audioEngineRef = useRef<AudioEngine | null>(null);
-  const accompanimentRef = useRef<AccompanimentPlayer | null>(null);
-  const melodyRef = useRef<ReferenceMelodyPlayer | null>(null);  // Bell synth melody guide
-  const progressTrackerRef = useRef<ProgressTracker | null>(null);
-  const timeUpdateIntervalRef = useRef<number | null>(null);
-  const currentTimeRef = useRef<number>(0); // Ref for currentTime to avoid stale closures
-
-  // Confusion matrix tracking
-  const hitNoteIndicesRef = useRef<Set<number>>(new Set()); // Track which notes have been hit
-  const lastCheckedNoteIndexRef = useRef<number>(-1); // Track last note we checked for misses
-
-  // Refs to always point to latest handlers (avoids stale closure in IPC MIDI listeners)
-  const handleNoteOnRef = useRef<((data: { note: number; velocity: number }) => void) | null>(null);
-  const handleNoteOffRef = useRef<((data: { note: number }) => void) | null>(null);
-
-  // Microphone input ref
-  const microphoneInputRef = useRef<MicrophoneInput | null>(null);
-
-  // Comparison engine ref (for matching detected vs expected notes)
-  const comparisonEngineRef = useRef<ComparisonEngine | null>(null);
-
-  // Initialize logger first
+  // WebMIDI setup
   useEffect(() => {
-    // initializeLogger(); // TEMP DISABLED
-    console.log('[App] Initializing application...');
-  }, []);
-
-  // Initialize core components
-  useEffect(() => {
-    const init = async () => {
-      try {
-        // DEV: Clear saved progress to ensure fresh start with full distribution width
-        // This resets any tightening that occurred in previous sessions
-        localStorage.removeItem('musicLearningAppProgress');
-        console.info('[App] Cleared saved progress for fresh start');
-
-        console.info('Creating core components...');
-        // Create core components
-        keyMapperRef.current = new AdaptiveKeyMapper(config);
-        audioEngineRef.current = new AudioEngine(config);
-        accompanimentRef.current = new AccompanimentPlayer(config);
-        melodyRef.current = new ReferenceMelodyPlayer(config);  // Bell synth melody guide
-        progressTrackerRef.current = new ProgressTracker(
-          config,
-          keyMapperRef.current,
-          accompanimentRef.current
-        );
-        // Create comparison engine for mic mode
-        comparisonEngineRef.current = new ComparisonEngine();
-
-        // Load song and LRC data in parallel
-        console.info('Loading initial song', { songId: config.gameplay.currentSong });
-        const [song, lrcData] = await Promise.all([
-          loadSong(config.gameplay.currentSong),
-          getLrcData(config.gameplay.currentSong),
-        ]);
-        setSongData(song);
-        if (lrcData) {
-          setLrcLines(lrcData.lines);
-        }
-        console.info('Song loaded successfully', {
-          name: song.name,
-          noteCount: song.notes.length,
-          duration: song.duration,
-          hasLrc: !!lrcData,
-        });
-
-        // Initialize audio systems (requires user interaction, will do on play)
-        setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
-
-        // Try to load saved progress
-        if (progressTrackerRef.current.loadProgress()) {
-          console.info('Loaded saved progress');
-        }
-
-        setLoading(false);
-        console.info('Application initialization complete');
-      } catch (err) {
-        const error = err as Error;
-        console.error('Initialization error', {
-          error: error.message,
-          stack: error.stack
-        });
-        setAudioStatus(`Error: ${err}`);
-        setLoading(false);
-      }
-    };
-
-    init();
-
-    return () => {
-      // Cleanup on unmount
-      if (audioEngineRef.current) audioEngineRef.current.dispose();
-      if (accompanimentRef.current) accompanimentRef.current.dispose();
-      if (melodyRef.current) melodyRef.current.dispose();
-      if (microphoneInputRef.current) microphoneInputRef.current.dispose();
-    };
-  }, []);
-
-  // Handle microphone note events
-  const handleMicrophoneNote = useCallback((event: NoteEvent) => {
-    console.log('[Mic] Note event:', event.type, event.noteName, 'MIDI:', event.midi, 'clarity:', event.clarity.toFixed(2));
-
-    if (event.type === 'on') {
-      // Update last detected note for display
-      setLastDetectedNote({
-        midi: event.midi,
-        noteName: event.noteName,
-        clarity: event.clarity,
-      });
-
-      // Record to comparison engine if active
-      if (comparisonEngineRef.current && isPlaying) {
-        const result = comparisonEngineRef.current.recordDetectedNote({
-          midi: event.midi,
-          noteName: event.noteName,
-          time: currentTimeRef.current,
-          clarity: event.clarity,
-          velocity: event.velocity,
-        });
-
-        if (result) {
-          setLastComparisonResult(result);
-          // Update stats periodically
-          const stats = comparisonEngineRef.current.getCurrentStats();
-          setComparisonStats(stats);
-        }
-      }
-
-      // Convert velocity from 0-1 to 0-127 for consistency with MIDI
-      const velocity = Math.round(event.velocity * 127);
-
-      // Route through the same handleNoteOn logic as MIDI
-      if (handleNoteOnRef.current) {
-        handleNoteOnRef.current({ note: event.midi, velocity });
-      }
-    } else {
-      // Note off
-      setLastDetectedNote(null);
-      if (handleNoteOffRef.current) {
-        handleNoteOffRef.current({ note: event.midi });
-      }
+    if (!navigator.requestMIDIAccess) {
+      setMidiStatus({ connected: false, message: 'WebMIDI not supported' });
+      return;
     }
-  }, [isPlaying]);
 
-  // Toggle between MIDI and Microphone input
-  const toggleInputMode = useCallback(async () => {
-    if (inputMode === 'midi') {
-      // Switch to microphone
-      console.log('[App] Switching to microphone input...');
+    let midiAccess: MIDIAccess | null = null;
 
-      // Create microphone input if not exists
-      if (!microphoneInputRef.current) {
-        microphoneInputRef.current = new MicrophoneInput({
-          pitchDetector: {
-            clarityThreshold: 0.85, // Slightly lower threshold for piano
-          },
-        });
+    const handleNoteOn = (note: number) => {
+      setHeldNotes(prev => {
+        const next = new Set(prev);
+        next.add(note);
+        return next;
+      });
+    };
+
+    const handleNoteOff = (note: number) => {
+      setHeldNotes(prev => {
+        const next = new Set(prev);
+        next.delete(note);
+        return next;
+      });
+    };
+
+    const onMidiMessage = (e: MIDIMessageEvent) => {
+      const [status, data1, data2] = e.data!;
+      if (status >= 0x90 && status <= 0x9F && data2 > 0) {
+        handleNoteOn(data1);
+      } else if ((status >= 0x80 && status <= 0x8F) || (status >= 0x90 && status <= 0x9F && data2 === 0)) {
+        handleNoteOff(data1);
       }
+    };
 
-      // Initialize (request permission)
-      const success = await microphoneInputRef.current.initialize();
-      if (success) {
-        setInputMode('microphone');
-        // Start listening immediately for testing (even without playing)
-        microphoneInputRef.current.start(handleMicrophoneNote);
-        setMicStatus('listening');
-        console.log('[App] Microphone initialized and listening!');
+    const bindInputs = (access: MIDIAccess) => {
+      const inputs = Array.from(access.inputs.values());
+      for (const input of inputs) {
+        input.onmidimessage = onMidiMessage;
+      }
+      if (inputs.length > 0) {
+        const names = inputs.map(i => i.name).join(', ');
+        setMidiStatus({ connected: true, message: `Connected: ${names}` });
       } else {
-        const status = microphoneInputRef.current.getStatus();
-        setMicStatus(status);
-        console.error('[App] Microphone initialization failed:', status);
+        setMidiStatus({ connected: false, message: 'No MIDI devices found' });
       }
-    } else {
-      // Switch back to MIDI
-      console.log('[App] Switching to MIDI input...');
-      if (microphoneInputRef.current) {
-        microphoneInputRef.current.stop();
-      }
-      setInputMode('midi');
-      setLastDetectedNote(null);
-    }
-  }, [inputMode, handleMicrophoneNote]);
-
-  // Start/stop microphone listening when playing state changes
-  useEffect(() => {
-    if (inputMode !== 'microphone' || !microphoneInputRef.current) {
-      return;
-    }
-
-    if (isPlaying) {
-      microphoneInputRef.current.start(handleMicrophoneNote);
-      setMicStatus('listening');
-    } else {
-      microphoneInputRef.current.stop();
-      setMicStatus('ready');
-    }
-  }, [isPlaying, inputMode, handleMicrophoneNote]);
-
-  // Initialize MIDI via IPC (MIDI is handled in main process using native midi package)
-  useEffect(() => {
-    console.info('Setting up MIDI IPC listeners...');
-
-    // Check if electronAPI is available (running in Electron)
-    if (!window.electronAPI) {
-      console.warn('electronAPI not available - not running in Electron');
-      setMidiStatus('MIDI only available in Electron app');
-      return;
-    }
-
-    // Listen for MIDI status from main process
-    window.electronAPI.onMidiStatus((data) => {
-      console.info('MIDI status update', data);
-      setMidiStatus(data.message);
-    });
-
-    // Listen for note on events - call through ref to get latest handler
-    window.electronAPI.onMidiNoteOn((data) => {
-      if (handleNoteOnRef.current) {
-        handleNoteOnRef.current(data);
-      }
-    });
-
-    // Listen for note off events - call through ref to get latest handler
-    window.electronAPI.onMidiNoteOff((data) => {
-      if (handleNoteOffRef.current) {
-        handleNoteOffRef.current(data);
-      }
-    });
-
-    console.debug('MIDI IPC listeners registered');
-
-    return () => {
-      // Cleanup IPC listeners on unmount
-      window.electronAPI?.removeMidiListeners();
     };
-  }, []);
 
-  // Handle MIDI note on (receives data from IPC: { note, velocity, channel })
-  const handleNoteOn = useCallback((data: { note: number; velocity: number }) => {
-    const pressedMidiKey = data.note;
-
-    console.debug('Note ON', {
-      midi: pressedMidiKey,
-      velocity: data.velocity
-    });
-
-    // Duck the melody guide when user plays (so their piano is the lead voice)
-    if (melodyRef.current) {
-      melodyRef.current.duck();
-    }
-
-    // Add to pressed keys
-    setPressedKeys((prev) => new Set(prev).add(pressedMidiKey));
-
-    // Get current correct note from song
-    if (!songData || !keyMapperRef.current || !audioEngineRef.current) {
-      console.warn('[MIDI] Early return - missing:', {
-        hasSongData: !!songData,
-        hasKeyMapper: !!keyMapperRef.current,
-        hasAudioEngine: !!audioEngineRef.current
-      });
-      return;
-    }
-
-    const time = currentTimeRef.current;
-
-    // Find currently ACTIVE note (not just recent note in gap)
-    const activeNoteIndex = songData.notes.findIndex((n) => {
-      const noteStart = n.time;
-      const noteEnd = n.time + n.duration;
-      return time >= noteStart && time < noteEnd;
-    });
-
-    const isInGap = activeNoteIndex === -1;
-    const currentNote = activeNoteIndex >= 0 ? songData.notes[activeNoteIndex] : null;
-
-    // Diagnostic logging
-    console.log('[MIDI] Note mapping', {
-      currentTime: time.toFixed(2),
-      hasActiveNote: !isInGap,
-      activeNoteIndex,
-      noteInfo: currentNote ? {
-        midi: currentNote.midi,
-        name: currentNote.name,
-        time: currentNote.time.toFixed(2),
-      } : 'In gap - EXTRA'
-    });
-
-    // If in a gap, this is an EXTRA press
-    if (isInGap) {
-      if (progressTrackerRef.current) {
-        progressTrackerRef.current.recordExtra();
-        setStats(progressTrackerRef.current.getStats());
+    navigator.requestMIDIAccess().then(
+      (access) => {
+        midiAccess = access;
+        bindInputs(access);
+        access.onstatechange = () => bindInputs(access);
+      },
+      (err) => {
+        setMidiStatus({ connected: false, message: `MIDI Error: ${err.message}` });
       }
-      // Still play something (fallback to most recent note for sound)
-      const fallbackNote = songData.notes.reduce((prev, current) => {
-        if (current.time + current.duration <= time) {
-          return (!prev || current.time > prev.time) ? current : prev;
-        }
-        return prev;
-      }, null as typeof songData.notes[0] | null) || songData.notes[0];
-
-      if (fallbackNote && audioEngineRef.current) {
-        const mapping = keyMapperRef.current.mapKeyToMelody(pressedMidiKey, fallbackNote.midi);
-        audioEngineRef.current.playNote({
-          note: mapping.melodyNote,
-          accuracy: mapping.accuracy * 0.5, // Reduce accuracy for extras (degraded sound)
-          duration: fallbackNote.duration,
-          velocity: data.velocity,
-        });
-      }
-      return;
-    }
-
-    // HIT: Active note being played
-    // Mark this note as hit
-    hitNoteIndicesRef.current.add(activeNoteIndex);
-
-    // Map pressed key to melody note
-    const mapping: KeyMappingResult = keyMapperRef.current.mapKeyToMelody(
-      pressedMidiKey,
-      currentNote!.midi
     );
 
-    console.debug('Key mapped (HIT)', {
-      pressed: mapping.pressedKey,
-      correct: currentNote!.midi,
-      distance: mapping.distance,
-      accuracy: mapping.accuracy.toFixed(2),
-      noteIndex: activeNoteIndex
-    });
-
-    // Play audio with feedback
-    audioEngineRef.current.playNote({
-      note: mapping.melodyNote,
-      accuracy: mapping.accuracy,
-      duration: currentNote!.duration,
-      velocity: data.velocity,
-    });
-
-    // Record performance (this is a HIT)
-    if (progressTrackerRef.current) {
-      progressTrackerRef.current.recordNote(mapping.accuracy);
-      setStats(progressTrackerRef.current.getStats());
-    }
-  }, [songData]);
-
-  // Handle MIDI note off (receives data from IPC: { note })
-  const handleNoteOff = useCallback((data: { note: number }) => {
-    console.debug('Note OFF', { midi: data.note });
-    setPressedKeys((prev) => {
-      const next = new Set(prev);
-      next.delete(data.note);
-
-      // If no more keys pressed, unduck the melody guide (fade it back in)
-      if (next.size === 0 && melodyRef.current) {
-        melodyRef.current.unduck();
+    return () => {
+      if (midiAccess) {
+        for (const input of midiAccess.inputs.values()) {
+          input.onmidimessage = null;
+        }
+        midiAccess.onstatechange = null;
       }
-
-      return next;
-    });
+    };
   }, []);
 
-  // Keep refs updated with latest handlers (fixes stale closure in MIDI listeners)
+  // File menu events (New / Open / Save)
   useEffect(() => {
-    handleNoteOnRef.current = handleNoteOn;
-    handleNoteOffRef.current = handleNoteOff;
-  }, [handleNoteOn, handleNoteOff]);
+    const api = window.electronAPI;
+    if (!api) return;
 
-  // Get current note based on playback time
-  // IMPORTANT: Uses ref to avoid stale closure - always reads latest time
-  const getCurrentNote = useCallback(() => {
-    if (!songData) return null;
-
-    // Read from ref to get LATEST time (avoids stale closure in MIDI callback)
-    const time = currentTimeRef.current;
-
-    // Find currently active note
-    let note = songData.notes.find((n) => {
-      const noteStart = n.time;
-      const noteEnd = n.time + n.duration;
-      return time >= noteStart && time < noteEnd;
+    api.onMenuNew(() => {
+      setGraphState(emptyGraphState());
     });
 
-    // If in a gap between notes, use the most recent note
-    // This allows practice during rests
-    if (!note) {
-      // Find the note that ended most recently
-      note = songData.notes.reduce((prev, current) => {
-        if (current.time + current.duration <= time) {
-          return (!prev || current.time + current.duration > prev.time + prev.duration)
-            ? current
-            : prev;
+    api.onMenuOpen((data: SaveData) => {
+      if (data && data.progressions) {
+        let nodePositions: Map<string, { x: number; y: number }> | undefined;
+        if (data.nodePositions) {
+          nodePositions = new Map(Object.entries(data.nodePositions));
         }
-        return prev;
-      }, null as typeof songData.notes[0] | null);
-    }
+        setGraphState(loadFromSaveData(data.progressions, nodePositions));
+      }
+    });
 
-    return note;
-  }, [songData]); // Note: removed currentTime dependency - using ref instead
-
-  // Update current correct note for visualization
-  useEffect(() => {
-    const note = getCurrentNote();
-    setCurrentCorrectNote(note ? note.midi : null);
-  }, [getCurrentNote]);
-
-  // Playback time update loop
-  // NOTE: Using setInterval polling (16ms lag) for simplicity
-  // FUTURE: Consider migrating to Transport.scheduleRepeat for tighter sync
-  useEffect(() => {
-    if (!isPlaying || !accompanimentRef.current || !songData) return;
-
-    const interval = setInterval(() => {
-      const time = accompanimentRef.current!.getCurrentTime();
-      currentTimeRef.current = time; // Update ref FIRST (for MIDI callbacks)
-      setCurrentTime(time); // Then update state (for UI)
-
-      // Check for MISSED notes (notes whose window has passed without being hit)
-      const lastChecked = lastCheckedNoteIndexRef.current;
-      const hitNotes = hitNoteIndicesRef.current;
-      let missOccurred = false;
-
-      // Find notes that have ended and weren't hit
-      for (let i = lastChecked + 1; i < songData.notes.length; i++) {
-        const note = songData.notes[i];
-        const noteEnd = note.time + note.duration;
-
-        if (noteEnd < time) {
-          // Note window has passed
-          if (!hitNotes.has(i)) {
-            // This note was MISSED
-            if (progressTrackerRef.current) {
-              progressTrackerRef.current.recordMiss();
-              missOccurred = true;
-            }
-            console.log('[MISS] Note missed', {
-              noteIndex: i,
-              midi: note.midi,
-              name: note.name,
-              noteEnd: noteEnd.toFixed(2),
-              currentTime: time.toFixed(2)
-            });
-          }
-          lastCheckedNoteIndexRef.current = i;
-        } else {
-          // Haven't reached this note's end yet, stop checking
-          break;
+    api.onMenuSave((filePath: string) => {
+      const state = graphStateRef.current;
+      const positions = positionsRef.current?.();
+      const nodePositions: Record<string, { x: number; y: number }> = {};
+      if (positions) {
+        for (const [id, pos] of positions) {
+          nodePositions[id] = { x: pos.x, y: pos.y };
         }
       }
-
-      // Only update stats when a miss occurred (avoid excessive re-renders)
-      if (missOccurred && progressTrackerRef.current) {
-        setStats(progressTrackerRef.current.getStats());
-      }
-    }, 16); // ~60fps updates
-
-    timeUpdateIntervalRef.current = interval as unknown as number;
+      const saveData: SaveData = {
+        version: 1,
+        progressions: state.progressions.map(p => ({
+          name: p.name,
+          chords: p.chords,
+          color: p.color,
+        })),
+        nodePositions,
+      };
+      api.fileWrite(filePath, JSON.stringify(saveData, null, 2));
+    });
 
     return () => {
-      if (timeUpdateIntervalRef.current) {
-        clearInterval(timeUpdateIntervalRef.current);
-      }
+      api.removeMenuListeners();
     };
-  }, [isPlaying, songData]);
-
-  // Auto-save progress periodically
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (progressTrackerRef.current) {
-        progressTrackerRef.current.saveProgress();
-      }
-    }, 30000); // Save every 30 seconds
-
-    return () => clearInterval(interval);
   }, []);
 
-  // Track main area width for responsive canvas sizing
+  // Chord detection with 50ms debounce
   useEffect(() => {
-    const updateWidth = () => {
-      if (mainAreaRef.current) {
-        setMainAreaWidth(mainAreaRef.current.clientWidth);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = setTimeout(() => {
+      const matches = detectChords(heldNotes, graphState.nodes);
+      setMatchedChords(matches);
+    }, 50);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
       }
     };
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, [sidebarCollapsed]);
+  }, [heldNotes, graphState.nodes]);
 
-  // Play/Pause handler
-  const handlePlayPause = async () => {
-    if (!audioEngineRef.current || !accompanimentRef.current || !melodyRef.current || !songData) return;
-
-    try {
-      if (!isPlaying) {
-        console.info('Starting playback...');
-
-        // Show loading state if samples not loaded yet
-        if (!samplesLoaded) {
-          setAudioStatus('Loading piano samples...');
-          console.info('Loading piano samples for first time...');
-        }
-
-        const startTime = Date.now();
-
-        // Initialize audio (loads samples) - now properly waits for completion
-        await audioEngineRef.current.initialize();
-        await accompanimentRef.current.initialize();
-        await melodyRef.current.initialize();  // Bell synth (instant, no samples)
-
-        const loadTime = Date.now() - startTime;
-        console.info('Piano samples loaded', { loadTimeMs: loadTime });
-
-        setSamplesLoaded(true);
-
-        // Set tempo BEFORE loading song (so Part is scheduled with correct timing)
-        const tempo = songData.tempo * config.gameplay.tempoMultiplier;
-        accompanimentRef.current.setTempo(tempo);
-        melodyRef.current.setTempo(tempo);
-        console.debug('Tempo set', { tempo, multiplier: config.gameplay.tempoMultiplier });
-
-        // Load song into both players
-        accompanimentRef.current.loadSong(songData);
-        melodyRef.current.loadSong(songData);
-
-        // Start both players (melody = bell guide, accompaniment = piano chords)
-        // Note: They share the same Tone.Transport so they stay in sync
-        accompanimentRef.current.start();
-        melodyRef.current.start();
-
-        // Start comparison session if in microphone mode
-        if (inputMode === 'microphone' && comparisonEngineRef.current) {
-          comparisonEngineRef.current.startSession(songData.notes);
-          setComparisonStats(null);
-          setLastComparisonResult(null);
-          console.info('[Comparison] Session started with', songData.notes.length, 'expected notes');
-        }
-
-        setIsPlaying(true);
-        setAudioStatus('Playing (melody guide + accompaniment)');
-        console.info('Playback started');
-      } else {
-        // Pause both
-        console.info('Pausing playback');
-        accompanimentRef.current.pause();
-        melodyRef.current.pause();
-        setIsPlaying(false);
-        setAudioStatus('Paused');
-      }
-    } catch (err) {
-      const error = err as Error;
-      console.error('Playback error', {
-        error: error.message,
-        stack: error.stack
-      });
-      setAudioStatus(`Error loading samples: ${err}`);
-      setSamplesLoaded(false); // Reset on error
-    }
-  };
-
-  // Stop handler
-  const handleStop = () => {
-    // End comparison session if active
-    if (comparisonEngineRef.current && inputMode === 'microphone') {
-      const finalStats = comparisonEngineRef.current.endSession();
-      setComparisonStats(finalStats);
-      console.info('[Comparison] Session ended', {
-        accuracy: (finalStats.accuracy * 100).toFixed(1) + '%',
-        hits: finalStats.hits,
-        misses: finalStats.misses,
-        extras: finalStats.extras,
-      });
-    }
-
-    if (accompanimentRef.current) {
-      accompanimentRef.current.stop();
-    }
-    if (melodyRef.current) {
-      melodyRef.current.stop();
-    }
-    currentTimeRef.current = 0; // Reset ref
-    setCurrentTime(0);
-    if (audioEngineRef.current) {
-      audioEngineRef.current.stopAll();
-    }
-    setIsPlaying(false);
-    setAudioStatus('Stopped');
-  };
-
-  // Reset handler
-  const handleReset = () => {
-    if (progressTrackerRef.current) {
-      progressTrackerRef.current.reset();
-      setStats(progressTrackerRef.current.getStats());
-    }
-    // Reset confusion matrix tracking refs
-    hitNoteIndicesRef.current.clear();
-    lastCheckedNoteIndexRef.current = -1;
-    handleStop();
-  };
-
-  // Tempo change handler
-  const handleTempoChange = (tempo: number) => {
-    if (!songData) return;
-
-    const multiplier = tempo / songData.tempo;
-    setConfig((prev) => ({
-      ...prev,
-      gameplay: { ...prev.gameplay, tempoMultiplier: multiplier },
-    }));
-
-    if (accompanimentRef.current) {
-      accompanimentRef.current.setTempo(tempo);
-    }
-    if (melodyRef.current) {
-      melodyRef.current.setTempo(tempo);
-    }
-  };
-
-  // Distribution width change handler
-  const handleDistributionChange = (width: number) => {
-    if (keyMapperRef.current) {
-      keyMapperRef.current.setDistributionWidth(width);
-    }
-
-    setConfig((prev) => ({
-      ...prev,
-      distribution: { ...prev.distribution, manualWidthOverride: width },
-    }));
-  };
-
-  // Reference volume change handler
-  const handleReferenceVolumeChange = (volume: number) => {
-    if (accompanimentRef.current) {
-      accompanimentRef.current.setVolume(volume);
-    }
-
-    setConfig((prev) => ({
-      ...prev,
-      referenceMelody: { ...prev.referenceMelody, manualVolumeOverride: volume },
-    }));
-  };
-
-  // Octave offset change handler
-  const handleOctaveOffsetChange = (offset: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      referenceMelody: { ...prev.referenceMelody, octaveOffset: offset },
-    }));
-
-    // Note: Song needs to be reloaded to apply new offset
-    // This will happen automatically when config changes trigger re-render
-    // For immediate effect during playback, user should stop and restart
-    console.info('[App] Octave offset changed', { newOffset: offset });
-  };
-
-  // Auto progression toggle handler
-  const handleAutoProgressionToggle = () => {
-    setConfig((prev) => ({
-      ...prev,
-      progression: { ...prev.progression, autoMode: !prev.progression.autoMode },
-    }));
-  };
-
-  // Song change handler
-  const handleSongChange = async (songId: string) => {
-    console.info('Changing song', { newSongId: songId });
-
-    // Stop current playback
-    handleStop();
-
-    // Update config
-    setConfig((prev) => ({
-      ...prev,
-      gameplay: { ...prev.gameplay, currentSong: songId },
-    }));
-
-    // Load new song and LRC data
-    setLoading(true);
-    try {
-      const [song, lrcData] = await Promise.all([
-        loadSong(songId),
-        getLrcData(songId),
-      ]);
-      setSongData(song);
-      setLrcLines(lrcData?.lines || []);
-      console.info('New song loaded', {
-        name: song.name,
-        noteCount: song.notes.length,
-        duration: song.duration,
-        segmentCount: song.segments.length,
-        hasLrc: !!lrcData,
-      });
-
-      // Reset segment selection
-      setCurrentSegment(null);
-      setIsSegmentLoopEnabled(false);
-
-      // Reset progress and confusion matrix tracking
-      if (progressTrackerRef.current) {
-        progressTrackerRef.current.reset();
-        setStats(progressTrackerRef.current.getStats());
-        console.info('Progress reset for new song');
-      }
-      hitNoteIndicesRef.current.clear();
-      lastCheckedNoteIndexRef.current = -1;
-
-      setCurrentSongId(songId);
-      setCurrentSongName(song.name);
-      setPracticeFrames(null); // Clear frames when switching songs
-      setPracticeAudioUrl(null);
-      setAudioStatus('Ready (click Play to load piano - may take 1-2 seconds)');
-      setLoading(false);
-    } catch (err) {
-      const error = err as Error;
-      console.error('Failed to load song', {
-        songId,
-        error: error.message,
-        stack: error.stack
-      });
-      setAudioStatus(`Error loading song: ${err}`);
-      setLoading(false);
-    }
-  };
-
-  // Song selection from search handler
-  const handleSongSelect = async (entry: SongIndexEntry) => {
-    console.info('Selecting song from search', { name: entry.name, path: entry.path });
-
-    // Stop current playback
-    handleStop();
-
-    // Load new song by path
-    setLoading(true);
-    try {
-      const song = await loadSongByPath(entry.path, entry.name);
-      setSongData(song);
-      setLrcLines([]); // Index songs don't have LRC files
-      console.info('Song loaded from index', {
-        name: song.name,
-        noteCount: song.notes.length,
-        duration: song.duration,
-      });
-
-      // Reset segment selection
-      setCurrentSegment(null);
-      setIsSegmentLoopEnabled(false);
-
-      // Reset progress and confusion matrix tracking
-      if (progressTrackerRef.current) {
-        progressTrackerRef.current.reset();
-        setStats(progressTrackerRef.current.getStats());
-      }
-      hitNoteIndicesRef.current.clear();
-      lastCheckedNoteIndexRef.current = -1;
-
-      setCurrentSongId(`path:${entry.path}`);
-      setCurrentSongName(entry.name);
-      setPracticeFrames(null);
-      setPracticeAudioUrl(null);
-      setAudioStatus('Ready (click Play to load piano)');
-      setLoading(false);
-    } catch (err) {
-      const error = err as Error;
-      console.error('Failed to load song from path', {
-        path: entry.path,
-        error: error.message,
-      });
-      setAudioStatus(`Error loading song: ${err}`);
-      setLoading(false);
-    }
-  };
-
-  // Segment change handler
-  const handleSegmentChange = (segment: SongSegment | null) => {
-    setCurrentSegment(segment);
-
-    if (accompanimentRef.current) {
-      accompanimentRef.current.setLoopSegment(segment);
-    }
-    if (melodyRef.current) {
-      melodyRef.current.setLoopSegment(segment);
-    }
-
-    // If segment selected, enable loop by default
-    if (segment) {
-      setIsSegmentLoopEnabled(true);
-    } else {
-      setIsSegmentLoopEnabled(false);
-    }
-  };
-
-  // Segment loop toggle handler
-  const handleSegmentLoopToggle = () => {
-    const newState = !isSegmentLoopEnabled;
-    setIsSegmentLoopEnabled(newState);
-
-    if (accompanimentRef.current) {
-      if (newState && currentSegment) {
-        accompanimentRef.current.setLoopSegment(currentSegment);
-      } else {
-        accompanimentRef.current.setLoopSegment(null);
-      }
-    }
-    if (melodyRef.current) {
-      if (newState && currentSegment) {
-        melodyRef.current.setLoopSegment(currentSegment);
-      } else {
-        melodyRef.current.setLoopSegment(null);
-      }
-    }
-  };
-
-  // Save config when it changes
+  // Add default G→D→A→G on mount
   useEffect(() => {
-    saveConfig(config);
+    const initial = emptyGraphState();
+    const { state } = addProgression(initial, 'Default', ['G', 'D', 'A', 'G']);
+    setGraphState(state);
+  }, []);
 
-    // Update component configs
-    if (keyMapperRef.current) keyMapperRef.current.updateConfig(config);
-    if (audioEngineRef.current) audioEngineRef.current.updateConfig(config);
-    if (accompanimentRef.current) accompanimentRef.current.updateConfig(config);
-    if (melodyRef.current) melodyRef.current.updateConfig(config);
-    if (progressTrackerRef.current) progressTrackerRef.current.updateConfig(config);
-  }, [config]);
+  const handleAddProgression = useCallback((name: string, chordsInput: string): string | null => {
+    const { chords, error: parseError } = parseChordInput(chordsInput);
+    if (parseError) return parseError;
 
-  if (loading || !songData) {
-    return (
-      <div style={{ padding: '20px', fontFamily: 'monospace', textAlign: 'center' }}>
-        <h1>Loading Music Learning App...</h1>
-        <p>{audioStatus}</p>
-      </div>
-    );
-  }
+    const { state: newState, error } = addProgression(graphState, name, chords!);
+    if (error) return error;
 
-  // Calculate visual keyboard range (song range + padding)
-  const noteRange = {
-    min: Math.max(0, songData.range.min - config.visual.keyboard.rangePadding),
-    max: Math.min(127, songData.range.max + config.visual.keyboard.rangePadding),
-  };
+    setGraphState(newState);
+    return null;
+  }, [graphState]);
 
-  const currentTempo = Math.round(songData.tempo * config.gameplay.tempoMultiplier);
-  const currentDistribution = keyMapperRef.current?.getDistributionWidth() || config.distribution.initialWidth;
-  const currentReferenceVolume = accompanimentRef.current?.getVolume() || config.referenceMelody.initialVolume;
+  const handleRemoveProgression = useCallback((name: string) => {
+    setGraphState(prev => removeProgression(prev, name));
+  }, []);
+
+  const handleEditProgression = useCallback((oldName: string, newName: string, chordsInput: string): string | null => {
+    const { chords, error: parseError } = parseChordInput(chordsInput);
+    if (parseError) return parseError;
+
+    const { state: newState, error } = editProgression(graphState, oldName, newName, chords!);
+    if (error) return error;
+
+    setGraphState(newState);
+    return null;
+  }, [graphState]);
 
   return (
-    <div style={{
-      display: 'flex',
-      fontFamily: 'monospace',
-      backgroundColor: '#1a1a1a',
-      color: '#eee',
-      height: '100vh',
-      overflow: 'hidden',
-    }}>
-      {/* Main content area */}
-      <div
-        ref={mainAreaRef}
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '15px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Compact header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px',
-          marginBottom: '10px',
-          flexShrink: 0,
-        }}>
-          <TheTighteningLogo width={200} />
-          <span style={{ color: '#888', fontSize: '12px' }}>
-            {songData.name} | {inputMode === 'midi' ? midiStatus : `Mic: ${micStatus}`} | {audioStatus}
-          </span>
-
-          {/* Input mode toggle */}
-          <button
-            onClick={toggleInputMode}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: inputMode === 'microphone' ? '#4CAF50' : '#555',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              marginLeft: 'auto',
-            }}
-            title={inputMode === 'midi' ? 'Click to use microphone' : 'Click to use MIDI keyboard'}
-          >
-            {inputMode === 'midi' ? 'MIDI' : 'MIC'}
-          </button>
-
-          {/* YouTube Import button */}
-          <button
-            onClick={() => setShowYouTubeImporter(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#FF0000',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-            title="Import notes from YouTube tutorial video"
-          >
-            YouTube
-          </button>
-
-          {/* Show detected note when using microphone */}
-          {inputMode === 'microphone' && lastDetectedNote && (
-            <span style={{
-              padding: '4px 8px',
-              backgroundColor: '#2196F3',
-              color: '#fff',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-            }}>
-              {lastDetectedNote.noteName} ({lastDetectedNote.clarity.toFixed(2)})
-            </span>
-          )}
-        </div>
-
-        {/* DEBUG: Microphone input status panel */}
-        {inputMode === 'microphone' && (
-          <div style={{
-            backgroundColor: '#333',
-            border: '2px solid #4CAF50',
-            borderRadius: '8px',
-            padding: '10px 15px',
-            marginBottom: '10px',
-            fontSize: '14px',
-          }}>
-            <div style={{ marginBottom: '8px' }}>
-              <strong style={{ color: '#4CAF50' }}>MICROPHONE MODE ACTIVE</strong>
-              <span style={{ marginLeft: '20px', color: '#aaa' }}>
-                Status: <span style={{ color: micStatus === 'listening' ? '#4CAF50' : '#FFC107' }}>{micStatus}</span>
-              </span>
-              <span style={{ marginLeft: '20px', color: '#aaa' }}>
-                Detected: {lastDetectedNote ? (
-                  <span style={{ color: '#2196F3', fontWeight: 'bold' }}>
-                    {lastDetectedNote.noteName} (MIDI {lastDetectedNote.midi}) - clarity: {lastDetectedNote.clarity.toFixed(2)}
-                  </span>
-                ) : (
-                  <span style={{ color: '#666' }}>None (play a note!)</span>
-                )}
-              </span>
-            </div>
-
-            {/* Last comparison result */}
-            {lastComparisonResult && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#aaa' }}>Last match: </span>
-                <span style={{
-                  color: lastComparisonResult.type === 'hit' ? '#4CAF50' :
-                         lastComparisonResult.type === 'early' || lastComparisonResult.type === 'late' ? '#FFC107' :
-                         lastComparisonResult.type === 'miss' ? '#F44336' :
-                         lastComparisonResult.type === 'extra' ? '#FF9800' : '#F44336',
-                  fontWeight: 'bold',
-                }}>
-                  {lastComparisonResult.type.toUpperCase()}
-                </span>
-                {lastComparisonResult.expectedNote && (
-                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
-                    Expected: {lastComparisonResult.expectedNote.name}
-                  </span>
-                )}
-                {lastComparisonResult.timingDiffMs !== null && (
-                  <span style={{ marginLeft: '10px', color: '#aaa' }}>
-                    Timing: {lastComparisonResult.timingDiffMs > 0 ? '+' : ''}{lastComparisonResult.timingDiffMs.toFixed(0)}ms
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Comparison stats */}
-            {comparisonStats && (
-              <div style={{
-                display: 'flex',
-                gap: '20px',
-                flexWrap: 'wrap',
-                paddingTop: '8px',
-                borderTop: '1px solid #555',
-              }}>
-                <span>
-                  <span style={{ color: '#aaa' }}>Accuracy: </span>
-                  <span style={{
-                    color: comparisonStats.accuracy >= 0.8 ? '#4CAF50' :
-                           comparisonStats.accuracy >= 0.5 ? '#FFC107' : '#F44336',
-                    fontWeight: 'bold',
-                  }}>
-                    {(comparisonStats.accuracy * 100).toFixed(0)}%
-                  </span>
-                </span>
-                <span style={{ color: '#4CAF50' }}>Hits: {comparisonStats.hits}</span>
-                <span style={{ color: '#FFC107' }}>Early: {comparisonStats.earlyNotes}</span>
-                <span style={{ color: '#FFC107' }}>Late: {comparisonStats.lateNotes}</span>
-                <span style={{ color: '#F44336' }}>Wrong: {comparisonStats.wrongPitch + comparisonStats.wrongOctave}</span>
-                <span style={{ color: '#F44336' }}>Misses: {comparisonStats.misses}</span>
-                <span style={{ color: '#FF9800' }}>Extras: {comparisonStats.extras}</span>
-                <span style={{ color: '#aaa' }}>
-                  Avg timing: {comparisonStats.averageTimingDiffMs > 0 ? '+' : ''}{comparisonStats.averageTimingDiffMs.toFixed(0)}ms
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Practice visualization - show frames if available, otherwise falling notes */}
-        <div style={{ flex: 1, minHeight: '200px', marginBottom: '0' }}>
-          {/* Debug: ALWAYS show frame status */}
-          <div style={{
-            position: 'absolute',
-            top: 60,
-            right: 360,
-            backgroundColor: practiceFrames && practiceFrames.size > 0 ? '#9C27B0' : '#F44336',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            fontSize: '14px',
-            color: '#fff',
-            zIndex: 100,
-            fontWeight: 'bold',
-          }}>
-            {practiceFrames ? `FRAMES: ${practiceFrames.size}` : 'NO FRAMES'}
-          </div>
-          {practiceFrames && practiceFrames.size > 0 ? (
-            <PracticeFrameDisplay
-              notes={songData.notes}
-              frames={practiceFrames}
-              audioBlobUrl={practiceAudioUrl}
-              audioStartTime={practiceStartTime}
-              width={mainAreaWidth - 30}
-              height={Math.max(300, window.innerHeight - 450)}
-            />
-          ) : (
-            <FallingNotesCanvas
-              notes={songData.notes}
-              currentTime={currentTime}
-              distributionWidth={currentDistribution}
-              noteRange={noteRange}
-              config={config}
-              width={mainAreaWidth - 30}
-              height={Math.max(300, window.innerHeight - 450)}
-              lookAhead={3}
-              segments={songData.segments}
-              currentSegment={currentSegment}
-            />
-          )}
-        </div>
-
-        {/* Visual keyboard - notes land directly on keys */}
-        <div style={{ flexShrink: 0 }}>
-          <VisualKeyboard
-            noteRange={noteRange}
-            pressedKeys={pressedKeys}
-            currentCorrectNote={currentCorrectNote}
-            distributionWidth={currentDistribution}
-            config={config}
-            width={mainAreaWidth - 30}
-            height={180}
+    <div className="app">
+      <div className="app-header">
+        <h1>Chord Walk</h1>
+        <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
+      </div>
+      <div className="app-body">
+        <div className="sidebar">
+          <ProgressionInput
+            onAdd={handleAddProgression}
+            onRemove={handleRemoveProgression}
+            onEdit={handleEditProgression}
+            progressions={graphState.progressions}
           />
+          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
         </div>
-
-        {/* Lyrics display */}
-        <div style={{ flexShrink: 0, marginTop: '10px' }}>
-          <LyricsDisplay
-            segments={songData.segments}
-            currentTime={currentTime}
-            width={mainAreaWidth - 30}
-            lrcLines={lrcLines}
+        <div className="graph-area">
+          <ChordGraph
+            graphState={graphState}
+            matchedChords={matchedChords}
+            positionsRef={positionsRef}
           />
         </div>
       </div>
-
-      {/* Collapsible sidebar */}
-      <div style={{
-        width: sidebarCollapsed ? '50px' : '350px',
-        backgroundColor: '#2a2a2a',
-        borderLeft: '2px solid #333',
-        transition: 'width 0.2s ease',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        {/* Sidebar toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          style={{
-            padding: '15px',
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '20px',
-            textAlign: 'center',
-          }}
-          title={sidebarCollapsed ? 'Expand controls' : 'Collapse controls'}
-        >
-          {sidebarCollapsed ? '◀' : '▶'}
-        </button>
-
-        {/* Controls content */}
-        {!sidebarCollapsed && (
-          <div style={{ overflow: 'auto', flex: 1 }}>
-            <PracticeControls
-              isPlaying={isPlaying}
-              onPlayPause={handlePlayPause}
-              onStop={handleStop}
-              onReset={handleReset}
-              tempo={currentTempo}
-              onTempoChange={handleTempoChange}
-              distributionWidth={currentDistribution}
-              maxDistributionWidth={config.distribution.initialWidth}
-              onDistributionChange={handleDistributionChange}
-              referenceVolume={currentReferenceVolume}
-              onReferenceVolumeChange={handleReferenceVolumeChange}
-              octaveOffset={config.referenceMelody.octaveOffset}
-              onOctaveOffsetChange={handleOctaveOffsetChange}
-              autoProgression={config.progression.autoMode}
-              onAutoProgressionToggle={handleAutoProgressionToggle}
-              stats={stats}
-              availableSongs={Object.keys(SONG_LIBRARY)}
-              currentSong={currentSongId}
-              currentSongName={currentSongName || songData?.name || 'Unknown'}
-              onSongChange={handleSongChange}
-              onSongSelect={handleSongSelect}
-              segments={songData?.segments || []}
-              currentSegment={currentSegment}
-              onSegmentChange={handleSegmentChange}
-              isSegmentLoopEnabled={isSegmentLoopEnabled}
-              onSegmentLoopToggle={handleSegmentLoopToggle}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* YouTube Importer Modal */}
-      {showYouTubeImporter && (
-        <YouTubeImporter
-          onNotesExtracted={(notes, videoInfo) => {
-            console.log('[App] YouTube notes extracted', { count: notes.length, videoTitle: videoInfo.title });
-            setYoutubeExtractedNotes(notes);
-          }}
-          onPassageSelected={(passage, videoInfo) => {
-            console.log('[App] YouTube passage selected', {
-              start: passage.startTime,
-              end: passage.endTime,
-              noteCount: passage.notes.length,
-              frameCount: passage.frames?.size || 0,
-              hasFrames: !!passage.frames,
-              frameType: passage.frames ? typeof passage.frames : 'undefined',
-              isMap: passage.frames instanceof Map,
-              videoTitle: videoInfo.title,
-            });
-
-            // Convert DetectedNoteEvent[] to MelodyNote[] for use as practice target
-            const melodyNotes: MelodyNote[] = passage.notes.map((note) => ({
-              midi: note.midi,
-              name: note.noteName,
-              time: note.startTime - passage.startTime, // Normalize to start at 0
-              duration: note.duration,
-              velocity: 80, // Default velocity since we don't have this from audio
-            }));
-
-            if (melodyNotes.length === 0) {
-              console.error('[App] No notes in passage!');
-              return;
-            }
-
-            // Store frames for practice visualization
-            if (passage.frames && passage.frames.size > 0) {
-              setPracticeFrames(passage.frames);
-              console.log('[App] Stored', passage.frames.size, 'frames for practice');
-            } else {
-              setPracticeFrames(null);
-            }
-
-            // Store audio for practice playback
-            if (passage.audioBlobUrl) {
-              setPracticeAudioUrl(passage.audioBlobUrl);
-              setPracticeStartTime(passage.startTime);
-              console.log('[App] Stored audio for practice', { startTime: passage.startTime });
-            } else {
-              setPracticeAudioUrl(null);
-            }
-
-            // Create a custom song data from the passage (matching SongData interface)
-            const customSongData: SongData = {
-              name: `${videoInfo.title} (Passage)`,
-              tempo: 120, // Default tempo
-              timeSignature: { numerator: 4, denominator: 4 },
-              duration: passage.endTime - passage.startTime,
-              notes: melodyNotes,
-              segments: [],
-              range: {
-                min: Math.min(...melodyNotes.map(n => n.midi)),
-                max: Math.max(...melodyNotes.map(n => n.midi)),
-              },
-            };
-
-            // Load this as the current song
-            setSongData(customSongData);
-            setCurrentSongName(customSongData.name);
-            setShowYouTubeImporter(false);
-
-            console.log('[App] Custom song loaded from YouTube passage', customSongData);
-          }}
-          onClose={() => setShowYouTubeImporter(false)}
-        />
-      )}
     </div>
   );
 }
-
-export default App;

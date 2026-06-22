@@ -4,7 +4,6 @@ import electron from 'vite-plugin-electron/simple';
 import renderer from 'vite-plugin-electron-renderer';
 import path from 'path';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
@@ -27,8 +26,8 @@ export default defineConfig({
     renderer()
   ],
   server: {
-    port: 5173,
-    strictPort: true
+    port: 5174,
+    strictPort: false
   },
   build: {
     outDir: 'dist'
