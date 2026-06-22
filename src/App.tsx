@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { GraphState, SaveData } from './types/index';
+import type { GraphState, SaveData, AppMode, WalkState } from './types/index';
 import { parseChordInput } from './core/chordParser';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
 import { detectChords } from './core/chordDetection';
@@ -7,11 +7,23 @@ import ChordGraph from './components/ChordGraph';
 import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
+import WalkMode from './components/WalkMode';
+import { getTheoryChordNodes } from './core/chordPathfinder';
+import CircleOfFifths from './components/CircleOfFifths';
 
 export default function App() {
   const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
   const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
   const [matchedChords, setMatchedChords] = useState<string[]>([]);
+  const [mode, setMode] = useState<AppMode>('home');
+  const [walkState, setWalkState] = useState<WalkState>({
+    fromChord: '',
+    toChord: '',
+    options: { relative: true, iiVI: false, leadingTone: false },
+    path: null,
+    currentStep: 0,
+    completed: false,
+  });
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
     message: 'Requesting MIDI access...',
@@ -141,13 +153,17 @@ export default function App() {
   }, []);
 
   // Chord detection with 50ms debounce
+  // In Walk mode, detect against all 36 theory chords; in Jam mode, only graph nodes
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
     debounceRef.current = setTimeout(() => {
-      const matches = detectChords(heldNotes, graphState.nodes);
+      const detectionNodes = mode === 'walk'
+        ? getTheoryChordNodes() as unknown as Map<string, import('./types/index').GraphNode>
+        : graphState.nodes;
+      const matches = detectChords(heldNotes, detectionNodes);
       setMatchedChords(matches);
     }, 50);
 
@@ -156,7 +172,27 @@ export default function App() {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [heldNotes, graphState.nodes]);
+  }, [heldNotes, graphState.nodes, mode]);
+
+  // Walk mode: advance progress when matched chord matches current step
+  useEffect(() => {
+    if (mode !== 'walk') return;
+    if (!walkState.path || walkState.completed) return;
+
+    const expected = walkState.path.chordNames[walkState.currentStep];
+    if (!expected) return;
+
+    // matchedChords now contains theory chord names (same naming as pathfinder)
+    if (matchedChords.includes(expected)) {
+      const nextStep = walkState.currentStep + 1;
+      const isComplete = nextStep >= walkState.path.chordNames.length;
+      setWalkState(prev => ({
+        ...prev,
+        currentStep: nextStep,
+        completed: isComplete,
+      }));
+    }
+  }, [matchedChords, mode, walkState.path, walkState.currentStep, walkState.completed]);
 
   // Add default G→D→A→G on mount
   useEffect(() => {
@@ -191,28 +227,91 @@ export default function App() {
     return null;
   }, [graphState]);
 
+  // Walk path data for circle of fifths overlay
+  const walkPath = mode === 'walk' && walkState.path
+    ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes, currentStep: walkState.currentStep }
+    : undefined;
+
+  if (mode === 'home') {
+    return (
+      <div className="app">
+        <div className="app-header">
+          <h1>Chord Walk</h1>
+          <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
+        </div>
+        <div className="landing">
+          <div className="landing-hero">
+            <p className="landing-subtitle">MIDI chord exploration</p>
+          </div>
+          <div className="landing-cards">
+            <button className="landing-card" onClick={() => setMode('jam')}>
+              <div className="landing-card-icon">&#9835;</div>
+              <h2>Jam</h2>
+              <p>Build chord progressions and see them as a force-directed graph. Play chords on MIDI and watch them light up in real time.</p>
+            </button>
+            <button className="landing-card" onClick={() => setMode('walk')}>
+              <div className="landing-card-icon">&#10132;</div>
+              <h2>Walk</h2>
+              <p>Pick two chords and find the shortest harmonic path between them. Then play the path on MIDI to practice the voice leading.</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="app-header">
-        <h1>Chord Walk</h1>
+        <h1 className="app-title-link" onClick={() => setMode('home')}>Chord Walk</h1>
+        <div className="mode-toggle">
+          <button
+            className={`mode-btn ${mode === 'jam' ? 'mode-btn-active' : ''}`}
+            onClick={() => setMode('jam')}
+          >
+            Jam
+          </button>
+          <button
+            className={`mode-btn ${mode === 'walk' ? 'mode-btn-active' : ''}`}
+            onClick={() => setMode('walk')}
+          >
+            Walk
+          </button>
+        </div>
         <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
       </div>
       <div className="app-body">
         <div className="sidebar">
-          <ProgressionInput
-            onAdd={handleAddProgression}
-            onRemove={handleRemoveProgression}
-            onEdit={handleEditProgression}
-            progressions={graphState.progressions}
-          />
-          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
+          {mode === 'jam' ? (
+            <>
+              <ProgressionInput
+                onAdd={handleAddProgression}
+                onRemove={handleRemoveProgression}
+                onEdit={handleEditProgression}
+                progressions={graphState.progressions}
+              />
+              <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
+            </>
+          ) : (
+            <>
+              <WalkMode walkState={walkState} onWalkStateChange={setWalkState} />
+              <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
+            </>
+          )}
         </div>
         <div className="graph-area">
-          <ChordGraph
-            graphState={graphState}
-            matchedChords={matchedChords}
-            positionsRef={positionsRef}
-          />
+          {mode === 'jam' ? (
+            <ChordGraph
+              graphState={graphState}
+              matchedChords={matchedChords}
+              positionsRef={positionsRef}
+            />
+          ) : (
+            <CircleOfFifths
+              walkPath={walkPath}
+              matchedChords={matchedChords}
+            />
+          )}
         </div>
       </div>
     </div>

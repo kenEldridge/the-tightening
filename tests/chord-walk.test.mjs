@@ -591,6 +591,354 @@ section('MIDI note name conversion');
 }
 
 // ═══════════════════════════════════════════════════════════
+// Chord Pathfinder (replicated from src/core/chordPathfinder.ts)
+// ═══════════════════════════════════════════════════════════
+
+const FIFTHS_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+
+function chordNameToNodeId(chordName) {
+  const def = getChordDefinition(chordName);
+  const pc = noteToPitchClass(def.root);
+  if (pc < 0) return null;
+
+  let quality = def.quality;
+  if (quality === 'dom7' || quality === 'maj7' || quality === 'sus2' || quality === 'sus4') {
+    quality = 'major';
+  } else if (quality === 'min7') {
+    quality = 'minor';
+  } else if (quality === 'aug') {
+    return null;
+  }
+
+  if (quality === 'major') return `key-${FIFTHS_ORDER.indexOf(pc)}`;
+  if (quality === 'minor') {
+    const relMajPc = (pc + 3) % 12;
+    return `minor-${FIFTHS_ORDER.indexOf(relMajPc)}`;
+  }
+  if (quality === 'dim') return `dim-${FIFTHS_ORDER.indexOf((pc + 1) % 12)}`;
+  return null;
+}
+
+function nodeIdToChordName(nodeId) {
+  const [prefix, idxStr] = nodeId.split('-');
+  const i = parseInt(idxStr, 10);
+  const fifthsPc = FIFTHS_ORDER[i];
+  if (prefix === 'key') return NOTE_NAMES[fifthsPc];
+  if (prefix === 'minor') {
+    const rootPc = (fifthsPc + 9) % 12;
+    return NOTE_NAMES[rootPc] + 'm';
+  }
+  if (prefix === 'dim') {
+    const rootPc = (fifthsPc + 11) % 12;
+    return NOTE_NAMES[rootPc] + 'dim';
+  }
+  return nodeId;
+}
+
+function buildPathGraph(options) {
+  const adj = new Map();
+  for (let i = 0; i < 12; i++) {
+    adj.set(`key-${i}`, []);
+    adj.set(`minor-${i}`, []);
+    adj.set(`dim-${i}`, []);
+  }
+
+  // Dom7 resolution (always on)
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    const targetPc = (rootPc + 5) % 12;
+    const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
+    adj.get(`key-${i}`).push({ target: `key-${targetMajPos}`, weight: 1, type: 'dom7' });
+
+    const minorMajPc = (targetPc + 3) % 12;
+    const targetMinPos = FIFTHS_ORDER.indexOf(minorMajPc);
+    adj.get(`key-${i}`).push({ target: `minor-${targetMinPos}`, weight: 1, type: 'dom7' });
+
+    const minorRootPc = (rootPc + 9) % 12;
+    const minorTargetPc = (minorRootPc + 5) % 12;
+    const minorTargetMajPos = FIFTHS_ORDER.indexOf(minorTargetPc);
+    adj.get(`minor-${i}`).push({ target: `key-${minorTargetMajPos}`, weight: 1, type: 'dom7' });
+
+    const minorTargetMinMajPc = (minorTargetPc + 3) % 12;
+    const minorTargetMinPos = FIFTHS_ORDER.indexOf(minorTargetMinMajPc);
+    adj.get(`minor-${i}`).push({ target: `minor-${minorTargetMinPos}`, weight: 1, type: 'dom7' });
+
+    const dimRootPc = (rootPc + 11) % 12;
+    const dimTargetPc = (dimRootPc + 5) % 12;
+    const dimTargetMajPos = FIFTHS_ORDER.indexOf(dimTargetPc);
+    adj.get(`dim-${i}`).push({ target: `key-${dimTargetMajPos}`, weight: 1, type: 'dom7' });
+
+    const dimTargetMinMajPc = (dimTargetPc + 3) % 12;
+    const dimTargetMinPos = FIFTHS_ORDER.indexOf(dimTargetMinMajPc);
+    adj.get(`dim-${i}`).push({ target: `minor-${dimTargetMinPos}`, weight: 1, type: 'dom7' });
+  }
+
+  if (options.relative) {
+    for (let i = 0; i < 12; i++) {
+      adj.get(`key-${i}`).push({ target: `minor-${i}`, weight: 0.5, type: 'relative' });
+      adj.get(`minor-${i}`).push({ target: `key-${i}`, weight: 0.5, type: 'relative' });
+    }
+  }
+
+  if (options.iiVI) {
+    for (let i = 0; i < 12; i++) {
+      const minorRootPc = (FIFTHS_ORDER[i] + 9) % 12;
+      const targetPc = (minorRootPc + 10) % 12;
+      const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
+      adj.get(`minor-${i}`).push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
+    }
+  }
+
+  if (options.leadingTone) {
+    for (let i = 0; i < 12; i++) {
+      const dimRootPc = (FIFTHS_ORDER[i] + 11) % 12;
+      const resolvePc = (dimRootPc + 1) % 12;
+      const majPos = FIFTHS_ORDER.indexOf(resolvePc);
+      adj.get(`dim-${i}`).push({ target: `key-${majPos}`, weight: 1, type: 'leadingTone' });
+
+      const minMajPc = (resolvePc + 3) % 12;
+      const minPos = FIFTHS_ORDER.indexOf(minMajPc);
+      adj.get(`dim-${i}`).push({ target: `minor-${minPos}`, weight: 1, type: 'leadingTone' });
+    }
+  }
+
+  return adj;
+}
+
+function findShortestPath(adj, fromId, toId) {
+  if (fromId === toId) return { path: [fromId], edgeTypes: [], totalWeight: 0 };
+
+  const dist = new Map();
+  const prev = new Map();
+  const visited = new Set();
+
+  for (const key of adj.keys()) {
+    dist.set(key, Infinity);
+    prev.set(key, null);
+  }
+  dist.set(fromId, 0);
+
+  const queue = [{ id: fromId, d: 0 }];
+
+  while (queue.length > 0) {
+    let minIdx = 0;
+    for (let i = 1; i < queue.length; i++) {
+      if (queue[i].d < queue[minIdx].d) minIdx = i;
+    }
+    const { id: u, d: uDist } = queue.splice(minIdx, 1)[0];
+
+    if (visited.has(u)) continue;
+    visited.add(u);
+    if (u === toId) break;
+
+    const neighbors = adj.get(u);
+    if (!neighbors) continue;
+    for (const edge of neighbors) {
+      if (visited.has(edge.target)) continue;
+      const newDist = uDist + edge.weight;
+      if (newDist < (dist.get(edge.target) ?? Infinity)) {
+        dist.set(edge.target, newDist);
+        prev.set(edge.target, { node: u, edgeType: edge.type });
+        queue.push({ id: edge.target, d: newDist });
+      }
+    }
+  }
+
+  if (dist.get(toId) === Infinity) return null;
+
+  const path = [];
+  const edgeTypes = [];
+  let cur = toId;
+  while (cur) {
+    path.unshift(cur);
+    const p = prev.get(cur);
+    if (p) {
+      edgeTypes.unshift(p.edgeType);
+      cur = p.node;
+    } else {
+      break;
+    }
+  }
+
+  return { path, edgeTypes, totalWeight: dist.get(toId) };
+}
+
+function findChordPath(from, to, options) {
+  const fromId = chordNameToNodeId(from);
+  const toId = chordNameToNodeId(to);
+  if (!fromId || !toId) return null;
+
+  const graph = buildPathGraph(options);
+  const result = findShortestPath(graph, fromId, toId);
+  if (!result) return null;
+
+  const chordNames = result.path.map(nodeIdToChordName);
+  return { chordNames, edgeTypes: result.edgeTypes, totalWeight: result.totalWeight };
+}
+
+// ═══════════════════════════════════════════════════════════
+// Pathfinder Tests
+// ═══════════════════════════════════════════════════════════
+
+section('Node ID mapping — chord name to node ID');
+
+{
+  assertEq(chordNameToNodeId('C'), 'key-0', 'C -> key-0');
+  assertEq(chordNameToNodeId('G'), 'key-1', 'G -> key-1');
+  assertEq(chordNameToNodeId('D'), 'key-2', 'D -> key-2');
+  assertEq(chordNameToNodeId('F'), 'key-11', 'F -> key-11');
+}
+
+{
+  // Am: root A (pc 9), relative major C (pc 0), FIFTHS_ORDER.indexOf(0) = 0
+  assertEq(chordNameToNodeId('Am'), 'minor-0', 'Am -> minor-0');
+  // Em: root E (pc 4), relative major G (pc 7), FIFTHS_ORDER.indexOf(7) = 1
+  assertEq(chordNameToNodeId('Em'), 'minor-1', 'Em -> minor-1');
+  // Dm: root D (pc 2), relative major F (pc 5), FIFTHS_ORDER.indexOf(5) = 11
+  assertEq(chordNameToNodeId('Dm'), 'minor-11', 'Dm -> minor-11');
+}
+
+{
+  // Bdim: root B (pc 11), (11+1)%12 = 0, FIFTHS_ORDER.indexOf(0) = 0
+  assertEq(chordNameToNodeId('Bdim'), 'dim-0', 'Bdim -> dim-0');
+  // F#dim: root F# (pc 6), (6+1)%12 = 7, FIFTHS_ORDER.indexOf(7) = 1
+  assertEq(chordNameToNodeId('F#dim'), 'dim-1', 'F#dim -> dim-1');
+}
+
+section('Node ID mapping — downgrade extended chords');
+
+{
+  // G7 (dom7) -> major G -> key-1
+  assertEq(chordNameToNodeId('G7'), 'key-1', 'G7 downgrades to key-1');
+  // Cmaj7 -> major C -> key-0
+  assertEq(chordNameToNodeId('Cmaj7'), 'key-0', 'Cmaj7 downgrades to key-0');
+  // Am7 (min7) -> minor A -> minor-0
+  assertEq(chordNameToNodeId('Am7'), 'minor-0', 'Am7 downgrades to minor-0');
+  // Gsus4 -> major G -> key-1
+  assertEq(chordNameToNodeId('Gsus4'), 'key-1', 'Gsus4 downgrades to key-1');
+  // Caug -> null (rejected)
+  assertEq(chordNameToNodeId('Caug'), null, 'Caug rejected');
+}
+
+section('Node ID mapping — node ID to chord name');
+
+{
+  assertEq(nodeIdToChordName('key-0'), 'C', 'key-0 -> C');
+  assertEq(nodeIdToChordName('key-1'), 'G', 'key-1 -> G');
+  assertEq(nodeIdToChordName('minor-0'), 'Am', 'minor-0 -> Am');
+  assertEq(nodeIdToChordName('minor-1'), 'Em', 'minor-1 -> Em');
+  assertEq(nodeIdToChordName('dim-0'), 'Bdim', 'dim-0 -> Bdim');
+  assertEq(nodeIdToChordName('dim-1'), 'F#dim', 'dim-1 -> F#dim');
+}
+
+section('Node ID mapping — round-trip');
+
+{
+  const testChords = ['C', 'G', 'D', 'Am', 'Em', 'Bdim', 'F#dim', 'F', 'Bb'];
+  for (const chord of testChords) {
+    // Bb is Bb -> noteToPitchClass('Bb') maps through FLAT_TO_SHARP to A# (pc 10)
+    // But nodeIdToChordName uses NOTE_NAMES which has 'A#' not 'Bb'
+    // So round-trip for flats won't match exactly — that's expected
+    if (chord === 'Bb') {
+      const id = chordNameToNodeId(chord);
+      const back = nodeIdToChordName(id);
+      // Bb -> A# is expected since NOTE_NAMES uses sharps
+      assertEq(back, 'A#', 'Bb round-trips to A# (sharp equivalent)');
+    } else {
+      const id = chordNameToNodeId(chord);
+      const back = nodeIdToChordName(id);
+      assertEq(back, chord, `${chord} round-trips through node ID`);
+    }
+  }
+}
+
+section('Pathfinder — dom7 only: C to Bb');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  const result = findChordPath('C', 'Bb', opts);
+  assert(result !== null, 'Path found C -> Bb');
+  // C -> F -> Bb (two dom7 steps: C is V of F, F is V of Bb)
+  // But NOTE_NAMES uses A# not Bb. The "to" chord Bb maps to same node as A#.
+  // nodeIdToChordName returns A# for that node.
+  assertEq(result.chordNames, ['C', 'F', 'A#'], 'C -> F -> A# (Bb) via dom7');
+  assertEq(result.edgeTypes, ['dom7', 'dom7'], 'Two dom7 edges');
+  assertEq(result.totalWeight, 2, 'Total weight 2');
+}
+
+section('Pathfinder — relative: C to Am');
+
+{
+  const opts = { relative: true, iiVI: false, leadingTone: false };
+  const result = findChordPath('C', 'Am', opts);
+  assert(result !== null, 'Path found C -> Am');
+  assertEq(result.chordNames, ['C', 'Am'], 'C -> Am direct via relative');
+  assertEq(result.edgeTypes, ['relative'], 'One relative edge');
+  assertEq(result.totalWeight, 0.5, 'Weight 0.5');
+}
+
+section('Pathfinder — dom7 only: C to Am (longer path)');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  const result = findChordPath('C', 'Am', opts);
+  assert(result !== null, 'Path found C -> Am without relative');
+  // Should be longer than 1 step since relative is off
+  assert(result.chordNames.length > 2, 'Longer path without relative');
+}
+
+section('Pathfinder — leading-tone: Bdim to C');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: true };
+  const result = findChordPath('Bdim', 'C', opts);
+  assert(result !== null, 'Path found Bdim -> C');
+  assertEq(result.chordNames, ['Bdim', 'C'], 'Bdim -> C direct via leading-tone');
+  assertEq(result.edgeTypes, ['leadingTone'], 'One leadingTone edge');
+  assertEq(result.totalWeight, 1, 'Weight 1');
+}
+
+section('Pathfinder — same chord');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  const result = findChordPath('G', 'G', opts);
+  assert(result !== null, 'Same chord path exists');
+  assertEq(result.chordNames, ['G'], 'Single node path');
+  assertEq(result.edgeTypes, [], 'No edges');
+  assertEq(result.totalWeight, 0, 'Zero weight');
+}
+
+section('Pathfinder — ii-V-I shortcut');
+
+{
+  const opts = { relative: false, iiVI: true, leadingTone: false };
+  // Dm is ii of C. With iiVI on, Dm -> C should be direct (weight 0.5)
+  const result = findChordPath('Dm', 'C', opts);
+  assert(result !== null, 'Path found Dm -> C');
+  assertEq(result.chordNames, ['Dm', 'C'], 'Dm -> C direct via ii-V-I');
+  assertEq(result.edgeTypes, ['iiVI'], 'One iiVI edge');
+  assertEq(result.totalWeight, 0.5, 'Weight 0.5');
+}
+
+section('Pathfinder — graph has 36 nodes');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  const graph = buildPathGraph(opts);
+  assertEq(graph.size, 36, '36 nodes in graph');
+  let keyCount = 0, minorCount = 0, dimCount = 0;
+  for (const key of graph.keys()) {
+    if (key.startsWith('key-')) keyCount++;
+    else if (key.startsWith('minor-')) minorCount++;
+    else if (key.startsWith('dim-')) dimCount++;
+  }
+  assertEq(keyCount, 12, '12 major nodes');
+  assertEq(minorCount, 12, '12 minor nodes');
+  assertEq(dimCount, 12, '12 dim nodes');
+}
+
+// ═══════════════════════════════════════════════════════════
 // Summary
 // ═══════════════════════════════════════════════════════════
 

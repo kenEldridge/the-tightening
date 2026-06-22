@@ -65,6 +65,32 @@ export interface SaveData {
   nodePositions?: Record<string, { x: number; y: number }>;
 }
 
+// Walk mode types
+export type AppMode = 'home' | 'jam' | 'walk';
+
+export interface WalkState {
+  fromChord: string;
+  toChord: string;
+  options: {
+    relative: boolean;
+    iiVI: boolean;
+    leadingTone: boolean;
+  };
+  /** Current path result (null if not yet computed or no path exists) */
+  path: WalkPathResult | null;
+  /** Index of the step the player is currently on (0 = first chord) */
+  currentStep: number;
+  /** Whether the full path has been completed */
+  completed: boolean;
+}
+
+export interface WalkPathResult {
+  chordNames: string[];
+  edgeTypes: string[];  // EdgeType values from chordPathfinder
+  explanations: string[];
+  totalWeight: number;
+}
+
 // Type for the Electron API exposed via preload
 export interface ElectronAPI {
   platform: string;
