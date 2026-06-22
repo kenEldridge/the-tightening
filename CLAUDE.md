@@ -4,7 +4,7 @@
 Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 
 - **Jam mode**: Build chord progressions, visualize as force-directed graph, detect chords via MIDI in real time
-- **Walk mode** (added v2.1.0): Pick two chords, find shortest harmonic path via Dijkstra over 36-node theory graph, play the path on MIDI with progress tracking
+- **Walk mode** (v2.1.0, enhanced v2.2.0): Pick two chords, find shortest harmonic path via Dijkstra over 36-node theory graph, play the path on MIDI with progress tracking. Return trip toggle for cyclical paths. Endless mode auto-picks random next destination after completion.
 
 ## Architecture
 
@@ -31,9 +31,9 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 
 ### Components (`src/components/`)
 - `ChordGraph.tsx` — Jam mode force-directed SVG graph with drag, MIDI highlighting
-- `CircleOfFifths.tsx` — Walk mode visualization, 3 concentric rings (Major/Minor/Dim), triad note spellings in each node, path highlighting with color-coded edges, MIDI match glow
+- `CircleOfFifths.tsx` — Walk mode visualization, 3 concentric rings (Major R=240, Minor R=180, Dim R=120), triad note spellings in each node, path highlighting with color-coded edges (amber=dom7, purple=relative, green=iiVI, red=leadingTone), MIDI match glow (blue=any, green=correct step). SVG uses viewBox for responsive scaling to any screen size.
 - `PathStrip.tsx` — horizontal step-by-step path display in sidebar
-- `WalkMode.tsx` — Walk sidebar panel: From/To dropdowns (all 36 chords), edge type toggles, path display
+- `WalkMode.tsx` — Walk sidebar panel: From/To dropdowns (all 36 chords), edge type toggles, return trip toggle, endless mode toggle, paths completed counter, path display
 - `ProgressionInput.tsx` — Jam mode progression entry
 - `HeldNotes.tsx` — shows currently held MIDI notes and matched chords
 - `MidiStatus.tsx` — MIDI connection indicator
@@ -55,13 +55,22 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `npm run build` — TypeScript + Vite production build
 - `node tests/chord-walk.test.mjs` — 144 tests (pure JS, no test framework, replicates core logic)
 - CI: GitHub Actions on push to master → builds Windows installer → creates GitHub release
-- Remote: `the-tightening` (github.com/kenEldridge/the-tightening.git)
+- Remote name: `the-tightening` (not `origin`) — github.com/kenEldridge/the-tightening.git
+- Release tags: `v{version}-build.{run_number}` (e.g. `v2.2.0-build.42`)
 
 ## Related project
 - `the-derple-dex` (sibling dir) — Astro blog with Circle of Fifths component. The pathfinding algorithm was ported from `CircleOfFifths.astro` lines ~1255-1374. That source only had dom7/relative/iiVI edges; leading-tone was added fresh here.
 
+### Walk mode features (v2.2.0)
+- **Return trip**: toggle appends reverse path B→A after outbound A→B, sharing the middle chord
+- **Endless mode**: after path completion, waits 1.5s then auto-picks random next destination. Last chord becomes next `fromChord`. Tracks `pathsCompleted` count.
+- Both toggles complement: return trip + endless = always depart from same home base. Endless alone = drift around the circle.
+- `WalkState.options` has: `relative`, `iiVI`, `leadingTone`, `returnTrip`, `endless`
+- Endless logic lives in App.tsx as a useEffect watching `walkState.completed` + `walkState.options.endless`
+- Return trip concatenation lives in WalkMode.tsx's `updateAndFindPath`
+
 ## Known limitations / future work
 - ii-V-I weight is 0.5 (matches derple source); reviewed theory design suggested 1.9 for "macro step" semantics — revisit later
-- No timer/scoring gamification yet (v1 is path display + MIDI progress only)
 - aug chords can't map into the 36-node pathfinder
 - Walk mode doesn't interact with the Jam graph at all (separate views)
+- Could add multi-stop waypoints (A→B→C) as a generalization of return trip
