@@ -206,37 +206,42 @@ export default function App() {
     const lastChord = walkState.path.chordNames[walkState.path.chordNames.length - 1];
 
     const timer = setTimeout(() => {
-      // Pick a random chord that's different from the last one
-      const candidates = allNames.filter(c => c !== lastChord);
-      const nextTo = candidates[Math.floor(Math.random() * candidates.length)];
       const opts = walkState.options;
+      // Shuffle candidates and try until we find a reachable one
+      // (dim chords are unreachable — no inbound edges)
+      const candidates = allNames.filter(c => c !== lastChord);
+      for (let attempt = 0; attempt < candidates.length; attempt++) {
+        const idx = Math.floor(Math.random() * candidates.length);
+        const nextTo = candidates[idx];
 
-      const outbound = findChordPath(lastChord, nextTo, opts);
-      if (!outbound) return;
+        const outbound = findChordPath(lastChord, nextTo, opts);
+        if (!outbound) continue;
 
-      let chordNames = outbound.chordNames;
-      let edgeTypes = outbound.edgeTypes;
-      let explanations = outbound.explanations;
-      let totalWeight = outbound.totalWeight;
+        let chordNames = outbound.chordNames;
+        let edgeTypes = outbound.edgeTypes;
+        let explanations = outbound.explanations;
+        let totalWeight = outbound.totalWeight;
 
-      if (opts.returnTrip) {
-        const returnPath = findChordPath(nextTo, lastChord, opts);
-        if (returnPath) {
-          chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
-          edgeTypes = [...edgeTypes, ...returnPath.edgeTypes];
-          explanations = [...explanations, ...returnPath.explanations];
-          totalWeight += returnPath.totalWeight;
+        if (opts.returnTrip) {
+          const returnPath = findChordPath(nextTo, lastChord, opts);
+          if (returnPath) {
+            chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
+            edgeTypes = [...edgeTypes, ...returnPath.edgeTypes];
+            explanations = [...explanations, ...returnPath.explanations];
+            totalWeight += returnPath.totalWeight;
+          }
         }
-      }
 
-      setWalkState(prev => ({
-        ...prev,
-        fromChord: lastChord,
-        toChord: nextTo,
-        path: { chordNames, edgeTypes, explanations, totalWeight },
-        currentStep: 0,
-        completed: false,
-      }));
+        setWalkState(prev => ({
+          ...prev,
+          fromChord: lastChord,
+          toChord: nextTo,
+          path: { chordNames, edgeTypes, explanations, totalWeight },
+          currentStep: 0,
+          completed: false,
+        }));
+        return;
+      }
     }, 1500);
 
     return () => clearTimeout(timer);
