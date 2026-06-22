@@ -12,7 +12,7 @@ let currentFilePath: string | null = null;
 function updateTitle() {
   if (!mainWindow) return;
   const fileName = currentFilePath ? path.basename(currentFilePath) : 'Untitled';
-  mainWindow.setTitle(`${fileName} — Chord Walk`);
+  mainWindow.setTitle(`${fileName} — The Tightening`);
 }
 
 function buildMenu() {
@@ -142,7 +142,7 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    title: 'Untitled — Chord Walk',
+    title: 'Untitled — The Tightening',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       nodeIntegration: false,
