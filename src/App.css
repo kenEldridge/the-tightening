@@ -193,6 +193,22 @@ body {
   background: var(--accent);
 }
 
+.spelling-select {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  outline: none;
+}
+
+.spelling-select:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
 /* ── Walk mode panel ── */
 
 .walk-mode {
@@ -280,6 +296,53 @@ body {
   font-size: 0.8rem;
   color: var(--accent);
   font-weight: 600;
+}
+
+/* Edge legend */
+
+.edge-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.edge-legend-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.edge-legend-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+}
+
+.edge-legend-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.edge-legend-swatch {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+}
+
+.edge-legend-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Path strip ── */

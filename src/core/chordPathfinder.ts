@@ -7,7 +7,7 @@ export const FIFTHS_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
 // ---------- Types ----------
 
-export type EdgeType = 'dom7' | 'relative' | 'iiVI' | 'leadingTone';
+export type EdgeType = 'fifth' | 'dom7' | 'relative' | 'iiVI' | 'leadingTone';
 
 export interface PathEdge {
   target: string;
@@ -19,6 +19,12 @@ export interface PathResult {
   path: string[];       // node IDs in order
   edgeTypes: EdgeType[];
   totalWeight: number;
+}
+
+interface SearchCost {
+  steps: number;
+  ringChanges: number;
+  weight: number;
 }
 
 export interface PathOptions {
@@ -89,11 +95,24 @@ export function nodeIdToChordName(nodeId: string): string {
 
 // ---------- Graph construction ----------
 
+// Constrainable edge types (the ones users can require in a path)
+const CONSTRAINABLE_TYPES: EdgeType[] = ['relative', 'iiVI', 'leadingTone'];
+
+function compareSearchCost(a: SearchCost, b: SearchCost): number {
+  if (a.steps !== b.steps) return a.steps - b.steps;
+  if (a.ringChanges !== b.ringChanges) return a.ringChanges - b.ringChanges;
+  return a.weight - b.weight;
+}
+
+function ringOf(nodeId: string): string {
+  return nodeId.split('-')[0];
+}
+
 /**
  * Build a weighted adjacency list over 36 theory nodes (12 major, 12 minor, 12 dim).
- * Ported from derple-dex CircleOfFifths.astro with added leading-tone support.
+ * All 5 edge types are always present — constraints are enforced at search time.
  */
-export function buildPathGraph(options: PathOptions): Map<string, PathEdge[]> {
+export function buildPathGraph(): Map<string, PathEdge[]> {
   const adj = new Map<string, PathEdge[]>();
 
   // Initialize adjacency lists for all 36 nodes
@@ -103,24 +122,39 @@ export function buildPathGraph(options: PathOptions): Map<string, PathEdge[]> {
     adj.set(`dim-${i}`, []);
   }
 
-  // Dom7 resolution (always on, weight 1.0):
-  // V → I: from any node with root R, edge to major/minor with root (R+5)%12
+  // Circle-of-fifths edges (weight 1.0):
+  // Movement up a perfect fifth (clockwise on the circle): root R → root (R+7)%12
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    const fifthUpPc = (rootPc + 7) % 12;
+
+    const fifthMajPos = FIFTHS_ORDER.indexOf(fifthUpPc);
+    adj.get(`key-${i}`)!.push({ target: `key-${fifthMajPos}`, weight: 1, type: 'fifth' });
+
+    const minorRootPc = (rootPc + 9) % 12;
+    const minorFifthUpPc = (minorRootPc + 7) % 12;
+    const minorFifthMajPc = (minorFifthUpPc + 3) % 12;
+    const minorFifthPos = FIFTHS_ORDER.indexOf(minorFifthMajPc);
+    adj.get(`minor-${i}`)!.push({ target: `minor-${minorFifthPos}`, weight: 1, type: 'fifth' });
+
+    const dimRootPc = (rootPc + 11) % 12;
+    const dimFifthUpPc = (dimRootPc + 7) % 12;
+    const dimFifthResolvePos = FIFTHS_ORDER.indexOf((dimFifthUpPc + 1) % 12);
+    adj.get(`dim-${i}`)!.push({ target: `dim-${dimFifthResolvePos}`, weight: 1, type: 'fifth' });
+  }
+
+  // Dom7 resolution (weight 1.0): V → I
   for (let i = 0; i < 12; i++) {
     const rootPc = FIFTHS_ORDER[i];
 
-    // === key-i (major, root = rootPc) ===
     const targetPc = (rootPc + 5) % 12;
     const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
     adj.get(`key-${i}`)!.push({ target: `key-${targetMajPos}`, weight: 1, type: 'dom7' });
 
-    // Also resolve to minor with target root
-    // minor-j has root (FIFTHS_ORDER[j]+9)%12, so we need (FIFTHS_ORDER[j]+9)%12 == targetPc
-    // i.e. FIFTHS_ORDER[j] == (targetPc+3)%12
     const minorMajPc = (targetPc + 3) % 12;
     const targetMinPos = FIFTHS_ORDER.indexOf(minorMajPc);
     adj.get(`key-${i}`)!.push({ target: `minor-${targetMinPos}`, weight: 1, type: 'dom7' });
 
-    // === minor-i (root = (rootPc+9)%12) ===
     const minorRootPc = (rootPc + 9) % 12;
     const minorTargetPc = (minorRootPc + 5) % 12;
     const minorTargetMajPos = FIFTHS_ORDER.indexOf(minorTargetPc);
@@ -130,7 +164,6 @@ export function buildPathGraph(options: PathOptions): Map<string, PathEdge[]> {
     const minorTargetMinPos = FIFTHS_ORDER.indexOf(minorTargetMinMajPc);
     adj.get(`minor-${i}`)!.push({ target: `minor-${minorTargetMinPos}`, weight: 1, type: 'dom7' });
 
-    // === dim-i (root = (rootPc+11)%12) ===
     const dimRootPc = (rootPc + 11) % 12;
     const dimTargetPc = (dimRootPc + 5) % 12;
     const dimTargetMajPos = FIFTHS_ORDER.indexOf(dimTargetPc);
@@ -142,119 +175,166 @@ export function buildPathGraph(options: PathOptions): Map<string, PathEdge[]> {
   }
 
   // Relative major/minor swap (weight 0.5)
-  if (options.relative) {
-    for (let i = 0; i < 12; i++) {
-      adj.get(`key-${i}`)!.push({ target: `minor-${i}`, weight: 0.5, type: 'relative' });
-      adj.get(`minor-${i}`)!.push({ target: `key-${i}`, weight: 0.5, type: 'relative' });
-    }
+  for (let i = 0; i < 12; i++) {
+    adj.get(`key-${i}`)!.push({ target: `minor-${i}`, weight: 0.5, type: 'relative' });
+    adj.get(`minor-${i}`)!.push({ target: `key-${i}`, weight: 0.5, type: 'relative' });
   }
 
   // ii-V-I (weight 0.5): minor with root R -> major with root (R+10)%12
-  if (options.iiVI) {
-    for (let i = 0; i < 12; i++) {
-      const minorRootPc = (FIFTHS_ORDER[i] + 9) % 12;
-      const targetPc = (minorRootPc + 10) % 12;
-      const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
-      adj.get(`minor-${i}`)!.push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
-    }
+  for (let i = 0; i < 12; i++) {
+    const minorRootPc = (FIFTHS_ORDER[i] + 9) % 12;
+    const targetPc = (minorRootPc + 10) % 12;
+    const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
+    adj.get(`minor-${i}`)!.push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
   }
 
-  // Leading-tone resolution (weight 1.0): dim -> major/minor one semitone up
-  if (options.leadingTone) {
-    for (let i = 0; i < 12; i++) {
-      // dim-i root = (FIFTHS_ORDER[i] + 11) % 12
-      const dimRootPc = (FIFTHS_ORDER[i] + 11) % 12;
-      // resolves up a semitone
-      const resolvePc = (dimRootPc + 1) % 12;
-
-      // -> major with that root
-      const majPos = FIFTHS_ORDER.indexOf(resolvePc);
-      adj.get(`dim-${i}`)!.push({ target: `key-${majPos}`, weight: 1, type: 'leadingTone' });
-
-      // -> minor with that root
-      const minMajPc = (resolvePc + 3) % 12;
-      const minPos = FIFTHS_ORDER.indexOf(minMajPc);
-      adj.get(`dim-${i}`)!.push({ target: `minor-${minPos}`, weight: 1, type: 'leadingTone' });
-    }
+  // Leading-tone neighborhood (weight 1.0): vii° resolves to I, and I/vi can move to vii°.
+  for (let i = 0; i < 12; i++) {
+    adj.get(`dim-${i}`)!.push({ target: `key-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`dim-${i}`)!.push({ target: `minor-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`key-${i}`)!.push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`minor-${i}`)!.push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
   }
 
   return adj;
 }
 
-// ---------- Dijkstra ----------
+// Lazy singleton — graph is always the same now
+let _pathGraph: Map<string, PathEdge[]> | null = null;
+function getPathGraph(): Map<string, PathEdge[]> {
+  if (!_pathGraph) _pathGraph = buildPathGraph();
+  return _pathGraph;
+}
+
+export function getDirectEdgeTypes(from: string, to: string): EdgeType[] {
+  const fromId = chordNameToNodeId(from);
+  const toId = chordNameToNodeId(to);
+  if (!fromId || !toId) return [];
+
+  const graph = getPathGraph();
+  const seen = new Set<EdgeType>();
+  for (const edge of graph.get(fromId) ?? []) {
+    if (edge.target === toId) {
+      seen.add(edge.type);
+    }
+  }
+  return Array.from(seen);
+}
+
+// ---------- Constrained Dijkstra ----------
 
 /**
- * Find the shortest weighted path between two nodes using Dijkstra's algorithm.
+ * Find the shortest path between two nodes that satisfies all constraints.
+ * Uses Dijkstra over expanded state space: (nodeId, satisfiedMask) where the mask
+ * tracks which required edge types have been used so far.
+ * Path length is minimized first, same-ring paths are preferred next,
+ * and harmonic weights break any remaining ties.
+ *
+ * With 3 constrainable types, max 2^3 = 8 masks × 36 nodes = 288 states.
  */
-export function findShortestPath(
+export function findConstrainedPath(
   adj: Map<string, PathEdge[]>,
   fromId: string,
   toId: string,
+  requiredTypes: Set<EdgeType>,
 ): PathResult | null {
-  if (fromId === toId) return { path: [fromId], edgeTypes: [], totalWeight: 0 };
+  // Build bitmask mapping for required types
+  const typeToBit = new Map<EdgeType, number>();
+  let bit = 0;
+  for (const t of CONSTRAINABLE_TYPES) {
+    if (requiredTypes.has(t)) {
+      typeToBit.set(t, 1 << bit);
+      bit++;
+    }
+  }
+  const allRequiredMask = (1 << bit) - 1; // all bits set
 
-  const dist = new Map<string, number>();
-  const prev = new Map<string, { node: string; edgeType: EdgeType } | null>();
+  if (fromId === toId && allRequiredMask === 0) {
+    return { path: [fromId], edgeTypes: [], totalWeight: 0 };
+  }
+
+  // State key: "nodeId|mask"
+  const stateKey = (node: string, mask: number) => `${node}|${mask}`;
+
+  const dist = new Map<string, SearchCost>();
+  const prev = new Map<string, { node: string; mask: number; edgeType: EdgeType } | null>();
   const visited = new Set<string>();
 
-  for (const key of adj.keys()) {
-    dist.set(key, Infinity);
-    prev.set(key, null);
-  }
-  dist.set(fromId, 0);
+  const startKey = stateKey(fromId, 0);
+  dist.set(startKey, { steps: 0, ringChanges: 0, weight: 0 });
+  prev.set(startKey, null);
 
-  const queue: { id: string; d: number }[] = [{ id: fromId, d: 0 }];
+  const queue: { node: string; mask: number; d: SearchCost }[] = [
+    { node: fromId, mask: 0, d: { steps: 0, ringChanges: 0, weight: 0 } },
+  ];
 
   while (queue.length > 0) {
     // Find minimum
     let minIdx = 0;
     for (let i = 1; i < queue.length; i++) {
-      if (queue[i].d < queue[minIdx].d) minIdx = i;
+      if (compareSearchCost(queue[i].d, queue[minIdx].d) < 0) minIdx = i;
     }
-    const { id: u, d: uDist } = queue.splice(minIdx, 1)[0];
+    const { node: u, mask: uMask, d: uCost } = queue.splice(minIdx, 1)[0];
 
-    if (visited.has(u)) continue;
-    visited.add(u);
+    const uKey = stateKey(u, uMask);
+    if (visited.has(uKey)) continue;
+    visited.add(uKey);
 
-    if (u === toId) break;
+    // Goal: reached target node with all constraints satisfied
+    if (u === toId && uMask === allRequiredMask) break;
 
     const neighbors = adj.get(u);
     if (!neighbors) continue;
 
     for (const edge of neighbors) {
-      if (visited.has(edge.target)) continue;
-      const newDist = uDist + edge.weight;
-      if (newDist < (dist.get(edge.target) ?? Infinity)) {
-        dist.set(edge.target, newDist);
-        prev.set(edge.target, { node: u, edgeType: edge.type });
-        queue.push({ id: edge.target, d: newDist });
+      // Compute new mask: set bit if this edge type is required
+      const edgeBit = typeToBit.get(edge.type) ?? 0;
+      const newMask = uMask | edgeBit;
+      const vKey = stateKey(edge.target, newMask);
+
+      if (visited.has(vKey)) continue;
+      const newCost = {
+        steps: uCost.steps + 1,
+        ringChanges: uCost.ringChanges + (ringOf(u) === ringOf(edge.target) ? 0 : 1),
+        weight: uCost.weight + edge.weight,
+      };
+      const oldCost = dist.get(vKey);
+      if (!oldCost || compareSearchCost(newCost, oldCost) < 0) {
+        dist.set(vKey, newCost);
+        prev.set(vKey, { node: u, mask: uMask, edgeType: edge.type });
+        queue.push({ node: edge.target, mask: newMask, d: newCost });
       }
     }
   }
 
-  if (dist.get(toId) === Infinity) return null;
+  const goalKey = stateKey(toId, allRequiredMask);
+  const goalCost = dist.get(goalKey);
+  if (!goalCost) return null;
 
   // Reconstruct path
   const path: string[] = [];
   const edgeTypes: EdgeType[] = [];
-  let cur: string | undefined = toId;
-  while (cur) {
-    path.unshift(cur);
-    const p = prev.get(cur);
+  let curNode = toId;
+  let curMask = allRequiredMask;
+  while (true) {
+    path.unshift(curNode);
+    const p = prev.get(stateKey(curNode, curMask));
     if (p) {
       edgeTypes.unshift(p.edgeType);
-      cur = p.node;
+      curNode = p.node;
+      curMask = p.mask;
     } else {
       break;
     }
   }
 
-  return { path, edgeTypes, totalWeight: dist.get(toId)! };
+  return { path, edgeTypes, totalWeight: goalCost.weight };
 }
 
 // ---------- Explanation ----------
 
 const EDGE_TYPE_LABELS: Record<EdgeType, string> = {
+  fifth: 'P5 (fifth)',
   dom7: 'V\u2192I',
   relative: 'relative maj/min',
   iiVI: 'ii-V-I',
@@ -267,6 +347,9 @@ const EDGE_TYPE_LABELS: Record<EdgeType, string> = {
 export function explainStep(fromId: string, toId: string, edgeType: EdgeType): string {
   const fromName = nodeIdToChordName(fromId);
   const toName = nodeIdToChordName(toId);
+  if (edgeType === 'leadingTone' && !fromId.startsWith('dim-') && toId.startsWith('dim-')) {
+    return `${fromName} \u2192 ${toName} (I/vi\u2192vii\u00B0)`;
+  }
   return `${fromName} \u2192 ${toName} (${EDGE_TYPE_LABELS[edgeType]})`;
 }
 
@@ -280,7 +363,8 @@ export interface ChordPathResult {
 }
 
 /**
- * Full pipeline: chord name → pathfinder ID → shortest path → chord names back.
+ * Full pipeline: chord name → pathfinder ID → constrained shortest path → chord names back.
+ * Options.relative/iiVI/leadingTone mean "path MUST include at least one edge of this type".
  * Returns null if either chord can't be mapped or no path exists.
  */
 export function findChordPath(
@@ -292,8 +376,13 @@ export function findChordPath(
   const toId = chordNameToNodeId(to);
   if (!fromId || !toId) return null;
 
-  const graph = buildPathGraph(options);
-  const result = findShortestPath(graph, fromId, toId);
+  const graph = getPathGraph();
+  const requiredTypes = new Set<EdgeType>();
+  if (options.relative) requiredTypes.add('relative');
+  if (options.iiVI) requiredTypes.add('iiVI');
+  if (options.leadingTone) requiredTypes.add('leadingTone');
+
+  const result = findConstrainedPath(graph, fromId, toId, requiredTypes);
   if (!result) return null;
 
   const chordNames = result.path.map(nodeIdToChordName);

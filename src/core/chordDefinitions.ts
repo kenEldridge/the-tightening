@@ -85,5 +85,24 @@ export function getQualityIntervals(quality: ChordQuality): number[] {
   return QUALITY_INTERVALS[quality];
 }
 
+export type NoteSpelling = 'sharps' | 'flats';
+
+const NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+/** Get the display name for a pitch class using the chosen spelling */
+export function pitchClassName(pc: number, spelling: NoteSpelling): string {
+  return spelling === 'flats' ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES[pc];
+}
+
+/** Convert a chord name to the chosen spelling (e.g. "C#m" → "Dbm" in flats mode) */
+export function respellChordName(name: string, spelling: NoteSpelling): string {
+  if (spelling === 'sharps') return name; // already canonical
+  const parsed = parseChordName(name);
+  if (!parsed) return name;
+  const pc = noteToPitchClass(parsed.root);
+  if (pc < 0) return name;
+  return NOTE_NAMES_FLAT[pc] + parsed.suffix;
+}
+
 /** Expose for tests */
-export { NOTE_NAMES, FLAT_TO_SHARP, QUALITY_INTERVALS, SUFFIX_TO_QUALITY, noteToPitchClass };
+export { NOTE_NAMES, NOTE_NAMES_FLAT, FLAT_TO_SHARP, QUALITY_INTERVALS, SUFFIX_TO_QUALITY, noteToPitchClass };

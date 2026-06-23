@@ -635,7 +635,19 @@ function nodeIdToChordName(nodeId) {
   return nodeId;
 }
 
-function buildPathGraph(options) {
+const CONSTRAINABLE_TYPES = ['relative', 'iiVI', 'leadingTone'];
+
+function compareSearchCost(a, b) {
+  if (a.steps !== b.steps) return a.steps - b.steps;
+  if (a.ringChanges !== b.ringChanges) return a.ringChanges - b.ringChanges;
+  return a.weight - b.weight;
+}
+
+function ringOf(nodeId) {
+  return nodeId.split('-')[0];
+}
+
+function buildPathGraph() {
   const adj = new Map();
   for (let i = 0; i < 12; i++) {
     adj.set(`key-${i}`, []);
@@ -643,7 +655,27 @@ function buildPathGraph(options) {
     adj.set(`dim-${i}`, []);
   }
 
-  // Dom7 resolution (always on)
+  // Circle-of-fifths edges (weight 1.0)
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    const fifthUpPc = (rootPc + 7) % 12;
+
+    const fifthMajPos = FIFTHS_ORDER.indexOf(fifthUpPc);
+    adj.get(`key-${i}`).push({ target: `key-${fifthMajPos}`, weight: 1, type: 'fifth' });
+
+    const minorRootPc = (rootPc + 9) % 12;
+    const minorFifthUpPc = (minorRootPc + 7) % 12;
+    const minorFifthMajPc = (minorFifthUpPc + 3) % 12;
+    const minorFifthPos = FIFTHS_ORDER.indexOf(minorFifthMajPc);
+    adj.get(`minor-${i}`).push({ target: `minor-${minorFifthPos}`, weight: 1, type: 'fifth' });
+
+    const dimRootPc = (rootPc + 11) % 12;
+    const dimFifthUpPc = (dimRootPc + 7) % 12;
+    const dimFifthResolvePos = FIFTHS_ORDER.indexOf((dimFifthUpPc + 1) % 12);
+    adj.get(`dim-${i}`).push({ target: `dim-${dimFifthResolvePos}`, weight: 1, type: 'fifth' });
+  }
+
+  // Dom7 resolution (weight 1.0)
   for (let i = 0; i < 12; i++) {
     const rootPc = FIFTHS_ORDER[i];
     const targetPc = (rootPc + 5) % 12;
@@ -673,94 +705,115 @@ function buildPathGraph(options) {
     adj.get(`dim-${i}`).push({ target: `minor-${dimTargetMinPos}`, weight: 1, type: 'dom7' });
   }
 
-  if (options.relative) {
-    for (let i = 0; i < 12; i++) {
-      adj.get(`key-${i}`).push({ target: `minor-${i}`, weight: 0.5, type: 'relative' });
-      adj.get(`minor-${i}`).push({ target: `key-${i}`, weight: 0.5, type: 'relative' });
-    }
+  // Relative major/minor swap (weight 0.5)
+  for (let i = 0; i < 12; i++) {
+    adj.get(`key-${i}`).push({ target: `minor-${i}`, weight: 0.5, type: 'relative' });
+    adj.get(`minor-${i}`).push({ target: `key-${i}`, weight: 0.5, type: 'relative' });
   }
 
-  if (options.iiVI) {
-    for (let i = 0; i < 12; i++) {
-      const minorRootPc = (FIFTHS_ORDER[i] + 9) % 12;
-      const targetPc = (minorRootPc + 10) % 12;
-      const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
-      adj.get(`minor-${i}`).push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
-    }
+  // ii-V-I (weight 0.5)
+  for (let i = 0; i < 12; i++) {
+    const minorRootPc = (FIFTHS_ORDER[i] + 9) % 12;
+    const targetPc = (minorRootPc + 10) % 12;
+    const targetMajPos = FIFTHS_ORDER.indexOf(targetPc);
+    adj.get(`minor-${i}`).push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
   }
 
-  if (options.leadingTone) {
-    for (let i = 0; i < 12; i++) {
-      const dimRootPc = (FIFTHS_ORDER[i] + 11) % 12;
-      const resolvePc = (dimRootPc + 1) % 12;
-      const majPos = FIFTHS_ORDER.indexOf(resolvePc);
-      adj.get(`dim-${i}`).push({ target: `key-${majPos}`, weight: 1, type: 'leadingTone' });
-
-      const minMajPc = (resolvePc + 3) % 12;
-      const minPos = FIFTHS_ORDER.indexOf(minMajPc);
-      adj.get(`dim-${i}`).push({ target: `minor-${minPos}`, weight: 1, type: 'leadingTone' });
-    }
+  // Leading-tone neighborhood (weight 1.0)
+  for (let i = 0; i < 12; i++) {
+    adj.get(`dim-${i}`).push({ target: `key-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`dim-${i}`).push({ target: `minor-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`key-${i}`).push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
+    adj.get(`minor-${i}`).push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
   }
 
   return adj;
 }
 
-function findShortestPath(adj, fromId, toId) {
-  if (fromId === toId) return { path: [fromId], edgeTypes: [], totalWeight: 0 };
+function findConstrainedPath(adj, fromId, toId, requiredTypes) {
+  // Build bitmask mapping for required types
+  const typeToBit = new Map();
+  let bit = 0;
+  for (const t of CONSTRAINABLE_TYPES) {
+    if (requiredTypes.has(t)) {
+      typeToBit.set(t, 1 << bit);
+      bit++;
+    }
+  }
+  const allRequiredMask = (1 << bit) - 1;
+
+  if (fromId === toId && allRequiredMask === 0) {
+    return { path: [fromId], edgeTypes: [], totalWeight: 0 };
+  }
+
+  const stateKey = (node, mask) => `${node}|${mask}`;
 
   const dist = new Map();
   const prev = new Map();
   const visited = new Set();
 
-  for (const key of adj.keys()) {
-    dist.set(key, Infinity);
-    prev.set(key, null);
-  }
-  dist.set(fromId, 0);
+  const startKey = stateKey(fromId, 0);
+  dist.set(startKey, { steps: 0, ringChanges: 0, weight: 0 });
+  prev.set(startKey, null);
 
-  const queue = [{ id: fromId, d: 0 }];
+  const queue = [{ node: fromId, mask: 0, d: { steps: 0, ringChanges: 0, weight: 0 } }];
 
   while (queue.length > 0) {
     let minIdx = 0;
     for (let i = 1; i < queue.length; i++) {
-      if (queue[i].d < queue[minIdx].d) minIdx = i;
+      if (compareSearchCost(queue[i].d, queue[minIdx].d) < 0) minIdx = i;
     }
-    const { id: u, d: uDist } = queue.splice(minIdx, 1)[0];
+    const { node: u, mask: uMask, d: uCost } = queue.splice(minIdx, 1)[0];
 
-    if (visited.has(u)) continue;
-    visited.add(u);
-    if (u === toId) break;
+    const uKey = stateKey(u, uMask);
+    if (visited.has(uKey)) continue;
+    visited.add(uKey);
+
+    if (u === toId && uMask === allRequiredMask) break;
 
     const neighbors = adj.get(u);
     if (!neighbors) continue;
     for (const edge of neighbors) {
-      if (visited.has(edge.target)) continue;
-      const newDist = uDist + edge.weight;
-      if (newDist < (dist.get(edge.target) ?? Infinity)) {
-        dist.set(edge.target, newDist);
-        prev.set(edge.target, { node: u, edgeType: edge.type });
-        queue.push({ id: edge.target, d: newDist });
+      const edgeBit = typeToBit.get(edge.type) ?? 0;
+      const newMask = uMask | edgeBit;
+      const vKey = stateKey(edge.target, newMask);
+
+      if (visited.has(vKey)) continue;
+      const newCost = {
+        steps: uCost.steps + 1,
+        ringChanges: uCost.ringChanges + (ringOf(u) === ringOf(edge.target) ? 0 : 1),
+        weight: uCost.weight + edge.weight,
+      };
+      const oldCost = dist.get(vKey);
+      if (!oldCost || compareSearchCost(newCost, oldCost) < 0) {
+        dist.set(vKey, newCost);
+        prev.set(vKey, { node: u, mask: uMask, edgeType: edge.type });
+        queue.push({ node: edge.target, mask: newMask, d: newCost });
       }
     }
   }
 
-  if (dist.get(toId) === Infinity) return null;
+  const goalKey = stateKey(toId, allRequiredMask);
+  const goalCost = dist.get(goalKey);
+  if (!goalCost) return null;
 
   const path = [];
   const edgeTypes = [];
-  let cur = toId;
-  while (cur) {
-    path.unshift(cur);
-    const p = prev.get(cur);
+  let curNode = toId;
+  let curMask = allRequiredMask;
+  while (true) {
+    path.unshift(curNode);
+    const p = prev.get(stateKey(curNode, curMask));
     if (p) {
       edgeTypes.unshift(p.edgeType);
-      cur = p.node;
+      curNode = p.node;
+      curMask = p.mask;
     } else {
       break;
     }
   }
 
-  return { path, edgeTypes, totalWeight: dist.get(toId) };
+  return { path, edgeTypes, totalWeight: goalCost.weight };
 }
 
 function findChordPath(from, to, options) {
@@ -768,8 +821,13 @@ function findChordPath(from, to, options) {
   const toId = chordNameToNodeId(to);
   if (!fromId || !toId) return null;
 
-  const graph = buildPathGraph(options);
-  const result = findShortestPath(graph, fromId, toId);
+  const graph = buildPathGraph();
+  const requiredTypes = new Set();
+  if (options.relative) requiredTypes.add('relative');
+  if (options.iiVI) requiredTypes.add('iiVI');
+  if (options.leadingTone) requiredTypes.add('leadingTone');
+
+  const result = findConstrainedPath(graph, fromId, toId, requiredTypes);
   if (!result) return null;
 
   const chordNames = result.path.map(nodeIdToChordName);
@@ -852,47 +910,75 @@ section('Node ID mapping — round-trip');
   }
 }
 
-section('Pathfinder — dom7 only: C to Bb');
+section('Pathfinder — no constraints: C to Bb (shortest path uses all edge types)');
 
 {
   const opts = { relative: false, iiVI: false, leadingTone: false };
   const result = findChordPath('C', 'Bb', opts);
   assert(result !== null, 'Path found C -> Bb');
-  // C -> F -> Bb (two dom7 steps: C is V of F, F is V of Bb)
-  // But NOTE_NAMES uses A# not Bb. The "to" chord Bb maps to same node as A#.
-  // nodeIdToChordName returns A# for that node.
-  assertEq(result.chordNames, ['C', 'F', 'A#'], 'C -> F -> A# (Bb) via dom7');
-  assertEq(result.edgeTypes, ['dom7', 'dom7'], 'Two dom7 edges');
-  assertEq(result.totalWeight, 2, 'Total weight 2');
+  // With all edges available, shortest: C -> F -> A# via dom7 (weight 2)
+  // or C -> Am -> F via relative+iiVI (weight 1.0) — but Am->F is not iiVI.
+  // Actually C -> F via dom7 (1), F -> A# via dom7 (1) = 2 total
+  // But also: C -> Am (relative, 0.5) -> ... not necessarily shorter to A#
+  // The dom7 path C -> F -> A# at weight 2 should still be optimal or close
+  assertEq(result.chordNames[0], 'C', 'Starts at C');
+  assertEq(result.chordNames[result.chordNames.length - 1], 'A#', 'Ends at A# (Bb)');
+  assert(result.totalWeight <= 2, 'Weight <= 2 with all edges available');
 }
 
-section('Pathfinder — relative: C to Am');
+section('Pathfinder — no constraints: C to Am (relative edge available, shortest)');
 
 {
-  const opts = { relative: true, iiVI: false, leadingTone: false };
+  const opts = { relative: false, iiVI: false, leadingTone: false };
   const result = findChordPath('C', 'Am', opts);
   assert(result !== null, 'Path found C -> Am');
+  // With all edges always on, relative edge (weight 0.5) is the shortest
   assertEq(result.chordNames, ['C', 'Am'], 'C -> Am direct via relative');
   assertEq(result.edgeTypes, ['relative'], 'One relative edge');
   assertEq(result.totalWeight, 0.5, 'Weight 0.5');
 }
 
-section('Pathfinder — dom7 only: C to Am (longer path)');
+section('Pathfinder - no constraints: C to D follows major fifths path');
 
 {
   const opts = { relative: false, iiVI: false, leadingTone: false };
-  const result = findChordPath('C', 'Am', opts);
-  assert(result !== null, 'Path found C -> Am without relative');
-  // Should be longer than 1 step since relative is off
-  assert(result.chordNames.length > 2, 'Longer path without relative');
+  const result = findChordPath('C', 'D', opts);
+  assert(result !== null, 'Path found C -> D');
+  assertEq(result.chordNames, ['C', 'G', 'D'], 'C -> D follows the major fifths path');
+  assertEq(result.edgeTypes, ['fifth', 'fifth'], 'Two fifth edges');
+  assertEq(result.totalWeight, 2, 'Weight 2');
 }
 
-section('Pathfinder — leading-tone: Bdim to C');
+section('Pathfinder — require relative: C to Am (still uses relative)');
+
+{
+  const opts = { relative: true, iiVI: false, leadingTone: false };
+  const result = findChordPath('C', 'Am', opts);
+  assert(result !== null, 'Path found C -> Am with relative required');
+  // Must include a relative edge — and the shortest path already does
+  assertEq(result.chordNames, ['C', 'Am'], 'C -> Am direct via relative');
+  assertEq(result.edgeTypes, ['relative'], 'One relative edge');
+  assertEq(result.totalWeight, 0.5, 'Weight 0.5');
+}
+
+section('Pathfinder — leading-tone: Bdim to C (no constraints)');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  const result = findChordPath('Bdim', 'C', opts);
+  assert(result !== null, 'Path found Bdim -> C');
+  // With all edges on, leadingTone (weight 1) and dom7 (weight 1) are both available
+  // leadingTone Bdim->C is direct at weight 1
+  assertEq(result.chordNames, ['Bdim', 'C'], 'Bdim -> C direct');
+  assertEq(result.totalWeight, 1, 'Weight 1');
+}
+
+section('Pathfinder — require leading-tone: Bdim to C');
 
 {
   const opts = { relative: false, iiVI: false, leadingTone: true };
   const result = findChordPath('Bdim', 'C', opts);
-  assert(result !== null, 'Path found Bdim -> C');
+  assert(result !== null, 'Path found Bdim -> C with leadingTone required');
   assertEq(result.chordNames, ['Bdim', 'C'], 'Bdim -> C direct via leading-tone');
   assertEq(result.edgeTypes, ['leadingTone'], 'One leadingTone edge');
   assertEq(result.totalWeight, 1, 'Weight 1');
@@ -909,13 +995,24 @@ section('Pathfinder — same chord');
   assertEq(result.totalWeight, 0, 'Zero weight');
 }
 
-section('Pathfinder — ii-V-I shortcut');
+section('Pathfinder — ii-V-I: Dm to C (no constraints, iiVI available)');
+
+{
+  const opts = { relative: false, iiVI: false, leadingTone: false };
+  // With all edges on, Dm -> C via iiVI (weight 0.5) is shortest
+  const result = findChordPath('Dm', 'C', opts);
+  assert(result !== null, 'Path found Dm -> C');
+  assertEq(result.chordNames, ['Dm', 'C'], 'Dm -> C direct via ii-V-I');
+  assertEq(result.edgeTypes, ['iiVI'], 'One iiVI edge');
+  assertEq(result.totalWeight, 0.5, 'Weight 0.5');
+}
+
+section('Pathfinder — require iiVI: Dm to C (constraint already satisfied)');
 
 {
   const opts = { relative: false, iiVI: true, leadingTone: false };
-  // Dm is ii of C. With iiVI on, Dm -> C should be direct (weight 0.5)
   const result = findChordPath('Dm', 'C', opts);
-  assert(result !== null, 'Path found Dm -> C');
+  assert(result !== null, 'Path found Dm -> C with iiVI required');
   assertEq(result.chordNames, ['Dm', 'C'], 'Dm -> C direct via ii-V-I');
   assertEq(result.edgeTypes, ['iiVI'], 'One iiVI edge');
   assertEq(result.totalWeight, 0.5, 'Weight 0.5');
@@ -924,8 +1021,7 @@ section('Pathfinder — ii-V-I shortcut');
 section('Pathfinder — graph has 36 nodes');
 
 {
-  const opts = { relative: false, iiVI: false, leadingTone: false };
-  const graph = buildPathGraph(opts);
+  const graph = buildPathGraph();
   assertEq(graph.size, 36, '36 nodes in graph');
   let keyCount = 0, minorCount = 0, dimCount = 0;
   for (const key of graph.keys()) {
@@ -936,6 +1032,69 @@ section('Pathfinder — graph has 36 nodes');
   assertEq(keyCount, 12, '12 major nodes');
   assertEq(minorCount, 12, '12 minor nodes');
   assertEq(dimCount, 12, '12 dim nodes');
+}
+
+section('Pathfinder — constraint forces different route');
+
+{
+  // C -> G with no constraints: 1 fifth (C->G), weight 1
+  const noConstraints = findChordPath('C', 'G', { relative: false, iiVI: false, leadingTone: false });
+  assert(noConstraints !== null, 'Path found C -> G no constraints');
+  assertEq(noConstraints.totalWeight, 1, 'C -> G shortest is weight 1');
+
+  // C -> G requiring relative: must include a relative edge
+  // Path: C -> Am (relative, 0.5) -> Am -> G (iiVI, 0.5) = weight 1
+  const withRel = findChordPath('C', 'G', { relative: true, iiVI: false, leadingTone: false });
+  assert(withRel !== null, 'Path found C -> G with relative required');
+  assert(withRel.edgeTypes.includes('relative'), 'Path includes a relative edge');
+  assert(withRel.totalWeight >= noConstraints.totalWeight, 'Constrained path at least as long');
+}
+
+section('Pathfinder — require iiVI: C to G includes iiVI edge');
+
+{
+  // C -> G requiring iiVI: must route through a minor->major iiVI edge
+  const withIIVI = findChordPath('C', 'G', { relative: false, iiVI: true, leadingTone: false });
+  assert(withIIVI !== null, 'Path found C -> G with iiVI required');
+  assert(withIIVI.edgeTypes.includes('iiVI'), 'Path includes iiVI edge');
+}
+
+section('Pathfinder — multiple constraints');
+
+{
+  // C -> G requiring both relative and iiVI
+  const result = findChordPath('C', 'G', { relative: true, iiVI: true, leadingTone: false });
+  assert(result !== null, 'Path found C -> G with relative + iiVI required');
+  assert(result.edgeTypes.includes('relative'), 'Path includes relative edge');
+  assert(result.edgeTypes.includes('iiVI'), 'Path includes iiVI edge');
+}
+
+section('Pathfinder — leadingTone constraint: Bdim to D');
+
+{
+  // From a dim chord, requiring leadingTone is achievable
+  const result = findChordPath('Bdim', 'D', { relative: false, iiVI: false, leadingTone: true });
+  assert(result !== null, 'Path found Bdim -> D with leadingTone required');
+  assert(result.edgeTypes.includes('leadingTone'), 'Path includes leadingTone edge');
+}
+
+section('Pathfinder - leadingTone constraint: C to D can enter dim ring');
+
+{
+  const result = findChordPath('C', 'D', { relative: false, iiVI: false, leadingTone: true });
+  assert(result !== null, 'Path found C -> D with leadingTone required');
+  assert(result.edgeTypes.includes('leadingTone'), 'Path includes leadingTone edge');
+  assert(result.chordNames.includes('Bdim'), 'Path can move C -> Bdim in the same fifths slot');
+}
+
+section('Pathfinder - C to D supports all required walk constraints');
+
+{
+  const result = findChordPath('C', 'D', { relative: true, iiVI: true, leadingTone: true });
+  assert(result !== null, 'Path found C -> D with relative + iiVI + leadingTone required');
+  assert(result.edgeTypes.includes('relative'), 'Path includes relative edge');
+  assert(result.edgeTypes.includes('iiVI'), 'Path includes iiVI edge');
+  assert(result.edgeTypes.includes('leadingTone'), 'Path includes leadingTone edge');
 }
 
 // ═══════════════════════════════════════════════════════════

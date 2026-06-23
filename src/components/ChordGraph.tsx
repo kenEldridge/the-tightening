@@ -164,6 +164,27 @@ export default function ChordGraph({ graphState, matchedChords, positionsRef }: 
   // Reciprocal set for edge rendering
   const reciprocalSet = useMemo(() => getReciprocalSet(graphState.edges), [graphState.edges]);
 
+  const visibleEdges = useMemo(() => {
+    const edges: {
+      key: string;
+      keys: string[];
+      edge: GraphEdge;
+      isBidirectional: boolean;
+    }[] = [];
+    for (const [key, edge] of graphState.edges) {
+      const reverseKey = `${edge.target}->${edge.source}`;
+      const isBidirectional = reciprocalSet.has(key);
+      if (isBidirectional && key > reverseKey) continue;
+      edges.push({
+        key,
+        keys: isBidirectional ? [key, reverseKey] : [key],
+        edge,
+        isBidirectional,
+      });
+    }
+    return edges;
+  }, [graphState.edges, reciprocalSet]);
+
   // Get edge color: progression color if single contributor, accent if multi
   const getEdgeColor = useCallback((edge: GraphEdge): string => {
     if (edge.contributors.size === 1) {
@@ -236,9 +257,12 @@ export default function ChordGraph({ graphState, matchedChords, positionsRef }: 
 
         {/* Edge layer */}
         <g className="edge-layer">
-          {Array.from(graphState.edges.entries()).map(([key, edge]) => {
-            const isHighlighted = highlightedEdgeKeys.has(key);
-            const targetNode = graphState.nodes.get(edge.target);
+          {visibleEdges.map(({ key, keys, edge, isBidirectional }) => {
+            const highlightedKey = keys.find(k => highlightedEdgeKeys.has(k));
+            const highlightedEdge = highlightedKey ? graphState.edges.get(highlightedKey) : null;
+            const isHighlighted = !!highlightedEdge;
+            const styleTarget = highlightedEdge ?? edge;
+            const targetNode = graphState.nodes.get(styleTarget.target);
 
             let strokeColor: string;
             let strokeWidth: number;
@@ -267,6 +291,7 @@ export default function ChordGraph({ graphState, matchedChords, positionsRef }: 
                 strokeWidth={strokeWidth}
                 strokeDasharray={dasharray}
                 fill="none"
+                markerStart={isBidirectional ? `url(#${markerId})` : undefined}
                 markerEnd={`url(#${markerId})`}
                 opacity={opacity}
                 d="M 0 0 L 0 0"

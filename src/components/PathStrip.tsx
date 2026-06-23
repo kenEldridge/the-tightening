@@ -1,5 +1,6 @@
 import React from 'react';
 import type { EdgeType } from '../core/chordPathfinder';
+import { edgeTypeColor, edgeTypeShortLabel } from '../core/edgeTypeStyles';
 
 interface Props {
   chordNames: string[];
@@ -8,13 +9,6 @@ interface Props {
   currentStep: number;
   completed: boolean;
 }
-
-const EDGE_TYPE_SHORT: Record<EdgeType, string> = {
-  dom7: 'V\u2192I',
-  relative: 'rel',
-  iiVI: 'ii-V-I',
-  leadingTone: 'vii\u00B0',
-};
 
 export default function PathStrip({ chordNames, edgeTypes, explanations, currentStep, completed }: Props) {
   if (chordNames.length === 0) return null;
@@ -36,9 +30,9 @@ export default function PathStrip({ chordNames, edgeTypes, explanations, current
                 {i < currentStep && <span className="path-step-check">{'\u2713'}</span>}
               </div>
               {i < edgeTypes.length && (
-                <div className="path-arrow" title={explanations[i]}>
+                <div className="path-arrow" title={explanations[i]} style={{ color: edgeTypeColor(edgeTypes[i]) }}>
                   <span className="path-arrow-line">{'\u2192'}</span>
-                  <span className="path-arrow-label">{EDGE_TYPE_SHORT[edgeTypes[i]]}</span>
+                  <span className="path-arrow-label">{edgeTypeShortLabel(edgeTypes[i])}</span>
                 </div>
               )}
             </React.Fragment>

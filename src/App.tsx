@@ -3,13 +3,14 @@ import type { GraphState, SaveData, AppMode, WalkState } from './types/index';
 import { parseChordInput } from './core/chordParser';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
 import { detectChords } from './core/chordDetection';
-import ChordGraph from './components/ChordGraph';
+import type { NoteSpelling } from './core/chordDefinitions';
 import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
 import { getTheoryChordNodes, getAllChordNames, findChordPath } from './core/chordPathfinder';
 import CircleOfFifths from './components/CircleOfFifths';
+import EdgeTypeLegend from './components/EdgeTypeLegend';
 
 export default function App() {
   const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
@@ -25,6 +26,7 @@ export default function App() {
     completed: false,
     pathsCompleted: 0,
   });
+  const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('sharps');
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
     message: 'Requesting MIDI access...',
@@ -36,9 +38,10 @@ export default function App() {
   // Ref to latest graphState for menu-save callback
   const graphStateRef = useRef(graphState);
   graphStateRef.current = graphState;
-
-  // Ref to get current node positions from the simulation
-  const positionsRef = useRef<(() => Map<string, { x: number; y: number }>) | null>(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const walkStateRef = useRef(walkState);
+  walkStateRef.current = walkState;
 
   // WebMIDI setup
   useEffect(() => {
@@ -115,6 +118,7 @@ export default function App() {
 
     api.onMenuNew(() => {
       setGraphState(emptyGraphState());
+      setMode('jam');
     });
 
     api.onMenuOpen((data: SaveData) => {
@@ -124,27 +128,12 @@ export default function App() {
           nodePositions = new Map(Object.entries(data.nodePositions));
         }
         setGraphState(loadFromSaveData(data.progressions, nodePositions));
+        setMode('jam');
       }
     });
 
     api.onMenuSave((filePath: string) => {
-      const state = graphStateRef.current;
-      const positions = positionsRef.current?.();
-      const nodePositions: Record<string, { x: number; y: number }> = {};
-      if (positions) {
-        for (const [id, pos] of positions) {
-          nodePositions[id] = { x: pos.x, y: pos.y };
-        }
-      }
-      const saveData: SaveData = {
-        version: 1,
-        progressions: state.progressions.map(p => ({
-          name: p.name,
-          chords: p.chords,
-          color: p.color,
-        })),
-        nodePositions,
-      };
+      const saveData = createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current);
       api.fileWrite(filePath, JSON.stringify(saveData, null, 2));
     });
 
@@ -154,16 +143,14 @@ export default function App() {
   }, []);
 
   // Chord detection with 50ms debounce
-  // In Walk mode, detect against all 36 theory chords; in Jam mode, only graph nodes
+  // Both modes now detect against all 36 theory chords (CoF is used for both)
   useEffect(() => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
     debounceRef.current = setTimeout(() => {
-      const detectionNodes = mode === 'walk'
-        ? getTheoryChordNodes() as unknown as Map<string, import('./types/index').GraphNode>
-        : graphState.nodes;
+      const detectionNodes = getTheoryChordNodes() as unknown as Map<string, import('./types/index').GraphNode>;
       const matches = detectChords(heldNotes, detectionNodes);
       setMatchedChords(matches);
     }, 50);
@@ -173,7 +160,7 @@ export default function App() {
         clearTimeout(debounceRef.current);
       }
     };
-  }, [heldNotes, graphState.nodes, mode]);
+  }, [heldNotes, mode]);
 
   // Walk mode: advance progress when matched chord matches current step
   useEffect(() => {
@@ -207,8 +194,7 @@ export default function App() {
 
     const timer = setTimeout(() => {
       const opts = walkState.options;
-      // Shuffle candidates and try until we find a reachable one
-      // (dim chords are unreachable — no inbound edges)
+      // Shuffle candidates and try until we find a reachable one.
       const candidates = allNames.filter(c => c !== lastChord);
       for (let attempt = 0; attempt < candidates.length; attempt++) {
         const idx = Math.floor(Math.random() * candidates.length);
@@ -300,7 +286,7 @@ export default function App() {
             <button className="landing-card" onClick={() => setMode('jam')}>
               <div className="landing-card-icon">&#9835;</div>
               <h2>Jam</h2>
-              <p>Build chord progressions and see them as a force-directed graph. Play chords on MIDI and watch them light up in real time.</p>
+              <p>Build chord progressions and see them on the Circle of Fifths. Play chords on MIDI and watch them light up in real time.</p>
             </button>
             <button className="landing-card" onClick={() => setMode('walk')}>
               <div className="landing-card-icon">&#10132;</div>
@@ -331,6 +317,14 @@ export default function App() {
             Walk
           </button>
         </div>
+        <select
+          className="spelling-select"
+          value={noteSpelling}
+          onChange={(e) => setNoteSpelling(e.target.value as NoteSpelling)}
+        >
+          <option value="sharps">Sharps (C#)</option>
+          <option value="flats">Flats (Db)</option>
+        </select>
         <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
       </div>
       <div className="app-body">
@@ -343,30 +337,61 @@ export default function App() {
                 onEdit={handleEditProgression}
                 progressions={graphState.progressions}
               />
-              <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
             </>
           ) : (
             <>
               <WalkMode walkState={walkState} onWalkStateChange={setWalkState} />
-              <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
             </>
           )}
+          <EdgeTypeLegend />
+          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
         </div>
         <div className="graph-area">
           {mode === 'jam' ? (
-            <ChordGraph
+            <CircleOfFifths
               graphState={graphState}
+              jamMatchedChords={matchedChords}
               matchedChords={matchedChords}
-              positionsRef={positionsRef}
+              noteSpelling={noteSpelling}
             />
           ) : (
             <CircleOfFifths
               walkPath={walkPath}
               matchedChords={matchedChords}
+              noteSpelling={noteSpelling}
             />
           )}
         </div>
       </div>
     </div>
   );
+}
+
+function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkState): SaveData {
+  if (mode === 'walk' && walkState.path) {
+    const constraintTags = [
+      walkState.options.relative ? 'relative' : null,
+      walkState.options.iiVI ? 'ii-V-I' : null,
+      walkState.options.leadingTone ? 'leading-tone' : null,
+      walkState.options.returnTrip ? 'return' : null,
+    ].filter(Boolean);
+    const suffix = constraintTags.length > 0 ? ` (${constraintTags.join(', ')})` : '';
+    return {
+      version: 1,
+      progressions: [{
+        name: `${walkState.fromChord || 'Walk'} to ${walkState.toChord || 'path'}${suffix}`,
+        chords: walkState.path.chordNames,
+        color: '#58a6ff',
+      }],
+    };
+  }
+
+  return {
+    version: 1,
+    progressions: graphState.progressions.map(p => ({
+      name: p.name,
+      chords: p.chords,
+      color: p.color,
+    })),
+  };
 }

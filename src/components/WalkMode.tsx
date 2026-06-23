@@ -101,12 +101,8 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
       </div>
 
       <div className="walk-section">
-        <label className="walk-label">Edge types</label>
+        <label className="walk-label">Must include</label>
         <div className="walk-toggles">
-          <label className="walk-toggle walk-toggle-fixed" title="Always enabled">
-            <input type="checkbox" checked disabled />
-            <span>V{'\u2192'}I (dom7)</span>
-          </label>
           <label className="walk-toggle">
             <input type="checkbox" checked={options.relative} onChange={() => handleToggle('relative')} />
             <span>Relative maj/min</span>
@@ -138,7 +134,7 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
       )}
 
       {fromChord && toChord && fromChord !== toChord && !path && (
-        <div className="walk-info">No path found with current edge types.</div>
+        <div className="walk-info">No path found with current constraints.</div>
       )}
 
       {path && (

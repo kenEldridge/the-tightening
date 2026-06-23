@@ -196,4 +196,23 @@ export function getReciprocalSet(edges: Map<string, GraphEdge>): Set<string> {
   return reciprocal;
 }
 
+/** Map a chord quality to the Circle of Fifths ring it belongs to */
+export function qualityToRing(quality: ChordQuality): 'major' | 'minor' | 'dim' | null {
+  switch (quality) {
+    case 'major':
+    case 'dom7':
+    case 'maj7':
+    case 'sus2':
+    case 'sus4':
+      return 'major';
+    case 'minor':
+    case 'min7':
+      return 'minor';
+    case 'dim':
+      return 'dim';
+    case 'aug':
+      return null;
+  }
+}
+
 export { PALETTE };
