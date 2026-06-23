@@ -40,6 +40,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `ProgressionInput.tsx` — Jam mode progression entry
 - `HeldNotes.tsx` — shows currently held MIDI notes and matched chords
 - `MidiStatus.tsx` — MIDI connection indicator
+- `DidYouKnow.tsx` — "Did you know?" learning panel pinned to the sidebar bottom (`margin-top: auto`); cycles to a random insight on "Next tip". Data in `src/core/insights.ts` (`INSIGHTS`: `{ category, text, relatedEdges? }[]`). `relatedEdges` is unused for now — a hook for future contextual tips keyed to the current path's edge types.
 
 ### Key conventions
 - Chord names are the primary ID everywhere (node IDs, edge keys like "G->D")
