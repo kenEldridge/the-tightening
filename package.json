@@ -1,6 +1,6 @@
 {
   "name": "the-tightening",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "private": true,
   "type": "module",
   "main": "dist-electron/index.js",

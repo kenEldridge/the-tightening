@@ -347,9 +347,11 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
 
           const mx = (fromNode.x + toNode.x) / 2;
           const my = (fromNode.y + toNode.y) / 2;
+          const edgeType = walkPath.edgeTypes[i];
 
           return (
             <g key={`label-${i}`}>
+              <title>{`${fromName} -> ${toName}\n${EDGE_TYPE_INFO[edgeType].label}: ${EDGE_TYPE_INFO[edgeType].description}`}</title>
               <circle cx={mx} cy={my} r={9} fill="#0d1117" stroke="#30363d" strokeWidth={1} />
               <text
                 x={mx} y={my + 1}
