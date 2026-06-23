@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { WalkState } from '../types/index';
 import type { EdgeType } from '../core/chordPathfinder';
 import { getAllChordNames, findChordPath } from '../core/chordPathfinder';
@@ -17,6 +17,10 @@ const allChords = getAllChordNames();
 
 export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps' }: Props) {
   const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted } = walkState;
+  const returnOptions = walkState.returnOptions ?? {};
+
+  // Which leg the "Must include" filters edit: outbound or the return trip.
+  const [activeTab, setActiveTab] = useState<'out' | 'back'>('out');
 
   const updateAndFindPath = useCallback(
     (updates: Partial<WalkState>) => {
@@ -25,6 +29,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
       const from = updates.fromChord ?? next.fromChord;
       const to = updates.toChord ?? next.toChord;
       const opts = updates.options ?? next.options;
+      const retOpts = next.returnOptions ?? {};
       if (from && to && from !== to) {
         const outbound = findChordPath(from, to, opts);
         if (outbound) {
@@ -34,7 +39,8 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           let totalWeight = outbound.totalWeight;
 
           if (opts.returnTrip) {
-            const returnPath = findChordPath(to, from, opts);
+            // Return leg has its own independent "must include" constraints.
+            const returnPath = findChordPath(to, from, retOpts);
             if (returnPath) {
               // Concatenate: skip first chord of return (it's the last of outbound)
               chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
@@ -54,6 +60,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
       next.fromChord = from;
       next.toChord = to;
       next.options = opts;
+      next.returnOptions = retOpts;
       onWalkStateChange(next);
     },
     [walkState, onWalkStateChange],
@@ -75,9 +82,13 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
   const handleToggle = useCallback(
     (key: EdgeType) => {
-      updateAndFindPath({ options: { ...options, [key]: !options[key] } });
+      if (activeTab === 'back') {
+        updateAndFindPath({ returnOptions: { ...returnOptions, [key]: !returnOptions[key] } });
+      } else {
+        updateAndFindPath({ options: { ...options, [key]: !options[key] } });
+      }
     },
-    [updateAndFindPath, options],
+    [updateAndFindPath, options, returnOptions, activeTab],
   );
 
   const handleReturnTrip = useCallback(() => {
@@ -106,19 +117,45 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
       <div className="walk-section">
         <label className="walk-label">Must include</label>
-        <div className="walk-toggles">
-          {EDGE_TYPE_ORDER.map(edgeType => (
-            <label className="walk-toggle" key={edgeType}>
-              <input
-                type="checkbox"
-                checked={!!options[edgeType]}
-                onChange={() => handleToggle(edgeType)}
-              />
-              <span className="walk-toggle-swatch" style={{ backgroundColor: edgeTypeColor(edgeType) }} />
-              <span title={EDGE_TYPE_INFO[edgeType].description}>{EDGE_TYPE_INFO[edgeType].label}</span>
-            </label>
-          ))}
+        <div className="walk-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'out'}
+            className={`walk-tab ${activeTab === 'out' ? 'walk-tab-active' : ''}`}
+            onClick={() => setActiveTab('out')}
+          >
+            Out
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'back'}
+            className={`walk-tab ${activeTab === 'back' ? 'walk-tab-active' : ''}`}
+            onClick={() => setActiveTab('back')}
+          >
+            Back
+          </button>
         </div>
+        <div className="walk-toggles">
+          {EDGE_TYPE_ORDER.map(edgeType => {
+            const legOptions = activeTab === 'back' ? returnOptions : options;
+            return (
+              <label className="walk-toggle" key={edgeType}>
+                <input
+                  type="checkbox"
+                  checked={!!legOptions[edgeType]}
+                  onChange={() => handleToggle(edgeType)}
+                />
+                <span className="walk-toggle-swatch" style={{ backgroundColor: edgeTypeColor(edgeType) }} />
+                <span title={EDGE_TYPE_INFO[edgeType].description}>{EDGE_TYPE_INFO[edgeType].label}</span>
+              </label>
+            );
+          })}
+        </div>
+        {activeTab === 'back' && !options.returnTrip && (
+          <div className="walk-info">Return trip is off — these apply once you enable it.</div>
+        )}
       </div>
 
       <div className="walk-section">

@@ -66,10 +66,10 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `the-derple-dex` (sibling dir) — Astro blog with Circle of Fifths component. The pathfinding algorithm was ported from `CircleOfFifths.astro` lines ~1255-1374. That source only had dom7/relative/iiVI edges; leading-tone was added fresh here.
 
 ### Walk mode features (v2.2.0)
-- **Return trip**: toggle appends reverse path B→A after outbound A→B, sharing the middle chord
+- **Return trip**: toggle appends reverse path B→A after outbound A→B, sharing the middle chord. The return leg has its OWN "must include" constraints (`WalkState.returnOptions`), independent of the outbound `options`. The "Must include" UI has Out/Back tabs (`activeTab` local state in WalkMode); Back defaults to nothing.
 - **Endless mode**: after path completion, waits 1.5s then auto-picks random next destination. Last chord becomes next `fromChord`. Tracks `pathsCompleted` count.
 - Both toggles complement: return trip + endless = always depart from same home base. Endless alone = drift around the circle.
-- `WalkState.options` is `Partial<Record<EdgeType, boolean>>` plus `returnTrip` + `endless` (v2.4.0; was a fixed `relative`/`iiVI`/`leadingTone` shape)
+- `WalkState.options` is `Partial<Record<EdgeType, boolean>>` plus `returnTrip` + `endless` (v2.4.0; was a fixed `relative`/`iiVI`/`leadingTone` shape). `WalkState.returnOptions` (v2.6.0) holds the return leg's independent edge-type constraints.
 - Endless logic lives in App.tsx as a useEffect watching `walkState.completed` + `walkState.options.endless`
 - Return trip concatenation lives in WalkMode.tsx's `updateAndFindPath`
 

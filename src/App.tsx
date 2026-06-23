@@ -24,6 +24,7 @@ export default function App() {
     fromChord: '',
     toChord: '',
     options: { fifth: true, relative: true, returnTrip: false, endless: false },
+    returnOptions: {},
     path: null,
     currentStep: 0,
     completed: false,
@@ -217,7 +218,7 @@ export default function App() {
         let totalWeight = outbound.totalWeight;
 
         if (opts.returnTrip) {
-          const returnPath = findChordPath(nextTo, lastChord, opts);
+          const returnPath = findChordPath(nextTo, lastChord, walkState.returnOptions ?? {});
           if (returnPath) {
             chordNames = [...chordNames, ...returnPath.chordNames.slice(1)];
             edgeTypes = [...edgeTypes, ...returnPath.edgeTypes];

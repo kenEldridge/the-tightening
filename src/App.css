@@ -245,6 +245,34 @@ body {
   border-color: var(--accent);
 }
 
+.walk-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.walk-tab {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.walk-tab:hover {
+  color: var(--text-primary);
+}
+
+.walk-tab-active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .walk-toggles {
   display: grid;
   grid-template-columns: 1fr 1fr;
