@@ -37,7 +37,11 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Intervals',
-    text: 'A just-intonation major third is 5:4; on a piano it is tuned slightly sharp, one of equal temperament’s little compromises.',
+    text: 'A pure (just) major third is 5:4 — about 14 cents flatter than the piano’s equal-tempered third. Equal temperament widens every third a touch so all keys sound equally (im)perfect.',
+  },
+  {
+    category: 'Intervals',
+    text: 'The major third and minor sixth are inversions — they add to an octave — so tuning the third pure (flat of the piano) makes its minor sixth pure too, but sharp of the piano.',
   },
 
   // --- The circle itself ---
