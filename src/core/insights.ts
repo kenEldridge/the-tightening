@@ -136,4 +136,13 @@ export const INSIGHTS: Insight[] = [
     category: 'This app',
     text: 'A walk is a sequence of moves, not a key — the tonal center can sit anywhere along the path, not just the first chord.',
   },
+  {
+    category: 'Circle',
+    text: 'C and F♯/G♭ sit directly opposite on the circle — a tritone apart, the most distant key relationship there is, which is why a tritone feels so unstable.',
+    relatedEdges: ['tritoneSub'],
+  },
+  {
+    category: 'Harmony',
+    text: 'Consonance is relational: a plain major triad can feel restful as a tonic or tense as a tritone away from home — same notes, different context.',
+  },
 ];
