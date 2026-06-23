@@ -35,9 +35,12 @@ interface Props {
 // Layout constants
 const CX = 300;
 const CY = 300;
-const R_MAJOR = 240;
-const R_MINOR = 180;
-const R_DIM = 120;
+// Ring radii are spread so the same-spoke edges (relative: major↔minor,
+// leading-tone: minor↔dim) clear both node circles plus edge padding and stay
+// visible/hoverable. Gap must exceed (nodeR_a + nodeR_b + 2*pad) ≈ 64/56.
+const R_MAJOR = 258;
+const R_MINOR = 175;
+const R_DIM = 98;
 const NODE_R_MAJOR = 30;
 const NODE_R_MINOR = 26;
 const NODE_R_DIM = 22;
