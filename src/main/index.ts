@@ -62,7 +62,7 @@ function buildMenu() {
           accelerator: 'CmdOrCtrl+S',
           click: () => {
             if (currentFilePath) {
-              mainWindow?.webContents.send('menu-save', currentFilePath);
+              mainWindow?.webContents.send('menu-save', currentFilePath, false);
             } else {
               // No file yet — do Save As
               doSaveAs();
@@ -123,8 +123,31 @@ async function doSaveAs() {
   if (result.canceled || !result.filePath) return;
   currentFilePath = result.filePath;
   updateTitle();
-  mainWindow.webContents.send('menu-save', currentFilePath);
+  mainWindow.webContents.send('menu-save', currentFilePath, true);
 }
+
+ipcMain.handle('file-save-as', async (_event, defaultPath: string, data: string) => {
+  if (!mainWindow) return null;
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: 'Save Chord Walk File',
+    defaultPath,
+    filters: [
+      { name: 'Chord Walk', extensions: ['json'] },
+    ],
+  });
+  if (result.canceled || !result.filePath) return null;
+
+  try {
+    fs.writeFileSync(result.filePath, data, 'utf-8');
+    currentFilePath = result.filePath;
+    updateTitle();
+    console.log('[Main] File saved:', result.filePath);
+    return result.filePath;
+  } catch (err) {
+    dialog.showErrorBox('Save Failed', `Could not write file:\n${(err as Error).message}`);
+    return null;
+  }
+});
 
 // IPC handler: renderer sends file data to write
 ipcMain.on('file-write', (_event, filePath: string, data: string) => {

@@ -100,8 +100,9 @@ export interface ElectronAPI {
   platform: string;
   onMenuNew: (callback: () => void) => void;
   onMenuOpen: (callback: (data: SaveData) => void) => void;
-  onMenuSave: (callback: (filePath: string) => void) => void;
+  onMenuSave: (callback: (filePath: string, saveAs: boolean) => void) => void;
   fileWrite: (filePath: string, data: string) => void;
+  fileSaveAs: (defaultPath: string, data: string) => Promise<string | null>;
   removeMenuListeners: () => void;
 }
 

@@ -132,9 +132,14 @@ export default function App() {
       }
     });
 
-    api.onMenuSave((filePath: string) => {
+    api.onMenuSave((filePath: string, saveAs: boolean) => {
       const saveData = createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current);
-      api.fileWrite(filePath, JSON.stringify(saveData, null, 2));
+      const json = JSON.stringify(saveData, null, 2);
+      if (modeRef.current === 'walk' && !saveAs) {
+        api.fileSaveAs(defaultWalkSaveName(walkStateRef.current), json);
+        return;
+      }
+      api.fileWrite(filePath, json);
     });
 
     return () => {
@@ -394,4 +399,10 @@ function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkSt
       color: p.color,
     })),
   };
+}
+
+function defaultWalkSaveName(walkState: WalkState): string {
+  const from = walkState.fromChord || 'walk';
+  const to = walkState.toChord || 'path';
+  return `${from}_to_${to}.cwalk.json`.replace(/[^a-zA-Z0-9._-]+/g, '_');
 }
