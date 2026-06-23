@@ -2,17 +2,20 @@ import React, { useCallback } from 'react';
 import type { WalkState } from '../types/index';
 import type { EdgeType } from '../core/chordPathfinder';
 import { getAllChordNames, findChordPath } from '../core/chordPathfinder';
+import { respellChordName } from '../core/chordDefinitions';
+import type { NoteSpelling } from '../core/chordDefinitions';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER, edgeTypeColor } from '../core/edgeTypeStyles';
 import PathStrip from './PathStrip';
 
 interface Props {
   walkState: WalkState;
   onWalkStateChange: (state: WalkState) => void;
+  noteSpelling?: NoteSpelling;
 }
 
 const allChords = getAllChordNames();
 
-export default function WalkMode({ walkState, onWalkStateChange }: Props) {
+export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps' }: Props) {
   const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted } = walkState;
 
   const updateAndFindPath = useCallback(
@@ -93,12 +96,12 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
     <div className="walk-mode">
       <div className="walk-section">
         <label className="walk-label">From</label>
-        <ChordSelect value={fromChord} onChange={handleFromChange} />
+        <ChordSelect value={fromChord} onChange={handleFromChange} noteSpelling={noteSpelling} />
       </div>
 
       <div className="walk-section">
         <label className="walk-label">To</label>
-        <ChordSelect value={toChord} onChange={handleToChange} />
+        <ChordSelect value={toChord} onChange={handleToChange} noteSpelling={noteSpelling} />
       </div>
 
       <div className="walk-section">
@@ -145,6 +148,7 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
             explanations={path.explanations}
             currentStep={currentStep}
             completed={completed}
+            noteSpelling={noteSpelling}
           />
           {currentStep > 0 && !completed && (
             <button className="walk-reset-btn" onClick={handleReset}>Reset progress</button>
@@ -158,23 +162,32 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
   );
 }
 
-function ChordSelect({ value, onChange }: { value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void }) {
+function ChordSelect({
+  value,
+  onChange,
+  noteSpelling,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  noteSpelling: NoteSpelling;
+}) {
+  // value stays canonical (sharps) so pathfinding keys still resolve; only the label respells.
   return (
     <select className="walk-select" value={value} onChange={onChange}>
       <option value="">-- pick --</option>
       <optgroup label="Major">
         {allChords.major.map(name => (
-          <option key={name} value={name}>{name}</option>
+          <option key={name} value={name}>{respellChordName(name, noteSpelling)}</option>
         ))}
       </optgroup>
       <optgroup label="Minor">
         {allChords.minor.map(name => (
-          <option key={name} value={name}>{name}</option>
+          <option key={name} value={name}>{respellChordName(name, noteSpelling)}</option>
         ))}
       </optgroup>
       <optgroup label="Diminished">
         {allChords.dim.map(name => (
-          <option key={name} value={name}>{name}</option>
+          <option key={name} value={name}>{respellChordName(name, noteSpelling)}</option>
         ))}
       </optgroup>
     </select>

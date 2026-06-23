@@ -1,5 +1,7 @@
 import React from 'react';
 import type { EdgeType } from '../core/chordPathfinder';
+import { respellChordName } from '../core/chordDefinitions';
+import type { NoteSpelling } from '../core/chordDefinitions';
 import { edgeTypeColor, edgeTypeShortLabel } from '../core/edgeTypeStyles';
 
 interface Props {
@@ -8,9 +10,10 @@ interface Props {
   explanations: string[];
   currentStep: number;
   completed: boolean;
+  noteSpelling?: NoteSpelling;
 }
 
-export default function PathStrip({ chordNames, edgeTypes, explanations, currentStep, completed }: Props) {
+export default function PathStrip({ chordNames, edgeTypes, explanations, currentStep, completed, noteSpelling = 'sharps' }: Props) {
   if (chordNames.length === 0) return null;
 
   return (
@@ -26,7 +29,7 @@ export default function PathStrip({ chordNames, edgeTypes, explanations, current
             <React.Fragment key={i}>
               <div className={stepClass}>
                 <span className="path-step-num">{i + 1}</span>
-                <span className="path-step-chord">{name}</span>
+                <span className="path-step-chord">{respellChordName(name, noteSpelling)}</span>
                 {i < currentStep && <span className="path-step-check">{'\u2713'}</span>}
               </div>
               {i < edgeTypes.length && (

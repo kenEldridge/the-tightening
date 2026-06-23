@@ -347,7 +347,7 @@ export default function App() {
             </>
           ) : (
             <>
-              <WalkMode walkState={walkState} onWalkStateChange={setWalkState} />
+              <WalkMode walkState={walkState} onWalkStateChange={setWalkState} noteSpelling={noteSpelling} />
             </>
           )}
           <EdgeTypeLegend />
