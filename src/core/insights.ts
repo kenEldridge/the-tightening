@@ -132,4 +132,8 @@ export const INSIGHTS: Insight[] = [
     category: 'This app',
     text: 'Transposing a song is just rotating it around this circle; every relationship stays identical.',
   },
+  {
+    category: 'This app',
+    text: 'A walk is a sequence of moves, not a key — the tonal center can sit anywhere along the path, not just the first chord.',
+  },
 ];
