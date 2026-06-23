@@ -7,7 +7,18 @@ export const FIFTHS_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
 // ---------- Types ----------
 
-export type EdgeType = 'fifth' | 'dom7' | 'relative' | 'iiVI' | 'leadingTone';
+export type EdgeType =
+  | 'fifth'
+  | 'plagal'
+  | 'diatonic'
+  | 'relative'
+  | 'iiVI'
+  | 'borrowed'
+  | 'parallel'
+  | 'dom7'
+  | 'leadingTone'
+  | 'chromaticMediant'
+  | 'tritoneSub';
 
 export interface PathEdge {
   target: string;
@@ -28,9 +39,7 @@ interface SearchCost {
 }
 
 export interface PathOptions {
-  relative: boolean;
-  iiVI: boolean;
-  leadingTone: boolean;
+  [key: string]: boolean | undefined;
 }
 
 // ---------- Node ID ↔ Chord name mapping ----------
@@ -95,8 +104,21 @@ export function nodeIdToChordName(nodeId: string): string {
 
 // ---------- Graph construction ----------
 
-// Constrainable edge types (the ones users can require in a path)
-const CONSTRAINABLE_TYPES: EdgeType[] = ['relative', 'iiVI', 'leadingTone'];
+export const EDGE_TYPES: EdgeType[] = [
+  'fifth',
+  'plagal',
+  'diatonic',
+  'relative',
+  'iiVI',
+  'borrowed',
+  'parallel',
+  'dom7',
+  'leadingTone',
+  'chromaticMediant',
+  'tritoneSub',
+];
+
+const CONSTRAINABLE_TYPES: EdgeType[] = EDGE_TYPES;
 
 function compareSearchCost(a: SearchCost, b: SearchCost): number {
   if (a.steps !== b.steps) return a.steps - b.steps;
@@ -106,6 +128,13 @@ function compareSearchCost(a: SearchCost, b: SearchCost): number {
 
 function ringOf(nodeId: string): string {
   return nodeId.split('-')[0];
+}
+
+function pitchClassToNodeId(prefix: 'key' | 'minor' | 'dim', pc: number): string {
+  const normalized = (pc + 120) % 12;
+  if (prefix === 'key') return `key-${FIFTHS_ORDER.indexOf(normalized)}`;
+  if (prefix === 'minor') return `minor-${FIFTHS_ORDER.indexOf((normalized + 3) % 12)}`;
+  return `dim-${FIFTHS_ORDER.indexOf((normalized + 1) % 12)}`;
 }
 
 /**
@@ -141,6 +170,31 @@ export function buildPathGraph(): Map<string, PathEdge[]> {
     const dimFifthUpPc = (dimRootPc + 7) % 12;
     const dimFifthResolvePos = FIFTHS_ORDER.indexOf((dimFifthUpPc + 1) % 12);
     adj.get(`dim-${i}`)!.push({ target: `dim-${dimFifthResolvePos}`, weight: 1, type: 'fifth' });
+  }
+
+  // Plagal movement (IV -> I color): same root motion as a fifth, named separately when required.
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    adj.get(`key-${i}`)!.push({ target: pitchClassToNodeId('key', rootPc + 7), weight: 1.05, type: 'plagal' });
+    const minorRootPc = (rootPc + 9) % 12;
+    adj.get(`minor-${i}`)!.push({ target: pitchClassToNodeId('minor', minorRootPc + 7), weight: 1.05, type: 'plagal' });
+  }
+
+  // Diatonic neighbor movement inside each major key.
+  for (let keyPc = 0; keyPc < 12; keyPc++) {
+    const degrees = [
+      pitchClassToNodeId('key', keyPc),
+      pitchClassToNodeId('minor', keyPc + 2),
+      pitchClassToNodeId('minor', keyPc + 4),
+      pitchClassToNodeId('key', keyPc + 5),
+      pitchClassToNodeId('key', keyPc + 7),
+      pitchClassToNodeId('minor', keyPc + 9),
+      pitchClassToNodeId('dim', keyPc + 11),
+    ];
+    for (let j = 0; j < degrees.length - 1; j++) {
+      adj.get(degrees[j])!.push({ target: degrees[j + 1], weight: 1.1, type: 'diatonic' });
+      adj.get(degrees[j + 1])!.push({ target: degrees[j], weight: 1.1, type: 'diatonic' });
+    }
   }
 
   // Dom7 resolution (weight 1.0): V → I
@@ -188,12 +242,59 @@ export function buildPathGraph(): Map<string, PathEdge[]> {
     adj.get(`minor-${i}`)!.push({ target: `key-${targetMajPos}`, weight: 0.5, type: 'iiVI' });
   }
 
+  // Borrowed/modal-mixture color: bIII, bVI, bVII, and iv from the parallel minor.
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    for (const offset of [3, 8, 10]) {
+      const borrowedMaj = pitchClassToNodeId('key', rootPc + offset);
+      adj.get(`key-${i}`)!.push({ target: borrowedMaj, weight: 1.35, type: 'borrowed' });
+      adj.get(borrowedMaj)!.push({ target: `key-${i}`, weight: 1.35, type: 'borrowed' });
+    }
+
+    const minorIv = pitchClassToNodeId('minor', rootPc + 5);
+    adj.get(`key-${i}`)!.push({ target: minorIv, weight: 1.35, type: 'borrowed' });
+    adj.get(minorIv)!.push({ target: `key-${i}`, weight: 1.35, type: 'borrowed' });
+  }
+
+  // Parallel major/minor color, distinct from relative major/minor.
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    const parallelMinor = pitchClassToNodeId('minor', rootPc);
+    adj.get(`key-${i}`)!.push({ target: parallelMinor, weight: 1.4, type: 'parallel' });
+    adj.get(parallelMinor)!.push({ target: `key-${i}`, weight: 1.4, type: 'parallel' });
+  }
+
   // Leading-tone neighborhood (weight 1.0): vii° resolves to I, and I/vi can move to vii°.
   for (let i = 0; i < 12; i++) {
     adj.get(`dim-${i}`)!.push({ target: `key-${i}`, weight: 1, type: 'leadingTone' });
     adj.get(`dim-${i}`)!.push({ target: `minor-${i}`, weight: 1, type: 'leadingTone' });
     adj.get(`key-${i}`)!.push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
     adj.get(`minor-${i}`)!.push({ target: `dim-${i}`, weight: 1, type: 'leadingTone' });
+  }
+
+  // Chromatic mediants: same-quality roots a major/minor third apart.
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    for (const offset of [3, 4, 8, 9]) {
+      adj.get(`key-${i}`)!.push({
+        target: pitchClassToNodeId('key', rootPc + offset),
+        weight: 1.7,
+        type: 'chromaticMediant',
+      });
+      const minorRootPc = (rootPc + 9) % 12;
+      adj.get(`minor-${i}`)!.push({
+        target: pitchClassToNodeId('minor', minorRootPc + offset),
+        weight: 1.7,
+        type: 'chromaticMediant',
+      });
+    }
+  }
+
+  // Tritone substitute dominant resolution: substitute dominant resolves down a semitone.
+  for (let i = 0; i < 12; i++) {
+    const rootPc = FIFTHS_ORDER[i];
+    adj.get(`key-${i}`)!.push({ target: pitchClassToNodeId('key', rootPc - 1), weight: 1.6, type: 'tritoneSub' });
+    adj.get(`key-${i}`)!.push({ target: pitchClassToNodeId('minor', rootPc - 1), weight: 1.6, type: 'tritoneSub' });
   }
 
   return adj;
@@ -230,7 +331,8 @@ export function getDirectEdgeTypes(from: string, to: string): EdgeType[] {
  * Path length is minimized first, same-ring paths are preferred next,
  * and harmonic weights break any remaining ties.
  *
- * With 3 constrainable types, max 2^3 = 8 masks × 36 nodes = 288 states.
+ * With all edge types constrainable, the expanded state space is still modest
+ * for this 36-node theory graph.
  */
 export function findConstrainedPath(
   adj: Map<string, PathEdge[]>,
@@ -335,10 +437,16 @@ export function findConstrainedPath(
 
 const EDGE_TYPE_LABELS: Record<EdgeType, string> = {
   fifth: 'P5 (fifth)',
+  plagal: 'IV-I (plagal)',
+  diatonic: 'diatonic neighbor',
   dom7: 'V\u2192I',
   relative: 'relative maj/min',
   iiVI: 'ii-V-I',
+  borrowed: 'borrowed/modal mixture',
+  parallel: 'parallel maj/min',
   leadingTone: 'vii\u00B0\u2192I',
+  chromaticMediant: 'chromatic mediant',
+  tritoneSub: 'tritone substitute',
 };
 
 /**
@@ -364,7 +472,7 @@ export interface ChordPathResult {
 
 /**
  * Full pipeline: chord name → pathfinder ID → constrained shortest path → chord names back.
- * Options.relative/iiVI/leadingTone mean "path MUST include at least one edge of this type".
+ * True edge-type options mean "path MUST include at least one edge of this type".
  * Returns null if either chord can't be mapped or no path exists.
  */
 export function findChordPath(
@@ -378,9 +486,9 @@ export function findChordPath(
 
   const graph = getPathGraph();
   const requiredTypes = new Set<EdgeType>();
-  if (options.relative) requiredTypes.add('relative');
-  if (options.iiVI) requiredTypes.add('iiVI');
-  if (options.leadingTone) requiredTypes.add('leadingTone');
+  for (const edgeType of CONSTRAINABLE_TYPES) {
+    if (options[edgeType]) requiredTypes.add(edgeType);
+  }
 
   const result = findConstrainedPath(graph, fromId, toId, requiredTypes);
   if (!result) return null;

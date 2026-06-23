@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import type { WalkState } from '../types/index';
 import type { EdgeType } from '../core/chordPathfinder';
 import { getAllChordNames, findChordPath } from '../core/chordPathfinder';
+import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER, edgeTypeColor } from '../core/edgeTypeStyles';
 import PathStrip from './PathStrip';
 
 interface Props {
@@ -70,7 +71,7 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
   );
 
   const handleToggle = useCallback(
-    (key: 'relative' | 'iiVI' | 'leadingTone') => {
+    (key: EdgeType) => {
       updateAndFindPath({ options: { ...options, [key]: !options[key] } });
     },
     [updateAndFindPath, options],
@@ -103,18 +104,17 @@ export default function WalkMode({ walkState, onWalkStateChange }: Props) {
       <div className="walk-section">
         <label className="walk-label">Must include</label>
         <div className="walk-toggles">
-          <label className="walk-toggle">
-            <input type="checkbox" checked={options.relative} onChange={() => handleToggle('relative')} />
-            <span>Relative maj/min</span>
-          </label>
-          <label className="walk-toggle">
-            <input type="checkbox" checked={options.iiVI} onChange={() => handleToggle('iiVI')} />
-            <span>ii-V-I</span>
-          </label>
-          <label className="walk-toggle">
-            <input type="checkbox" checked={options.leadingTone} onChange={() => handleToggle('leadingTone')} />
-            <span>vii{'\u00B0'}{'\u2192'}I</span>
-          </label>
+          {EDGE_TYPE_ORDER.map(edgeType => (
+            <label className="walk-toggle" key={edgeType}>
+              <input
+                type="checkbox"
+                checked={!!options[edgeType]}
+                onChange={() => handleToggle(edgeType)}
+              />
+              <span className="walk-toggle-swatch" style={{ backgroundColor: edgeTypeColor(edgeType) }} />
+              <span title={EDGE_TYPE_INFO[edgeType].description}>{EDGE_TYPE_INFO[edgeType].label}</span>
+            </label>
+          ))}
         </div>
       </div>
 

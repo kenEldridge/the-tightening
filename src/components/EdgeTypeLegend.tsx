@@ -9,7 +9,7 @@ export default function EdgeTypeLegend() {
         {EDGE_TYPE_ORDER.map(edgeType => {
           const info = EDGE_TYPE_INFO[edgeType];
           return (
-            <div className="edge-legend-item" key={edgeType}>
+            <div className="edge-legend-item" key={edgeType} title={info.description}>
               <span className="edge-legend-swatch" style={{ backgroundColor: info.color }} />
               <span className="edge-legend-label">{info.label}</span>
             </div>

@@ -1,3 +1,5 @@
+import type { EdgeType } from '../core/chordPathfinder';
+
 // Chord qualities supported in v1
 export type ChordQuality =
   | 'major'
@@ -71,10 +73,7 @@ export type AppMode = 'home' | 'jam' | 'walk';
 export interface WalkState {
   fromChord: string;
   toChord: string;
-  options: {
-    relative: boolean;
-    iiVI: boolean;
-    leadingTone: boolean;
+  options: Partial<Record<EdgeType, boolean>> & {
     returnTrip: boolean;
     endless: boolean;
   };

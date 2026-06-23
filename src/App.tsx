@@ -9,8 +9,10 @@ import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
 import { getTheoryChordNodes, getAllChordNames, findChordPath } from './core/chordPathfinder';
+import type { EdgeType } from './core/chordPathfinder';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
+import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
 export default function App() {
   const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
@@ -20,7 +22,7 @@ export default function App() {
   const [walkState, setWalkState] = useState<WalkState>({
     fromChord: '',
     toChord: '',
-    options: { relative: true, iiVI: false, leadingTone: false, returnTrip: false, endless: false },
+    options: { fifth: true, relative: true, returnTrip: false, endless: false },
     path: null,
     currentStep: 0,
     completed: false,
@@ -273,7 +275,7 @@ export default function App() {
 
   // Walk path data for circle of fifths overlay
   const walkPath = mode === 'walk' && walkState.path
-    ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes, currentStep: walkState.currentStep }
+    ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
     : undefined;
 
   if (mode === 'home') {
@@ -375,9 +377,9 @@ export default function App() {
 function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkState): SaveData {
   if (mode === 'walk' && walkState.path) {
     const constraintTags = [
-      walkState.options.relative ? 'relative' : null,
-      walkState.options.iiVI ? 'ii-V-I' : null,
-      walkState.options.leadingTone ? 'leading-tone' : null,
+      ...EDGE_TYPE_ORDER
+        .filter(edgeType => walkState.options[edgeType])
+        .map(edgeType => EDGE_TYPE_INFO[edgeType].label),
       walkState.options.returnTrip ? 'return' : null,
     ].filter(Boolean);
     const suffix = constraintTags.length > 0 ? ` (${constraintTags.join(', ')})` : '';

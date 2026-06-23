@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes } from '../core/chordPathfinder';
+import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from '../core/chordPathfinder';
 import type { EdgeType } from '../core/chordPathfinder';
-import { edgeTypeColor, mostDissonantEdgeType } from '../core/edgeTypeStyles';
+import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from '../core/edgeTypeStyles';
 import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from '../core/chordDefinitions';
 import type { NoteSpelling } from '../core/chordDefinitions';
 import type { GraphState, GraphEdge } from '../types/index';
@@ -20,7 +20,7 @@ function triadNotes(chordName: string, spelling: NoteSpelling): string {
 
 interface WalkPathOverlay {
   nodes: string[];       // chord names in path order
-  edgeTypes: string[];
+  edgeTypes: EdgeType[];
   currentStep: number;
 }
 
@@ -101,6 +101,23 @@ function chordToRingNode(chordName: string): RingNode | null {
   if (!nodeId) return null;
   // Find the RingNode with this id
   return RING_NODES.find(n => n.id === nodeId) || null;
+}
+
+function classifyJamEdge(source: string, target: string): EdgeType[] {
+  const directTypes = getDirectEdgeTypes(source, target);
+  if (directTypes.length > 0) return directTypes;
+
+  const path = findChordPath(source, target, {
+    relative: false,
+    iiVI: false,
+    leadingTone: false,
+  });
+  return path?.edgeTypes ?? [];
+}
+
+function edgeTypesTitle(edgeTypes: EdgeType[]): string {
+  if (edgeTypes.length === 0) return 'Unclassified harmonic move';
+  return edgeTypes.map(edgeTypeTitle).join('\n');
 }
 
 /** Info about a progression chord occupying a CoF slot */
@@ -193,7 +210,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       // Skip self-loops on the CoF (e.g. G and G7 both map to same slot)
       if (fromRing.id === toRing.id) continue;
 
-      const edgeTypes = getDirectEdgeTypes(edge.source, edge.target);
+      const edgeTypes = classifyJamEdge(edge.source, edge.target);
       const color = edgeTypeColor(mostDissonantEdgeType(edgeTypes) ?? undefined);
 
       const isBidirectional = reciprocalSet.has(key);
@@ -312,7 +329,9 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               opacity={isDone ? 0.4 : 0.9}
               strokeLinecap="round"
               markerEnd="url(#cof-arrow)"
-            />
+            >
+              <title>{`${fromName} -> ${toName}\n${EDGE_TYPE_INFO[edgeType].label}: ${EDGE_TYPE_INFO[edgeType].description}`}</title>
+            </line>
           );
         })}
 
@@ -383,7 +402,9 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               strokeLinecap="round"
               markerStart={edge.isBidirectional ? 'url(#cof-arrow)' : undefined}
               markerEnd="url(#cof-arrow)"
-            />
+            >
+              <title>{`${edge.from.name} ${edge.isBidirectional ? '<->' : '->'} ${edge.to.name}\n${edgeTypesTitle(edge.edgeTypes)}`}</title>
+            </line>
           );
         })}
 
