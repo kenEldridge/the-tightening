@@ -58,9 +58,11 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `npm run dev` — Vite + Electron dev mode
 - `npm run build` — TypeScript + Vite production build
 - `node tests/chord-walk.test.mjs` — 176 tests (pure JS, no test framework, replicates core logic)
-- CI: GitHub Actions on push to master → builds Windows installer → creates GitHub release
+- CI: GitHub Actions (`.github/workflows/release.yml`):
+  - push to `master` → `npm run build` + `node tests/chord-walk.test.mjs` only (no release)
+  - push a `v*` tag → also builds the Windows installer and publishes a GitHub release
 - Remote name: `the-tightening` (not `origin`) — github.com/kenEldridge/the-tightening.git
-- Release tags: `v{version}-build.{run_number}` (e.g. `v2.2.0-build.42`)
+- To release: bump `package.json` version, commit, then `git tag vX.Y.Z && git push the-tightening vX.Y.Z`. Release name/tag = the pushed tag (`github.ref_name`).
 
 ## Related project
 - `the-derple-dex` (sibling dir) — Astro blog with Circle of Fifths component. The pathfinding algorithm was ported from `CircleOfFifths.astro` lines ~1255-1374. That source only had dom7/relative/iiVI edges; leading-tone was added fresh here.
