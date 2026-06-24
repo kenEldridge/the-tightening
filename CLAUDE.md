@@ -40,6 +40,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `ProgressionInput.tsx` — Jam mode progression entry
 - `HeldNotes.tsx` — shows currently held MIDI notes and matched chords
 - `MidiStatus.tsx` — MIDI connection indicator
+- `AudioRecorder.tsx` — sidebar panel that records a chosen audio **input** device to a 16-bit PCM WAV (in-app `<audio>` playback + download). FP-10 sends MIDI only over USB, so audio comes from a separate line-in ("USB Audio Device"); the panel just captures whatever input is selected. Uses Web Audio (`getUserMedia` → `MediaStreamSource` → `ScriptProcessorNode`, pumped through a gain-0 node so it isn't monitored aloud) and a hand-rolled WAV encoder. Requires the media-permission handler in `src/main/index.ts` (`setPermissionRequestHandler`/`setPermissionCheckHandler` allow-all — safe; window only loads our own UI). Not MIDI-synced; it's a raw audio capture of the line-in.
 - `DidYouKnow.tsx` — "Did you know?" learning panel pinned to the sidebar bottom (`margin-top: auto`); cycles to a random insight on "Next tip". Data in `src/core/insights.ts` (`INSIGHTS`: `{ category, text, relatedEdges? }[]`). `relatedEdges` is unused for now — a hook for future contextual tips keyed to the current path's edge types.
 
 ### Key conventions

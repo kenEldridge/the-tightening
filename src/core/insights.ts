@@ -6,7 +6,7 @@ export interface Insight {
   /** The one-line fact. Keep it to a sentence or two. */
   text: string;
   /**
-   * Optional edge types this insight explains. Lets the panel surface a
+   * Optional edge types this insight explains. Can let a panel surface a
    * relevant tip when one of these relationships appears in the current path.
    */
   relatedEdges?: EdgeType[];
@@ -20,7 +20,7 @@ export const INSIGHTS: Insight[] = [
   // --- Intervals & the physics ---
   {
     category: 'Intervals',
-    text: 'A perfect fifth is a 3:2 frequency ratio; flip it to 2:3 and you get a perfect fourth — the same two notes, the other direction.',
+    text: 'A perfect fifth is a 3:2 frequency ratio; invert it within the octave and you get 4:3, a perfect fourth — the same two notes, the other direction.',
     relatedEdges: ['fifth', 'dom7'],
   },
   {
@@ -65,7 +65,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Circle',
-    text: 'Twelve fifths span exactly seven octaves — the circle only closes because equal temperament makes it.',
+    text: 'In equal temperament, twelve fifth-steps are adjusted to land exactly seven octaves up.',
   },
 
   // --- The relationships (edge types) ---
@@ -108,7 +108,7 @@ export const INSIGHTS: Insight[] = [
   // --- How chords are built ---
   {
     category: 'Chords',
-    text: 'A major triad is a major third with a minor third on top; a minor triad just flips the order.',
+    text: 'A major triad stacks a major third with a minor third on top; a minor triad stacks a minor third with a major third on top.',
   },
   {
     category: 'Chords',
@@ -142,7 +142,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Circle',
-    text: 'C and F♯/G♭ sit directly opposite on the circle — a tritone apart, the most distant key relationship there is, which is why a tritone feels so unstable.',
+    text: 'C and F♯/G♭ sit directly opposite on the circle — a tritone apart, the most distant key relationship there is. That opposite-pole geometry is part of why tritone relationships feel so unstable.',
     relatedEdges: ['tritoneSub'],
   },
   {

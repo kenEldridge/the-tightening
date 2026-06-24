@@ -387,6 +387,83 @@ body {
   white-space: nowrap;
 }
 
+/* ── Audio recorder ── */
+
+.recorder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.recorder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recorder-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recorder-time {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #f85149;
+  font-variant-numeric: tabular-nums;
+}
+
+.recorder-btn {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.recorder-btn-start {
+  color: #f85149;
+  background: transparent;
+}
+
+.recorder-btn-start:hover {
+  border-color: #f85149;
+}
+
+.recorder-btn-stop {
+  color: #fff;
+  background: #f85149;
+  border-color: #f85149;
+}
+
+.recorder-error {
+  font-size: 0.75rem;
+  color: #f85149;
+}
+
+.recorder-clip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recorder-clip audio {
+  width: 100%;
+  height: 32px;
+}
+
+.recorder-download {
+  font-size: 0.75rem;
+  color: var(--accent);
+  align-self: flex-start;
+}
+
 /* ── Did you know? insight panel ── */
 
 .insight-panel {

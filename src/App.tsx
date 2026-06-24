@@ -12,6 +12,7 @@ import { getTheoryChordNodes, getAllChordNames, findChordPath } from './core/cho
 import type { EdgeType } from './core/chordPathfinder';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
+import AudioRecorder from './components/AudioRecorder';
 import DidYouKnow from './components/DidYouKnow';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
@@ -354,6 +355,7 @@ export default function App() {
           )}
           <EdgeTypeLegend />
           <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
+          <AudioRecorder />
           <DidYouKnow />
         </div>
         <div className="graph-area">

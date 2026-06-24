@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, session } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -194,6 +194,12 @@ const createWindow = () => {
 
 app.whenReady().then(() => {
   console.log('[Main] Electron app ready');
+
+  // Grant permission requests (mic/audio for line-in recording, MIDI, etc.).
+  // Safe here: the window only ever loads our own trusted UI, no remote content.
+  session.defaultSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(true));
+  session.defaultSession.setPermissionCheckHandler(() => true);
+
   createWindow();
 
   app.on('activate', () => {
