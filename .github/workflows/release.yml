@@ -31,9 +31,9 @@ jobs:
 
       - name: Build installer
         if: startsWith(github.ref, 'refs/tags/v')
-        run: npx electron-builder --win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # --publish never: don't let electron-builder create its own draft
+        # release; the "Create Release" step below publishes the real one.
+        run: npx electron-builder --win --publish never
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
