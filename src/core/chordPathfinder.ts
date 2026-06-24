@@ -392,6 +392,11 @@ export function findConstrainedPath(
       // Compute new mask: set bit if this edge type is required
       const edgeBit = typeToBit.get(edge.type) ?? 0;
       const newMask = uMask | edgeBit;
+
+      // Don't let the destination appear as a waypoint — only enter it when
+      // all constraints are already satisfied by this move.
+      if (edge.target === toId && newMask !== allRequiredMask) continue;
+
       const vKey = stateKey(edge.target, newMask);
 
       if (visited.has(vKey)) continue;
