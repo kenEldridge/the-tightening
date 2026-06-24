@@ -616,10 +616,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           );
         })}
 
-        {/* Ring labels */}
-        <text x={CX} y={CY - R_MAJOR - 12} textAnchor="middle" fontSize={10} fill="#8b949e" opacity={0.6}>Major</text>
-        <text x={CX} y={CY - R_MINOR - 10} textAnchor="middle" fontSize={9} fill="#8b949e" opacity={0.6}>Minor</text>
-        <text x={CX} y={CY - R_DIM - 8} textAnchor="middle" fontSize={8} fill="#8b949e" opacity={0.6}>Dim</text>
+
       </svg>
     </div>
   );
