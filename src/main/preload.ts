@@ -22,6 +22,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('file-save-as', defaultPath, data);
   },
 
+  // Tell the main process that MIDI activity occurred (prevents system sleep)
+  midiActivity: () => {
+    ipcRenderer.send('midi-activity');
+  },
+
   // Cleanup
   removeMenuListeners: () => {
     ipcRenderer.removeAllListeners('menu-new');

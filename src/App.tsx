@@ -74,6 +74,7 @@ export default function App() {
     };
 
     const onMidiMessage = (e: MIDIMessageEvent) => {
+      window.electronAPI.midiActivity();
       const [status, data1, data2] = e.data!;
       if (status >= 0x90 && status <= 0x9F && data2 > 0) {
         handleNoteOn(data1);

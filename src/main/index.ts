@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, session } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, session, powerSaveBlocker } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -147,6 +147,25 @@ ipcMain.handle('file-save-as', async (_event, defaultPath: string, data: string)
     dialog.showErrorBox('Save Failed', `Could not write file:\n${(err as Error).message}`);
     return null;
   }
+});
+
+// Keep the system awake while MIDI is active; sleep again after 5 min of silence.
+let _psbId: number | null = null;
+let _psbTimer: ReturnType<typeof setTimeout> | null = null;
+const MIDI_IDLE_MS = 5 * 60 * 1000;
+
+ipcMain.on('midi-activity', () => {
+  if (_psbId === null) {
+    _psbId = powerSaveBlocker.start('prevent-display-sleep');
+  }
+  if (_psbTimer) clearTimeout(_psbTimer);
+  _psbTimer = setTimeout(() => {
+    if (_psbId !== null) {
+      powerSaveBlocker.stop(_psbId);
+      _psbId = null;
+    }
+    _psbTimer = null;
+  }, MIDI_IDLE_MS);
 });
 
 // IPC handler: renderer sends file data to write
