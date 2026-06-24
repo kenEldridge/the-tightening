@@ -175,7 +175,7 @@ const createWindow = () => {
 
   buildMenu();
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (!app.isPackaged) {
     const url = 'http://localhost:5174';
     console.log('[Main] Loading dev server:', url);
     mainWindow.loadURL(url);
