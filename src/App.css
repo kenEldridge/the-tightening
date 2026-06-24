@@ -355,6 +355,111 @@ body {
   font-weight: 600;
 }
 
+/* Cycle preset browser */
+
+.walk-constraints-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.walk-constraints-header .walk-tabs {
+  margin-bottom: 0;
+}
+
+.cycle-browser {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cycle-browser-list {
+  max-height: 140px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.cycle-preset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  gap: 8px;
+  transition: background 0.1s;
+}
+
+.cycle-preset-btn:last-child {
+  border-bottom: none;
+}
+
+.cycle-preset-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.cycle-preset-active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent) !important;
+  outline: none;
+}
+
+.cycle-preset-active::before {
+  content: '✓';
+  font-size: 0.65rem;
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.cycle-preset-pattern {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.cycle-sep {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  opacity: 0.7;
+  flex: 0 0 auto;
+}
+
+.cycle-preset-count {
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 1px 5px;
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.walk-clear-btn {
+  align-self: flex-start;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.walk-clear-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
 /* Edge legend */
 
 .edge-legend {

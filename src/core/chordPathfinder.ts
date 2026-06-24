@@ -515,6 +515,36 @@ export function findChordPath(
 }
 
 /**
+ * Return the set of chord names reachable from `from` under `options`.
+ * A chord is reachable if findChordPath returns a result. The source itself
+ * is excluded. Results are cached per (from, options-key) so repeated calls
+ * during a single render cycle are free.
+ */
+const _reachCache = new Map<string, Set<string>>();
+
+export function getReachableDestinations(from: string, options: PathOptions): Set<string> {
+  const key = from + '|' + CONSTRAINABLE_TYPES.filter(t => options[t]).sort().join(',');
+  if (_reachCache.has(key)) return _reachCache.get(key)!;
+
+  const { major, minor, dim } = getAllChordNames();
+  const all = [...major, ...minor, ...dim];
+  const reachable = new Set<string>();
+
+  for (const dest of all) {
+    if (dest === from) continue;
+    if (findChordPath(from, dest, options)) reachable.add(dest);
+  }
+
+  _reachCache.set(key, reachable);
+  // Keep cache bounded — evict when it gets large
+  if (_reachCache.size > 200) {
+    const firstKey = _reachCache.keys().next().value;
+    if (firstKey !== undefined) _reachCache.delete(firstKey);
+  }
+  return reachable;
+}
+
+/**
  * Get all 36 chord names in circle-of-fifths order, grouped by quality.
  */
 export function getAllChordNames(): { major: string[]; minor: string[]; dim: string[] } {

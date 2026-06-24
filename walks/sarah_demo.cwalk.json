@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "progressions": [
+    {
+      "name": "C to A (Fifth, Relative, return)",
+      "chords": [
+        "C",
+        "G",
+        "Em",
+        "A",
+        "G#",
+        "Gdim",
+        "C"
+      ],
+      "color": "#58a6ff"
+    }
+  ]
+}
