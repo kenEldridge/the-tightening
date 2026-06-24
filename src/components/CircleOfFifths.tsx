@@ -526,12 +526,24 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             displayName = respellChordName(mostSpecific, noteSpelling);
           }
 
-          const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 8.5;
-          const triadFontSize = node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 5.5;
+          const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 9;
+          const triadFontSize = node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 7;
           const notes = triadNotes(node.name, noteSpelling);
 
+          // Dim nodes are too small to read at low resolution when inactive.
+          // Scale them up when active so the text is legible; hide triad notes otherwise.
+          const isDimActive = node.ring === 'dim' && (
+            isJamMode
+              ? (isJamActive || isJamMatched || isJamNextCandidate)
+              : (inPath || isWalkMatched || isCurrentStep || isDoneStep)
+          );
+          const showTriadNotes = node.ring !== 'dim' || isDimActive;
+          const dimTransform = isDimActive
+            ? `translate(${node.x},${node.y}) scale(1.25) translate(${-node.x},${-node.y})`
+            : undefined;
+
           return (
-            <g key={node.id} opacity={opacity}>
+            <g key={node.id} opacity={opacity} transform={dimTransform}>
               <circle
                 cx={node.x}
                 cy={node.y}
@@ -592,18 +604,20 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               >
                 {displayName}
               </text>
-              {/* Triad notes */}
-              <text
-                x={node.x}
-                y={node.y + 8}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={triadFontSize}
-                fill="#8b949e"
-                style={{ pointerEvents: 'none', fontFamily: 'monospace' }}
-              >
-                {notes}
-              </text>
+              {/* Triad notes — hidden on dim nodes unless active */}
+              {showTriadNotes && (
+                <text
+                  x={node.x}
+                  y={node.y + 8}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={triadFontSize}
+                  fill="#8b949e"
+                  style={{ pointerEvents: 'none', fontFamily: 'monospace' }}
+                >
+                  {notes}
+                </text>
+              )}
             </g>
           );
         })}
