@@ -210,7 +210,6 @@ export default function App() {
           ...prev,
           currentStep: 0,
           completed: false,
-          pathsCompleted: prev.pathsCompleted + 1,
           currentPathCompletions: newCompletions,
         }));
       }, 1500);
@@ -254,7 +253,6 @@ export default function App() {
           path: { chordNames, edgeTypes, explanations, totalWeight },
           currentStep: 0,
           completed: false,
-          pathsCompleted: prev.pathsCompleted + 1,
           currentPathCompletions: 0,
         }));
         return;
