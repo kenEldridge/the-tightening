@@ -19,7 +19,7 @@ export default function AudioRecorder() {
   const ctxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const workletRef = useRef<AudioWorkletNode | null>(null);
   const sinkRef = useRef<GainNode | null>(null);
   const buffersRef = useRef<Float32Array[][]>([]); // per-channel chunk lists
   const channelsRef = useRef(2);
@@ -71,7 +71,7 @@ export default function AudioRecorder() {
 
   const stop = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    processorRef.current?.disconnect();
+    workletRef.current?.disconnect();
     sourceRef.current?.disconnect();
     sinkRef.current?.disconnect();
     streamRef.current?.getTracks().forEach(t => t.stop());
@@ -86,7 +86,7 @@ export default function AudioRecorder() {
 
     ctx?.close().catch(() => {});
     ctxRef.current = null;
-    processorRef.current = null;
+    workletRef.current = null;
     sourceRef.current = null;
     sinkRef.current = null;
     buffersRef.current = [];
@@ -119,20 +119,44 @@ export default function AudioRecorder() {
       channelsRef.current = chCount;
       buffersRef.current = Array.from({ length: chCount }, () => [] as Float32Array[]);
 
-      const processor = ctx.createScriptProcessor(4096, chCount, chCount);
-      processorRef.current = processor;
-      processor.onaudioprocess = (e) => {
+      // AudioWorklet runs on a dedicated audio thread — immune to main-thread
+      // jank from React renders or the force simulation.
+      const workletBlob = new Blob([`
+        class RecorderProcessor extends AudioWorkletProcessor {
+          process(inputs) {
+            const input = inputs[0];
+            if (input && input.length > 0) {
+              this.port.postMessage(input.map(ch => new Float32Array(ch)));
+            }
+            return true;
+          }
+        }
+        registerProcessor('recorder-processor', RecorderProcessor);
+      `], { type: 'application/javascript' });
+      const workletUrl = URL.createObjectURL(workletBlob);
+      await ctx.audioWorklet.addModule(workletUrl);
+      URL.revokeObjectURL(workletUrl);
+
+      const worklet = new AudioWorkletNode(ctx, 'recorder-processor', {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        outputChannelCount: [chCount],
+        channelCount: chCount,
+        channelCountMode: 'explicit',
+      });
+      workletRef.current = worklet;
+      worklet.port.onmessage = (e: MessageEvent<Float32Array[]>) => {
         for (let c = 0; c < chCount; c++) {
-          buffersRef.current[c].push(new Float32Array(e.inputBuffer.getChannelData(c)));
+          if (e.data[c]) buffersRef.current[c].push(e.data[c]);
         }
       };
 
-      // Pump the processor without monitoring it out loud (gain 0 → destination).
+      // Connect through a silent gain node to keep the graph active.
       const sink = ctx.createGain();
       sink.gain.value = 0;
       sinkRef.current = sink;
-      source.connect(processor);
-      processor.connect(sink);
+      source.connect(worklet);
+      worklet.connect(sink);
       sink.connect(ctx.destination);
 
       setElapsed(0);
