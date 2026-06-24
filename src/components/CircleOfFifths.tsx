@@ -527,23 +527,17 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           }
 
           const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 9;
-          const triadFontSize = node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 7;
           const notes = triadNotes(node.name, noteSpelling);
 
-          // Dim nodes are too small to read at low resolution when inactive.
-          // Scale them up when active so the text is legible; hide triad notes otherwise.
-          const isDimActive = node.ring === 'dim' && (
-            isJamMode
-              ? (isJamActive || isJamMatched || isJamNextCandidate)
-              : (inPath || isWalkMatched || isCurrentStep || isDoneStep)
-          );
-          const showTriadNotes = node.ring !== 'dim' || isDimActive;
-          const dimTransform = isDimActive
-            ? `translate(${node.x},${node.y}) scale(1.25) translate(${-node.x},${-node.y})`
-            : undefined;
+          const isActive = isJamMode
+            ? (isJamActive || isJamMatched || isJamNextCandidate)
+            : (inPath || isWalkMatched || isCurrentStep || isDoneStep);
+
+          const triadFontSize = isActive ? 9 : (node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 5.5);
+          const showTriadNotes = node.ring !== 'dim' || isActive;
 
           return (
-            <g key={node.id} opacity={opacity} transform={dimTransform}>
+            <g key={node.id} opacity={opacity}>
               <circle
                 cx={node.x}
                 cy={node.y}
