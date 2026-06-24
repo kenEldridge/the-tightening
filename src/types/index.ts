@@ -88,6 +88,10 @@ export interface WalkState {
   completed: boolean;
   /** Number of paths completed in this session (for endless mode) */
   pathsCompleted: number;
+  /** How many times to repeat the current path before advancing (endless mode) */
+  repeatCount: number;
+  /** How many times the current path has been completed this cycle */
+  currentPathCompletions: number;
 }
 
 export interface WalkPathResult {

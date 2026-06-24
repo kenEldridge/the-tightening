@@ -16,7 +16,7 @@ interface Props {
 const allChords = getAllChordNames();
 
 export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps' }: Props) {
-  const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted } = walkState;
+  const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted, repeatCount } = walkState;
   const returnOptions = walkState.returnOptions ?? {};
 
   // Which leg the "Must include" filters edit: outbound or the return trip.
@@ -99,6 +99,11 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     updateAndFindPath({ options: { ...options, endless: !options.endless } });
   }, [updateAndFindPath, options]);
 
+  const handleRepeatCount = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.max(1, Math.min(99, parseInt(e.target.value, 10) || 1));
+    onWalkStateChange({ ...walkState, repeatCount: val, currentPathCompletions: 0 });
+  }, [walkState, onWalkStateChange]);
+
   const handleReset = useCallback(() => {
     onWalkStateChange({ ...walkState, currentStep: 0, completed: false });
   }, [walkState, onWalkStateChange]);
@@ -167,6 +172,20 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           <input type="checkbox" checked={options.endless} onChange={handleEndless} />
           <span>Endless mode</span>
         </label>
+        {options.endless && (
+          <label className="walk-toggle walk-repeat-count">
+            <span>Repeat</span>
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={repeatCount}
+              onChange={handleRepeatCount}
+              className="walk-repeat-input"
+            />
+            <span>× before advancing</span>
+          </label>
+        )}
       </div>
 
       {fromChord && toChord && fromChord === toChord && (

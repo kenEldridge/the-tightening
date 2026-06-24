@@ -30,6 +30,8 @@ export default function App() {
     currentStep: 0,
     completed: false,
     pathsCompleted: 0,
+    repeatCount: 1,
+    currentPathCompletions: 0,
   });
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('sharps');
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
@@ -194,18 +196,34 @@ export default function App() {
     }
   }, [matchedChords, mode, walkState.path, walkState.currentStep, walkState.completed]);
 
-  // Endless mode: auto-pick next destination after completing a path
+  // Endless mode: repeat N times then auto-pick next destination
   useEffect(() => {
     if (!walkState.completed || !walkState.options.endless) return;
     if (!walkState.path) return;
 
+    const newCompletions = walkState.currentPathCompletions + 1;
+
+    if (newCompletions < walkState.repeatCount) {
+      // Replay the same path
+      const timer = setTimeout(() => {
+        setWalkState(prev => ({
+          ...prev,
+          currentStep: 0,
+          completed: false,
+          pathsCompleted: prev.pathsCompleted + 1,
+          currentPathCompletions: newCompletions,
+        }));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+
+    // Done repeating — pick a new destination
     const allChords = getAllChordNames();
     const allNames = [...allChords.major, ...allChords.minor, ...allChords.dim];
     const lastChord = walkState.path.chordNames[walkState.path.chordNames.length - 1];
 
     const timer = setTimeout(() => {
       const opts = walkState.options;
-      // Shuffle candidates and try until we find a reachable one.
       const candidates = allNames.filter(c => c !== lastChord);
       for (let attempt = 0; attempt < candidates.length; attempt++) {
         const idx = Math.floor(Math.random() * candidates.length);
@@ -236,6 +254,8 @@ export default function App() {
           path: { chordNames, edgeTypes, explanations, totalWeight },
           currentStep: 0,
           completed: false,
+          pathsCompleted: prev.pathsCompleted + 1,
+          currentPathCompletions: 0,
         }));
         return;
       }
