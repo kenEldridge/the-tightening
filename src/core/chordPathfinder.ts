@@ -397,6 +397,9 @@ export function findConstrainedPath(
       // all constraints are already satisfied by this move.
       if (edge.target === toId && newMask !== allRequiredMask) continue;
 
+      // Don't revisit the start node — a path that loops back through it is circular.
+      if (edge.target === fromId && fromId !== toId) continue;
+
       const vKey = stateKey(edge.target, newMask);
 
       if (visited.has(vKey)) continue;
