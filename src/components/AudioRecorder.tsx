@@ -33,9 +33,17 @@ export default function AudioRecorder() {
       setDevices(inputs);
       setDeviceId(prev => {
         if (prev && inputs.some(d => d.deviceId === prev)) return prev;
-        // Prefer a line-in / USB audio device by label if present.
-        const preferred = inputs.find(d => /usb audio|line|aux/i.test(d.label));
-        return (preferred ?? inputs[0])?.deviceId ?? '';
+        // Auto-select the most likely line input: an explicit "line in" wins,
+        // then USB-audio/interface/aux inputs, then anything mentioning "line".
+        const score = (label = '') => {
+          const l = label.toLowerCase();
+          if (/line\s*-?\s*in/.test(l)) return 3;
+          if (/usb audio|usb codec|interface|aux/.test(l)) return 2;
+          if (/\bline\b/.test(l)) return 1;
+          return 0;
+        };
+        const best = [...inputs].sort((a, b) => score(b.label) - score(a.label))[0];
+        return (best ?? inputs[0])?.deviceId ?? '';
       });
     } catch (e) {
       setError(`Could not list audio devices: ${(e as Error).message}`);
