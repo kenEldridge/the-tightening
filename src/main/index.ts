@@ -149,6 +149,12 @@ ipcMain.handle('file-save-as', async (_event, defaultPath: string, data: string)
   }
 });
 
+ipcMain.on('set-menu-bar-visible', (_event, visible: boolean) => {
+  if (!mainWindow) return;
+  mainWindow.setMenuBarVisibility(visible);
+  mainWindow.autoHideMenuBar = !visible;
+});
+
 // Keep the system awake while MIDI is active; sleep again after 5 min of silence.
 let _psbId: number | null = null;
 let _psbTimer: ReturnType<typeof setTimeout> | null = null;

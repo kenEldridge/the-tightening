@@ -115,6 +115,8 @@ export interface ElectronAPI {
   onMenuSave: (callback: (filePath: string, saveAs: boolean) => void) => void;
   fileWrite: (filePath: string, data: string) => void;
   fileSaveAs: (defaultPath: string, data: string) => Promise<string | null>;
+  midiActivity: () => void;
+  setMenuBarVisible: (visible: boolean) => void;
   removeMenuListeners: () => void;
 }
 

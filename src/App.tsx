@@ -34,6 +34,15 @@ export default function App() {
     currentPathCompletions: 0,
   });
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
+  const [graphExpanded, setGraphExpanded] = useState(false);
+
+  useEffect(() => {
+    window.electronAPI?.setMenuBarVisible(!graphExpanded);
+    if (!graphExpanded) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setGraphExpanded(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [graphExpanded]);
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
     message: 'Requesting MIDI access...',
@@ -329,7 +338,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app${graphExpanded ? ' graph-expanded' : ''}`}>
       <div className="app-header">
         <h1 className="app-title-link" onClick={() => setMode('home')}>Chord Walk</h1>
         <div className="mode-toggle">
@@ -378,6 +387,17 @@ export default function App() {
           <DidYouKnow />
         </div>
         <div className="graph-area">
+          <button
+            className="graph-expand-btn"
+            onClick={() => setGraphExpanded(e => !e)}
+            title={graphExpanded ? 'Collapse' : 'Expand graph'}
+          >
+            {graphExpanded ? (
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 1H2a1 1 0 0 0-1 1v3.5h1.5V2.5H5.5V1zM1 11.5V15a1 1 0 0 0 1 1h3.5v-1.5H2.5V11.5H1zM14 1h-3.5v1.5h2.5V5H14.5V2a1 1 0 0 0-1-1zM14.5 11.5H13V15.5h-2.5V16H14a1 1 0 0 0 1-1v-3.5h-0.5z"/></svg>
+            ) : (
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h4.5v1.5H2.5V5H1V1zm9.5 0H15v4h-1.5V2.5H10.5V1zM1 11h1.5v2.5H5.5V15H1v-4zm13.5 0V15H11v-1.5h2.5V11H14.5z"/></svg>
+            )}
+          </button>
           {mode === 'jam' ? (
             <CircleOfFifths
               graphState={graphState}

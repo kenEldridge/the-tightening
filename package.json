@@ -25,7 +25,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "the-tightening-setup.exe"
     },
     "mac": {
       "target": "dmg"

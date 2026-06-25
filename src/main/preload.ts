@@ -27,6 +27,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('midi-activity');
   },
 
+  // Show or hide the native menu bar
+  setMenuBarVisible: (visible: boolean) => {
+    ipcRenderer.send('set-menu-bar-visible', visible);
+  },
+
   // Cleanup
   removeMenuListeners: () => {
     ipcRenderer.removeAllListeners('menu-new');
