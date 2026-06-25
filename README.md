@@ -6,6 +6,8 @@ A MIDI-driven chord theory tool. Two modes: **Jam** and **Walk**.
 
 **[Latest release](https://github.com/kenEldridge/the-tightening/releases/latest)** — Windows `.exe` installer.
 
+**[Guides & tutorials](https://derple.dev/tutorials/)** — walk-throughs for every feature on DerpleDex.
+
 ---
 
 ## Jam mode
