@@ -426,7 +426,7 @@ async function main() {
     .filter(f => f.endsWith('.pdf') && !f.startsWith('_'))
     .sort();
 
-  console.log(`Analyzing ${files.length} songs...`);
+  console.log(`Analyzing ${files.length} PDF songs...`);
 
   const songs: SongResult[] = [];
   const edgeTypeCount: Record<EdgeType, number> = {} as Record<EdgeType, number>;
@@ -466,7 +466,44 @@ async function main() {
     songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords });
   }
 
-  console.log(`Processed ${songs.length} songs.\n`);
+  // ---------------------------------------------------------------------------
+  // Load MIDI-mined songs (analysis/midi-songs.csv) if present
+  // ---------------------------------------------------------------------------
+  const midiCsvPath = join(__dirname, 'midi-songs.csv');
+  if (existsSync(midiCsvPath)) {
+    const midiLines = readFileSync(midiCsvPath, 'utf-8').split('\n').slice(1); // skip header
+    let midiCount = 0;
+    for (const rawLine of midiLines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      // Parse CSV: title (possibly quoted), chord_sequence (possibly quoted)
+      const match = line.match(/^("(?:[^"]|"")*"|[^,]*),("(?:[^"]|"")*"|.*)$/);
+      if (!match) continue;
+      const title = match[1].replace(/^"|"$/g, '').replace(/""/g, '"');
+      const chordStr = match[2].replace(/^"|"$/g, '').replace(/""/g, '"');
+      const chords = chordStr.split(' ').filter(Boolean);
+      if (chords.length < 2) continue;
+
+      const edges = classifyEdges(chords);
+      const edgeSeq = edgeTypeSequence(chords);
+      const edgeTypesFound = new Set<EdgeType>();
+      const unmappableChords = chords.filter(c => !safeMapChord(c));
+
+      for (const edge of edges) {
+        for (const t of edge.types) {
+          edgeTypesFound.add(t);
+          edgeTypeCount[t]++;
+        }
+      }
+      for (const t of edgeTypesFound) edgeTypeSongCount[t]++;
+
+      songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords });
+      midiCount++;
+    }
+    console.log(`Loaded ${midiCount} MIDI-mined songs from midi-songs.csv`);
+  }
+
+  console.log(`Processed ${songs.length} songs total.\n`);
 
   // ---------------------------------------------------------------------------
   // CSV 1: songs.csv — one row per song

@@ -4,220 +4,220 @@ CHORD PROGRESSION ANALYSIS — THE TIGHTENING SONG LIBRARY
 
 ── EDGE TYPE FREQUENCY (across all songs) ───────────────────────────
 
-  diatonic             271 songs (92%)   6059 total edges
-  dom7                 258 songs (87%)   4946 total edges
-  fifth                257 songs (87%)   4306 total edges
-  plagal               257 songs (87%)   4306 total edges
-  borrowed             256 songs (86%)   4529 total edges
-  relative             213 songs (72%)   2049 total edges
-  iiVI                 133 songs (45%)   1002 total edges
-  chromaticMediant     126 songs (43%)   912 total edges
-  tritoneSub           76 songs (26%)   405 total edges
-  parallel             50 songs (17%)   231 total edges
-  leadingTone          3 songs (1%)   26 total edges
+  diatonic             2621 songs (93%)   27503 total edges
+  dom7                 2541 songs (90%)   18913 total edges
+  borrowed             2393 songs (85%)   19917 total edges
+  fifth                2317 songs (82%)   14008 total edges
+  plagal               2314 songs (82%)   13994 total edges
+  relative             2046 songs (73%)   11062 total edges
+  iiVI                 1469 songs (52%)   4759 total edges
+  chromaticMediant     1464 songs (52%)   5687 total edges
+  tritoneSub           898 songs (32%)   2518 total edges
+  parallel             892 songs (32%)   2687 total edges
+  leadingTone          587 songs (21%)   1759 total edges
 
 ── TOP CHORD CYCLES (literal, 5+ songs) — loop closes back to start ──
 
-  [2-chord, 26 songs, 142×]  C F → C
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [2-chord, 26 songs, 159×]  D G → D
-    Barry Manilow - Mandy / Billy Joel - She's Got A Way / Bob Dylan - Blowin' in the Wind
-  [2-chord, 25 songs, 177×]  G C → G
-    Air Supply - All Out of Love / Bette Midler - The Rose / Billie Eilish - Ocean Eyes
-  [2-chord, 22 songs, 108×]  C G → C
-    Billie Eilish - Ocean Eyes / Cat Stevens - Wild World / Christmas - O Holy Night
-  [2-chord, 21 songs, 154×]  F C → F
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Barry Manilow - Mandy
-  [2-chord, 18 songs, 115×]  G F → G
-    Air Supply - All Out of Love / Bette Midler - The Rose / Bob Dylan - Like a Rolling Stone
-  [2-chord, 17 songs, 99×]  D A → D
-    ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Bob Marley & The Wailers - Three Little Birds (D)
-  [2-chord, 17 songs, 96×]  E A → E
-    Bee Gees - To Love Somebody / Big Thief - Masterpiece / Blondie - Heart Of Glass
-  [2-chord, 16 songs, 146×]  F Bb → F
-    ABBA - Slipping Through My Fingers / Barry Manilow - Mandy / Billy Joel - Vienna
-  [2-chord, 16 songs, 64×]  A E → A
-    Bee Gees - To Love Somebody / Big Thief - Masterpiece / Blondie - Heart Of Glass
-  [2-chord, 15 songs, 80×]  G D → G
-    Alessia Cara - Out Of Love / Bob Dylan - Blowin' in the Wind / Bob Marley & The Wailers - Three Little Birds (D)
-  [3-chord, 13 songs, 64×]  F C G → F
-    Air Supply - All Out of Love / Billy Joel - Piano Man / Carly Simon - You're So Vain
-  [2-chord, 13 songs, 80×]  A D → A
-    ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Crosby, Stills, Nash, & Young - Our House
-  [3-chord, 12 songs, 121×]  G D C → G
-    Bob Dylan - Knockin' On Heaven's Door / Cat Stevens - Father And Son / Grateful Dead - Ripple
-  [3-chord, 11 songs, 47×]  F G C → F
-    Air Supply - All Out of Love / Bob Dylan - Like a Rolling Stone / Creedence Clearwater Revival - Have You Ever Seen The Rain
-  [3-chord, 11 songs, 52×]  G F C → G
-    Billy Joel - Piano Man / Cat Stevens - Wild World / Elton John - Daniel
-  [2-chord, 11 songs, 89×]  F G → F
-    Barry Manilow - Mandy / Billy Joel - Piano Man / Bob Dylan - Like a Rolling Stone
-  [2-chord, 11 songs, 29×]  D C → D
-    Barry Manilow - Mandy / Billy Joel - She's Got A Way / Finneas - Break My Heart Again
-  [2-chord, 11 songs, 37×]  G Am → G
-    Gerry Rafferty - Right Down The Line / Gillian Welch - Look At Miss Ohio / Jackson Browne - Late For The Sky
-  [4-chord, 10 songs, 34×]  C F C F → C
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [3-chord, 10 songs, 75×]  A E D → A
-    Bee Gees - To Love Somebody / Bob Marley & The Wailers - Three Little Birds (A) / Bonnie Raitt - John Prine - Angel from Montgomery
-  [3-chord, 10 songs, 86×]  C G F → C
-    Billy Joel - Piano Man / Carly Simon - You're So Vain / Elton John - I Guess That's Why They Call It The Blues
-  [3-chord, 10 songs, 100×]  C G D → C
-    Cat Stevens - Father And Son / Grateful Dead - Ripple / Johnny Nash - I Can See Clearly Now
-  [2-chord, 10 songs, 71×]  C Dm → C
-    Bill Withers - Lean on Me / Black Sabbath - Changes / Elton John - I Guess That's Why They Call It The Blues
-  [4-chord, 9 songs, 34×]  F C F C → F
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [3-chord, 9 songs, 71×]  D A E → D
-    Bee Gees - To Love Somebody / Bob Marley & The Wailers - Three Little Birds (A) / Bonnie Raitt - John Prine - Angel from Montgomery
-  [3-chord, 9 songs, 112×]  D C G → D
-    Bob Dylan - Knockin' On Heaven's Door / Cat Stevens - Father And Son / Johnny Nash - I Can See Clearly Now
-  [2-chord, 9 songs, 37×]  A G → A
-    ABBA - Waterloo / Bee Gees - To Love Somebody / Neil Young - After The Gold Rush
-  [2-chord, 9 songs, 121×]  D Em → D
-    America - A Horse with No Name / Dua Lipa - Don't Start Now / Nirvana - Come As You Are
-  [2-chord, 9 songs, 82×]  Bb F → Bb
-    Barry Manilow - Mandy / Bob Dylan - Mr. Tambourine Man / Cigarettes After Sex - Apocalypse
-  [2-chord, 8 songs, 23×]  C D → C
-    Barry Manilow - Mandy / Billy Joel - She's Got A Way / Billy Joel - Vienna
-  [2-chord, 8 songs, 68×]  Dm C → Dm
-    Bill Withers - Lean on Me / Black Sabbath - Changes / Elton John - I Guess That's Why They Call It The Blues
-  [2-chord, 8 songs, 37×]  B E → B
-    Céline Dion - My Heart Will Go On / Neil Diamond - Sweet Caroline / Phoebe Bridgers - That Funny Feeling
-  [4-chord, 7 songs, 49×]  F Bb F Bb → F
-    Barry Manilow - Mandy / Bob Dylan - Mr. Tambourine Man / Cigarettes After Sex - Apocalypse
-  [4-chord, 7 songs, 29×]  F G C Am → F
-    Creedence Clearwater Revival - Have You Ever Seen The Rain / Elvis Presley - If I Can Dream / John Lennon - Watching The Wheels
-  [3-chord, 7 songs, 46×]  D G A → D
-    ABBA - Waterloo / Bob Dylan - Blowin' in the Wind / John Lennon - Love
-  [3-chord, 7 songs, 74×]  E D A → E
-    Bee Gees - To Love Somebody / Bonnie Raitt - John Prine - Angel from Montgomery / John Denver - Take Me Home Country Roads
-  [3-chord, 7 songs, 46×]  G C F → G
-    Bob Dylan - Like a Rolling Stone / Creedence Clearwater Revival - Have You Ever Seen The Rain / Lady Gaga - Always Remember Us This Way
-  [3-chord, 7 songs, 42×]  G D A → G
-    Bob Marley & The Wailers - Three Little Birds (D) / Elvis Presley - Can't Help Falling In Love / Neil Young - After The Gold Rush
-  [2-chord, 7 songs, 13×]  F# E → F#
-    Ben E. King - Stand By Me / Céline Dion - My Heart Will Go On / Glass Animals - Heat Waves
-  [2-chord, 7 songs, 13×]  E F# → E
-    Ben E. King - Stand By Me / Harry Nilsson - Without You / Red Hot Chili Peppers - Californication
-  [2-chord, 7 songs, 43×]  C G7 → C
-    Bill Withers - Lean on Me / Christmas - O Holy Night / Christmas - Silent Night - key of C
-  [2-chord, 7 songs, 21×]  Eb Ab → Eb
-    Buddy Holly - Everyday / Crowded House - Don't Dream It's Over / Céline Dion - My Heart Will Go On
-  [4-chord, 6 songs, 26×]  D A D A → D
-    ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Crosby, Stills, Nash, & Young - Our House
-  [4-chord, 6 songs, 28×]  C G C G → C
-    Creedence Clearwater Revival - Have You Ever Seen The Rain / Grateful Dead - Ripple / John Denver - Leaving on a Jet Plane
-  [3-chord, 6 songs, 42×]  A G D → A
-    ABBA - Waterloo / Neil Young - Helpless - (D) / Patti Smith - Because the Night
-  [3-chord, 6 songs, 32×]  A D G → A
-    ABBA - Waterloo / Bob Dylan - Blowin' in the Wind / John Lennon - Happy Xmas (War Is Over)
-  [3-chord, 6 songs, 26×]  G Am F → G
-    Elton John - Daniel / Elton John - I Guess That's Why They Call It The Blues / Lady Gaga - Always Remember Us This Way
-  [2-chord, 6 songs, 32×]  Eb Bb → Eb
-    Barry Manilow - Mandy / Billy Joel - Honesty / Carpenters - Goodbye To Love
-  [2-chord, 6 songs, 11×]  Em C → Em
-    Bruno Mars - Count On Me / Cyndi Lauper - Girls Just Want To Have Fun / David Bowie - Space Oddity
+  [2-chord, 312 songs, 955×]  G C → G
+    ABBA - does your mother know / ABBA - hamlet 3 / ABBA - my love my life
+  [2-chord, 300 songs, 917×]  C G → C
+    98 Degrees - I Do Cherish You / ABBA - does your mother know / ABBA - hamlet 3
+  [2-chord, 244 songs, 817×]  G D → G
+    ABBA - does your mother know / ABBA - eagle / ABBA - my love my life
+  [2-chord, 231 songs, 683×]  C F → C
+    98 Degrees - The Hardest Thing / ABBA - hamlet 3 / ABBA - my love my life
+  [2-chord, 217 songs, 802×]  D G → D
+    ABBA - eagle / ABBA - knowing me knowing you / Ace Of Base - Dont Turn Around
+  [2-chord, 194 songs, 608×]  F C → F
+    3t - i need you / 3t - i want you / ABBA - hamlet 3
+  [2-chord, 187 songs, 581×]  A E → A
+    2 Unlimited - are you ready for this / ABBA - dancing queen / ABBA - i am the city
+  [2-chord, 184 songs, 626×]  E A → E
+    2 Unlimited - are you ready for this / ABBA - chiquitita / ABBA - dancing queen
+  [2-chord, 177 songs, 586×]  A D → A
+    ABBA - chiquitita / ABBA - dancing queen / ABBA - i am the city
+  [2-chord, 176 songs, 557×]  D A → D
+    ABBA - chiquitita / ABBA - dancing queen / ABBA - i am the city
+  [2-chord, 175 songs, 477×]  G Em → G
+    ABBA - does your mother know / ABBA - eagle / ABBA - super trouper
+  [2-chord, 140 songs, 294×]  C Am → C
+    ABBA - eagle / ABBA - like an angel pSÌŒugh my room / ABBA - like an angel passing through my room
+  [2-chord, 136 songs, 421×]  G A → G
+    ABBA - just like that / AC DC - highway to hell / Ace Of Base - life is a flower
+  [2-chord, 133 songs, 388×]  Em G → Em
+    ABBA - eagle / ABBA - super trouper / AC DC - for those about to rock
+  [2-chord, 128 songs, 374×]  G F → G
+    ABBA - hamlet 3 / Atlantic Starr - i ll remember you / Beatles - a day in the life
+  [2-chord, 126 songs, 234×]  C D → C
+    2 Unlimited - are you ready for this / ABBA - i'm a marionette / ABBA - i m a marionette
+  [2-chord, 124 songs, 370×]  F G → F
+    ABBA - i wonder / Atlantic Starr - i ll remember you / Beatles - a day in the life
+  [2-chord, 124 songs, 317×]  C Em → C
+    ABBA - super trouper / Alice In Chains - nutshell / Alien Ant Farm - smoothcriminal
+  [2-chord, 122 songs, 259×]  G Am → G
+    98 Degrees - I Do Cherish You / America - america sandman / BabyFace - babyface when
+  [2-chord, 117 songs, 366×]  A G → A
+    ABBA - just like that / AC DC - highway to hell / Ace Of Base - life is a flower
+  [2-chord, 116 songs, 245×]  D C → D
+    2 Unlimited - are you ready for this / ABBA - i'm a marionette / ABBA - i m a marionette
+  [2-chord, 111 songs, 229×]  Am C → Am
+    ABBA - eagle / America - america sandman / BabyFace - babyface when
+  [2-chord, 105 songs, 293×]  C Dm → C
+    ABBA - super trouper / Ace Of Base - lucky love / Air Supply - Even The Nights Are Better
+  [2-chord, 105 songs, 257×]  Em C → Em
+    ABBA - super trouper / Alice In Chains - nutshell / Alien Ant Farm - smoothcriminal
+  [4-chord, 104 songs, 354×]  G C G C → G
+    AC DC - you shook me / America - America TinMan / Barry Manilow - BarryMannilow IWriteTheSongs
+  [2-chord, 102 songs, 330×]  F A# → F
+    ABBA - i have a dream / ABBA - move on / Ace Of Base - lucky love
+  [4-chord, 100 songs, 350×]  C G C G → C
+    AC DC - you shook me / America - America TinMan / Barry Manilow - BarryMannilow IWriteTheSongs
+  [2-chord, 97 songs, 205×]  Am G → Am
+    Allman Brothers Band - in memory elizabeth / America - america sandman / Beat - CantTouchThis
+  [2-chord, 96 songs, 290×]  Em D → Em
+    ABBA - just like that / ABBA - my love my life / Ace Of Base - Dont Turn Around
+  [2-chord, 95 songs, 280×]  D Em → D
+    ABBA - i'm a marionette / ABBA - i m a marionette / ABBA - just like that
+  [2-chord, 93 songs, 264×]  C A# → C
+    ABBA - summer night city / Ace Of Base - lucky love / Air Supply - Even The Nights Are Better
+  [2-chord, 86 songs, 299×]  E B → E
+    311 - down / ABBA - hole in your soul / Ace Of Base - happy nation
+  [2-chord, 85 songs, 287×]  A# F → A#
+    ABBA - i have a dream / ABBA - move on / Ace Of Base - lucky love
+  [4-chord, 80 songs, 234×]  A E A E → A
+    2 Unlimited - are you ready for this / ABBA - dancing queen / Allman Brothers Band - blue sky
+  [2-chord, 80 songs, 268×]  Dm C → Dm
+    Beach Boys - surfs up / Beat - whatitslike / Beatles - and i love her
+  [2-chord, 76 songs, 181×]  D# A# → D#
+    ABBA - move on / Ace Of Base - Always Have Always Will / Air Supply - All Out Of Love
+  [2-chord, 76 songs, 208×]  A B → A
+    Air Supply - She Never Heard Me Call / Alice In Chains - no excuses / America - america Sister goldenhair
+  [4-chord, 75 songs, 305×]  G D G D → G
+    ABBA - eagle / America - america Ventura hwy / Bananorama - Venus
+  [4-chord, 75 songs, 317×]  D G D G → D
+    America - america Ventura hwy / Bananorama - Venus / Bananorama - venus2
+  [2-chord, 75 songs, 254×]  B E → B
+    ABBA - hole in your soul / Ace Of Base - happy nation / Alice In Chains - sludge factory
+  [2-chord, 74 songs, 171×]  A# D# → A#
+    ABBA - move on / Ace Of Base - Always Have Always Will / Air Supply - All Out Of Love
+  [4-chord, 73 songs, 246×]  E A E A → E
+    2 Unlimited - are you ready for this / ABBA - dancing queen / Allman Brothers Band - blue sky
+  [2-chord, 73 songs, 219×]  A# C → A#
+    ABBA - summer night city / BabyFace - babyface everytime / Beatles - blackbird
+  [4-chord, 71 songs, 245×]  C F C F → C
+    Beatles - imagine / Beatles - let it be / Beatles - ob la di ob la da
+  [2-chord, 71 songs, 168×]  D E → D
+    BareNaked Ladies - One Week / Beatles - here comes the sun / Beatles - me and my monkey
+  [3-chord, 68 songs, 139×]  C G F → C
+    ABBA - hamlet 3 / Beatles - baby you're a rich man / Beatles - baby you re a rich man
+  [2-chord, 68 songs, 161×]  G# D# → G#
+    ABBA - tiger / Beach Boys - surfer girl / Beach Boys - surfs up
+  [2-chord, 68 songs, 215×]  C# F# → C#
+    Alice In Chains - i stay away / Asia - heat of the moment / Billy Joel - BillyJoel Zanzibar
+  [4-chord, 65 songs, 228×]  F C F C → F
+    Asia - only time will tell / Beatles - all together now / Beatles - imagine
+  [2-chord, 65 songs, 157×]  F Am → F
+    3t - i need you / 3t - i want you / AC DC - who made who
 
 ── TOP EDGE-TYPE CYCLES (key-agnostic, 5+ songs) ────────────────────
 
-  [2-step, 168 songs, 1933×]  dom7 fifth → fifth (closes)
-    e.g. "F Bb F"  — Radiohead - Karma Police / Red Hot Chili Peppers - Californication / a-ha - Take On Me
-  [2-step, 126 songs, 1196×]  diatonic diatonic → diatonic (closes)
-    e.g. "A G A"  — Nirvana - Come As You Are / Radiohead - Karma Police / Red Hot Chili Peppers - Californication
-  [3-step, 76 songs, 641×]  diatonic dom7 dom7 → dom7 (closes)
-    e.g. "A B E A"  — Radiohead - Karma Police / The Police - Every Breath You Take / Lana Del Rey - Young And Beautiful
-  [3-step, 68 songs, 1037×]  diatonic fifth fifth → fifth (closes)
-    e.g. "A G D A"  — Red Hot Chili Peppers - Californication / a-ha - Take On Me / Tears For Fears - Everybody Wants To Rule The World
-  [4-step, 65 songs, 528×]  dom7 fifth dom7 fifth → fifth (closes)
-    e.g. "A D A D A"  — Radiohead - Karma Police / R.E.M. - Losing My Religion / Cigarettes After Sex - Apocalypse
-  [4-step, 47 songs, 566×]  diatonic diatonic diatonic diatonic → diatonic (closes)
-    e.g. "Em D Em D Em"  — Nirvana - Come As You Are / The Police - Every Breath You Take / Tears For Fears - Everybody Wants To Rule The World
-  [2-step, 41 songs, 233×]  relative relative → relative (closes)
-    e.g. "C#m E C#m"  — Radiohead - Karma Police / Red Hot Chili Peppers - Californication / The Police - Every Breath You Take
-  [4-step, 40 songs, 244×]  diatonic diatonic dom7 fifth → fifth (closes)
-    e.g. "G F G C G"  — a-ha - Take On Me / Pink Floyd - Wish You Were Here / Oasis - Don't Look Back In Anger
-  [4-step, 32 songs, 438×]  dom7 dom7 fifth fifth → fifth (closes)
-    e.g. "A D G D A"  — The Cure - Friday I'm In Love / Wheatus - Teenage Dirtbag / Van Morrison - Brown Eyed Girl
-  [3-step, 32 songs, 273×]  diatonic relative fifth → fifth (closes)
-    e.g. "D Em G D"  — Red Hot Chili Peppers - Californication / Dua Lipa - Don't Start Now / Billy Joel - Vienna
-  [4-step, 28 songs, 251×]  dom7 dom7 dom7 relative → relative (closes)
-    e.g. "Em7 Am D7 G Em7"  — Cigarettes After Sex - Apocalypse / Lana Del Rey - Young And Beautiful / The Strokes - The Adults Are Talking
-  [2-step, 27 songs, 209×]  borrowed dom7 → dom7 (closes)
-    e.g. "Dm A Dm"  — Radiohead - No Surprises / Elvis Presley - Can't Help Falling In Love / The Turtles - Happy Together
-  [2-step, 21 songs, 78×]  borrowed borrowed → borrowed (closes)
-    e.g. "G Bb G"  — Nirvana - Come As You Are / Red Hot Chili Peppers - Californication / Van Morrison - Brown Eyed Girl
-  [4-step, 20 songs, 78×]  diatonic diatonic fifth dom7 → dom7 (closes)
-    e.g. "C Dm C G7 C"  — R.E.M. - Losing My Religion / Billy Joel - Piano Man / Elton John - Your Song
-  [3-step, 20 songs, 112×]  diatonic dom7 relative → relative (closes)
-    e.g. "Cm Bb7 Eb Cm"  — Pink Floyd - Wish You Were Here / Cigarettes After Sex - Apocalypse / The Pixies - Where Is My Mind
-  [5-step, 17 songs, 158×]  diatonic fifth dom7 fifth fifth → fifth (closes)
-    e.g. "B A E A E B"  — Billy Joel - Piano Man / Olivia Rodrigo - Drivers License / Bob Marley & The Wailers - Three Little Birds (A)
-  [5-step, 17 songs, 122×]  diatonic diatonic diatonic dom7 dom7 → dom7 (closes)
-    e.g. "Bb C Bb C F Bb"  — The Walters - I Love You So / Louis Armstrong - What A Wonderful World / Lukas Graham - 7 Years
-  [5-step, 16 songs, 73×]  diatonic fifth fifth dom7 fifth → fifth (closes)
-    e.g. "E D A E A E"  — Taylor Swift - Lover / The Beatles - Hey Jude / The La's - There She Goes
-  [5-step, 14 songs, 74×]  diatonic diatonic diatonic fifth fifth → fifth (closes)
-    e.g. "Em7 F Em Dm Am Em7"  — Tears For Fears - Everybody Wants To Rule The World / Billy Joel - Piano Man / Taylor Swift - Lover
-  [4-step, 14 songs, 95×]  dom7 fifth relative relative → relative (closes)
-    e.g. "C7 F C Am C7"  — Radiohead - Karma Police / Billy Joel - Piano Man / Phoebe Bridgers - Motion Sickness
-  [3-step, 14 songs, 73×]  diatonic diatonic relative → relative (closes)
-    e.g. "F Em Dm F"  — Tears For Fears - Everybody Wants To Rule The World / Mac Demarco - Chamber of Reflection / The Rolling Stones - Wild Horses
-  [5-step, 13 songs, 162×]  diatonic dom7 dom7 fifth dom7 → dom7 (closes)
-    e.g. "Bb C F Bb F Bb"  — Phoebe Bridgers - Motion Sickness / Bob Dylan - Blowin' in the Wind / ABBA - Waterloo
-  [4-step, 13 songs, 103×]  diatonic diatonic diatonic fifth → fifth (closes)
-    e.g. "G Am Bm C G"  — Wheatus - Teenage Dirtbag / The Righteous Brothers - Unchained Melody / Miley Cyrus - Midnight Sky
-  [4-step, 13 songs, 122×]  diatonic diatonic relative dom7 → dom7 (closes)
-    e.g. "C D Em G C"  — Lana Del Rey - Young And Beautiful / Glass Animals - Heat Waves / Billie Eilish - Ocean Eyes
-  [4-step, 13 songs, 79×]  borrowed dom7 borrowed dom7 → dom7 (closes)
-    e.g. "Dm A Dm A Dm"  — Radiohead - No Surprises / Elvis Presley - Can't Help Falling In Love / The Turtles - Happy Together
-  [5-step, 12 songs, 108×]  diatonic dom7 dom7 dom7 fifth → fifth (closes)
-    e.g. "C D7 G C Fmaj7 C"  — a-ha - Take On Me / Billy Joel - Piano Man / Joji - Glimpse of Us
-  [3-step, 12 songs, 27×]  borrowed diatonic diatonic → diatonic (closes)
-    e.g. "D Bb C D"  — Red Hot Chili Peppers - Californication / Ben E. King - Stand By Me / Lynyrd Skynyrd - Simple Man
-  [5-step, 11 songs, 67×]  diatonic dom7 fifth dom7 dom7 → dom7 (closes)
-    e.g. "G A D A D G"  — Creedence Clearwater Revival - Have You Ever Seen The Rain / Wheatus - Teenage Dirtbag / Van Morrison - Brown Eyed Girl
-  [4-step, 11 songs, 39×]  diatonic dom7 diatonic fifth → fifth (closes)
-    e.g. "D E A G D"  — R.E.M. - Losing My Religion / Glass Animals - Heat Waves / ABBA - Waterloo
-  [3-step, 11 songs, 62×]  borrowed fifth diatonic → diatonic (closes)
-    e.g. "C Eb Bb C"  — Radiohead - Let Down / Lana Del Rey - Young And Beautiful / Pink Floyd - Comfortably Numb
-  [3-step, 10 songs, 28×]  diatonic relative dom7 → dom7 (closes)
-    e.g. "C Bb Gm7 C"  — Cigarettes After Sex - Apocalypse / Olivia Rodrigo - Drivers License / Sufjan Stevens - Fourth of July
-  [4-step, 9 songs, 52×]  borrowed dom7 dom7 dom7 → dom7 (closes)
-    e.g. "A F# B E A"  — The Ronettes - Be My Baby / Blondie - Heart Of Glass / Elton John - Daniel
-  [4-step, 9 songs, 47×]  diatonic dom7 diatonic relative → relative (closes)
-    e.g. "F G C Dm7 F"  — Radiohead - Karma Police / a-ha - Take On Me / Lana Del Rey - Young And Beautiful
-  [4-step, 9 songs, 187×]  diatonic diatonic fifth relative → relative (closes)
-    e.g. "G#m F# E B G#m"  — Pink Floyd - Comfortably Numb / Glass Animals - Heat Waves / Mitski - Nobody
-  [5-step, 8 songs, 26×]  diatonic diatonic diatonic diatonic relative → relative (closes)
-    e.g. "F Em Dm C Dm F"  — Radiohead - Karma Police / Tears For Fears - Everybody Wants To Rule The World / Bob Dylan - Like a Rolling Stone
-  [5-step, 8 songs, 22×]  diatonic relative fifth dom7 fifth → fifth (closes)
-    e.g. "Db Ebm7 Gb Db Gb Db"  — Eric Clapton - Tears in Heaven / Commodores - Easy / King Princess - 1950
-  [4-step, 7 songs, 25×]  relative relative relative relative → relative (closes)
-    e.g. "C#m E C#m E C#m"  — Coldplay - Sparks / The Strokes - The Adults Are Talking / The Beatles - All My Loving
-  [4-step, 7 songs, 53×]  borrowed fifth fifth fifth → fifth (closes)
-    e.g. "F Ab Eb Bb F"  — Pink Floyd - Comfortably Numb / Billy Joel - Vienna / The Beatles - A Day In The Life
-  [4-step, 7 songs, 28×]  diatonic diatonic diatonic dom7 → dom7 (closes)
-    e.g. "F Em Dm C F"  — Bob Dylan - Like a Rolling Stone / Sufjan Stevens - Fourth of July / Neil Diamond - Sweet Caroline
-  [3-step, 7 songs, 51×]  borrowed dom7 parallel → parallel (closes)
-    e.g. "Bbm F Bb Bbm"  — David Bowie - Space Oddity / ABBA - Slipping Through My Fingers / Cavetown - This Is Home
-  [3-step, 7 songs, 27×]  borrowed diatonic fifth → fifth (closes)
-    e.g. "D F G D"  — Oasis - Wonderwall / The Beatles - With A Little Help From My Friends / The Beatles - I Am The Walrus
-  [5-step, 6 songs, 25×]  diatonic fifth relative dom7 dom7 → dom7 (closes)
-    e.g. "G7 F C Am Dm7 G7"  — Taylor Swift - Lover / Pure Prairie League - Amie / Audrey Hepburn - Moon River
-  [5-step, 6 songs, 10×]  borrowed diatonic diatonic diatonic diatonic → diatonic (closes)
-    e.g. "D Bb C Bb C D"  — Ben E. King - Stand By Me / The Beatles - Something / The Beatles - A Day In The Life
-  [5-step, 6 songs, 40×]  diatonic diatonic fifth diatonic fifth → fifth (closes)
-    e.g. "A G A E D7 A"  — Pink Floyd - Wish You Were Here / Carly Simon - You're So Vain / Lady Gaga - Always Remember Us This Way
-  [5-step, 6 songs, 74×]  diatonic relative dom7 fifth fifth → fifth (closes)
-    e.g. "B C#m E A E B"  — Eric Clapton - Tears in Heaven / Elton John - I Guess That's Why They Call It The Blues / Elvis Presley - Always On My Mind
-  [4-step, 6 songs, 19×]  borrowed borrowed diatonic diatonic → diatonic (closes)
-    e.g. "B G# B C# B"  — Red Hot Chili Peppers - Californication / The Beatles - Here Comes The Sun / Sam Cooke - Bring It On Home to Me
-  [3-step, 6 songs, 13×]  borrowed dom7 diatonic → diatonic (closes)
-    e.g. "C A D C"  — The Police - Every Breath You Take / The Kinks - Sunny Afternoon / David Bowie - The Man Who Sold The World
-  [5-step, 5 songs, 15×]  diatonic dom7 dom7 fifth relative → relative (closes)
-    e.g. "Cm Bb7 Eb Ab Eb Cm"  — The Strokes - The Adults Are Talking / Olivia Rodrigo - Drivers License / John Denver - Take Me Home Country Roads
-  [5-step, 5 songs, 30×]  borrowed dom7 dom7 dom7 dom7 → dom7 (closes)
-    e.g. "G B Em7 A7 D7 G"  — The Kinks - Sunny Afternoon / Frank Sinatra - Fly Me To The Moon / Eagles - Desperado
-  [4-step, 5 songs, 17×]  borrowed diatonic diatonic dom7 → dom7 (closes)
-    e.g. "F Ab Bb Cm F"  — Queen - You're My Best Friend / Ashe - Moral of the Story / The Beatles - I Am The Walrus
+  [2-step, 1732 songs, 11228×]  dom7 fifth → fifth (closes)
+    e.g. "E A E"  — nirvana - come as you are / foo fighters - everlong / police - every breath you take
+  [2-step, 1714 songs, 9339×]  diatonic diatonic → diatonic (closes)
+    e.g. "Bm A Bm"  — radiohead - karma police / foo fighters - everlong / police - every breath you take
+  [2-step, 883 songs, 3680×]  relative relative → relative (closes)
+    e.g. "Fm G# Fm"  — foo fighters - everlong / red hot chilli peppers - under the bridge / green day - basket case
+  [4-step, 745 songs, 4144×]  diatonic diatonic diatonic diatonic → diatonic (closes)
+    e.g. "C D C D C"  — police - every breath you take / red hot chilli peppers - under the bridge / jackson michael - beat it
+  [4-step, 676 songs, 4299×]  dom7 fifth dom7 fifth → fifth (closes)
+    e.g. "E A E A E"  — green day - basket case / ABBA - dancing queen / nirvana - all apologies
+  [3-step, 664 songs, 2294×]  diatonic dom7 dom7 → dom7 (closes)
+    e.g. "G# A# D# G#"  — weezer - buddy holly / pink floyd - the great gig in the sky / foo fighters - my hero
+  [3-step, 432 songs, 1601×]  diatonic fifth fifth → fifth (closes)
+    e.g. "D C G D"  — red hot chilli peppers - under the bridge / Queen - bohemian rhapsody / Queen - Queen Bohemian Rhapsody
+  [4-step, 377 songs, 1094×]  diatonic diatonic dom7 fifth → fifth (closes)
+    e.g. "E D E A E"  — jackson michael - beat it / ABBA - dancing queen / earth wind fire - september
+  [4-step, 356 songs, 997×]  diatonic diatonic fifth dom7 → dom7 (closes)
+    e.g. "F Gm F C F"  — green day - basket case / radiohead - high and dry / Cranberries - Linger
+  [2-step, 348 songs, 1197×]  borrowed borrowed → borrowed (closes)
+    e.g. "G# F G#"  — jackson michael - billie jean / ABBA - dancing queen / nirvana - heart shaped box
+  [3-step, 324 songs, 826×]  diatonic dom7 relative → relative (closes)
+    e.g. "Fm D# G# Fm"  — jackson michael - billie jean / radiohead - karma police / police - every breath you take
+  [2-step, 274 songs, 831×]  parallel parallel → parallel (closes)
+    e.g. "Bm B Bm"  — nirvana - lithium / jackson michael - beat it / nirvana - dumb
+  [4-step, 267 songs, 998×]  dom7 dom7 fifth fifth → fifth (closes)
+    e.g. "E A D A E"  — ABBA - dancing queen / Boston - more than a feeling / Cyndi Lauper - Girls Just Want to Have Fun
+  [4-step, 246 songs, 579×]  diatonic diatonic relative relative → relative (closes)
+    e.g. "F#m E F#m A F#m"  — radiohead - karma police / foo fighters - everlong / ABBA - dancing queen
+  [3-step, 244 songs, 594×]  diatonic relative fifth → fifth (closes)
+    e.g. "C Dm F C"  — radiohead - high and dry / Queen - bohemian rhapsody / Queen - Queen Bohemian Rhapsody
+  [4-step, 234 songs, 1347×]  relative relative relative relative → relative (closes)
+    e.g. "C Am C Am C"  — weezer - buddy holly / nirvana - dumb / nirvana - in bloom
+  [3-step, 199 songs, 524×]  diatonic relative dom7 → dom7 (closes)
+    e.g. "C#m B G#m C#m"  — radiohead - karma police / REM - Losing My Religion / Boston - more than a feeling
+  [3-step, 198 songs, 628×]  diatonic diatonic relative → relative (closes)
+    e.g. "G F Em G"  — toto - africa / radiohead - subterranean homesick alien / Rollin STones - Gimme Shelter
+  [5-step, 172 songs, 393×]  diatonic diatonic diatonic dom7 dom7 → dom7 (closes)
+    e.g. "C D Em D G C"  — earth wind fire - september / sublime - santeria / green day - when i come around
+  [2-step, 160 songs, 757×]  borrowed dom7 → dom7 (closes)
+    e.g. "Am E Am"  — nirvana - lithium / nirvana - in bloom / dire straits - sultans of swing
+  [4-step, 155 songs, 338×]  dom7 relative relative fifth → fifth (closes)
+    e.g. "D G Em G D"  — Depech Mode - enjoy the silence / depeche mode - enjoy the silence / led zepplin - stairway to heaven
+  [5-step, 152 songs, 371×]  diatonic dom7 dom7 fifth dom7 → dom7 (closes)
+    e.g. "D# F A# D# A# D#"  — foo fighters - my hero / Cyndi Lauper - Time after Time / pink floyd - hey you
+  [5-step, 138 songs, 389×]  diatonic fifth dom7 fifth fifth → fifth (closes)
+    e.g. "G F C F C G"  — Boston - more than a feeling / oasis - don't look back in anger / CCR - Bad Moon Rising
+  [4-step, 137 songs, 329×]  dom7 fifth relative relative → relative (closes)
+    e.g. "A D A F#m A"  — ABBA - dancing queen / Black Sabbath - paranoid / Cyndi Lauper - Girls Just Want to Have Fun
+  [5-step, 115 songs, 259×]  diatonic fifth fifth dom7 fifth → fifth (closes)
+    e.g. "E D A E A E"  — SmashMouth - All Star / imbruglia natalie - torn / pearl jam - jeremy
+  [5-step, 109 songs, 249×]  diatonic dom7 fifth dom7 dom7 → dom7 (closes)
+    e.g. "D# F A# F A# D#"  — weezer - buddy holly / Cranberries - dreams / CCR - Have You Ever Seen The Rain
+  [4-step, 106 songs, 330×]  dom7 dom7 dom7 relative → relative (closes)
+    e.g. "G#m C# F# B G#m"  — a-ha - take on me / Queen - bohemian rhapsody / Queen - Queen Bohemian Rhapsody
+  [4-step, 95 songs, 202×]  diatonic dom7 diatonic fifth → fifth (closes)
+    e.g. "G Am D C G"  — radiohead - karma police / dire straits - sultans of swing / Rollin STones - Sympathy for the Devil
+  [3-step, 94 songs, 233×]  borrowed fifth diatonic → diatonic (closes)
+    e.g. "C D# A# C"  — police - every breath you take / pink floyd - comfortably numb / pink floyd - brain damage
+  [2-step, 94 songs, 289×]  leadingTone leadingTone → leadingTone (closes)
+    e.g. "F Edim F"  — nirvana - all apologies / Boston - more than a feeling / joel billy - piano man
+  [5-step, 92 songs, 191×]  diatonic diatonic diatonic fifth fifth → fifth (closes)
+    e.g. "A G A G D A"  — red hot chilli peppers - under the bridge / SmashMouth - All Star / rage against the machine - bulls on parade
+  [3-step, 92 songs, 205×]  borrowed dom7 diatonic → diatonic (closes)
+    e.g. "G E A G"  — nirvana - the man who sold the world / Europe - The Final Countdown / mamas and the papas - california dreaming
+  [3-step, 84 songs, 190×]  diatonic diatonic parallel → parallel (closes)
+    e.g. "A#m G# A# A#m"  — toto - africa / pearl jam - even flow / pearl jam - alive
+  [5-step, 82 songs, 139×]  diatonic diatonic diatonic dom7 relative → relative (closes)
+    e.g. "Gm F Gm F A# Gm"  — red hot chilli peppers - under the bridge / radiohead - fake plastic trees / pearl jam - even flow
+  [4-step, 81 songs, 387×]  borrowed borrowed borrowed borrowed → borrowed (closes)
+    e.g. "G# F G# F G#"  — jackson michael - billie jean / weezer - buddy holly / nirvana - dumb
+  [4-step, 79 songs, 190×]  borrowed borrowed diatonic diatonic → diatonic (closes)
+    e.g. "E C# E F#m E"  — Eric Clapton - cocaine / SEAL - kiss from a rose / Tears for Fears - Head Over Heels
+  [3-step, 78 songs, 161×]  diatonic fifth relative → relative (closes)
+    e.g. "C# D#m A#m C#"  — nirvana - rape me / Metallica - one / Bon Jovi - it's my life
+  [4-step, 77 songs, 224×]  dom7 relative fifth relative → relative (closes)
+    e.g. "G C Am Em G"  — aerosmith - dream on / joel billy - piano man / ABBA - waterloo
+  [3-step, 74 songs, 180×]  borrowed diatonic diatonic → diatonic (closes)
+    e.g. "C G# A# C"  — Metallica - master of puppets / nirvana - pennyroyal tea / SEAL - kiss from a rose
+  [5-step, 67 songs, 127×]  diatonic dom7 fifth dom7 relative → relative (closes)
+    e.g. "Bm A D A D Bm"  — ABBA - dancing queen / Boston - more than a feeling / pink floyd - hey you
+  [5-step, 66 songs, 122×]  diatonic relative fifth dom7 fifth → fifth (closes)
+    e.g. "D Em G D G D"  — fleetwood mac - rhiannon / spin doctors - two princes / CCR - Proud Mary
+  [4-step, 64 songs, 261×]  parallel parallel parallel parallel → parallel (closes)
+    e.g. "B Bm B Bm B"  — earth wind fire - september / pearl jam - even flow / pearl jam - alive
+  [3-step, 63 songs, 205×]  borrowed diatonic dom7 → dom7 (closes)
+    e.g. "D# C A# D#"  — led zepplin - stairway to heaven / pearl jam - jeremy / Queen - killer queen
+  [5-step, 62 songs, 138×]  diatonic diatonic diatonic diatonic relative → relative (closes)
+    e.g. "Bm C D C D Bm"  — spice girls - wannabe / kansas - dust in the wind / Queen - under pressure
+  [3-step, 61 songs, 99×]  dom7 fifth parallel → parallel (closes)
+    e.g. "Bm E B Bm"  — Bryan Adams - heaven / led zepplin - kashmire / earth wind fire - boogie wonderland
+  [4-step, 54 songs, 143×]  diatonic diatonic relative dom7 → dom7 (closes)
+    e.g. "G A Bm D G"  — ABBA - waterloo / Eric Clapton - tears in heaven / john elton - crocodile rock
+  [5-step, 53 songs, 120×]  diatonic diatonic diatonic relative dom7 → dom7 (closes)
+    e.g. "C#m B C#m B G#m C#m"  — nirvana - pennyroyal tea / dire straits - brothers in arms / nirvana - school
+  [4-step, 53 songs, 114×]  diatonic dom7 diatonic relative → relative (closes)
+    e.g. "C D G Am C"  — radiohead - karma police / Europe - The Final Countdown / Bryan Adams - heaven
+  [4-step, 52 songs, 105×]  diatonic diatonic parallel parallel → parallel (closes)
+    e.g. "Bm A Bm B Bm"  — SmashMouth - All Star / aerosmith - crazy / led zepplin - kashmire
+  [4-step, 50 songs, 144×]  diatonic diatonic diatonic fifth → fifth (closes)
+    e.g. "A B C#m D A"  — earth wind fire - september / dire straits - sultans of swing / joel billy - uptown girl

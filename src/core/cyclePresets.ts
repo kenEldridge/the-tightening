@@ -15,756 +15,1066 @@ export const CYCLE_PRESETS: CyclePreset[] = [
   {
     "loop": "dom7 fifth",
     "length": 2,
-    "songCount": 168,
+    "songCount": 1732,
     "constraints": [
       "fifth",
       "dom7"
     ],
-    "exampleChords": "F Bb F",
+    "exampleChords": "E A E",
     "topSongs": [
       {
-        "title": "Radiohead - Karma Police",
-        "chords": "D G D"
+        "title": "nirvana - come as you are",
+        "chords": "Am Dm Am"
       },
       {
-        "title": "Red Hot Chili Peppers - Californication",
-        "chords": "E A E"
-      },
-      {
-        "title": "a-ha - Take On Me",
+        "title": "foo fighters - everlong",
         "chords": "A D A"
       },
       {
-        "title": "Amy Winehouse - Back To Black",
-        "chords": "Dm Gm Dm"
+        "title": "police - every breath you take",
+        "chords": "G C G"
       },
       {
-        "title": "Radiohead - Let Down",
-        "chords": "G# C# G#"
+        "title": "jackson michael - beat it",
+        "chords": "C# F# C#"
       },
       {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "Em Am Em"
+        "title": "green day - basket case",
+        "chords": "D# G# D#"
       },
       {
-        "title": "The Cure - Friday I'm In Love",
-        "chords": "D G D"
+        "title": "ABBA - dancing queen",
+        "chords": "E A E"
       },
       {
-        "title": "Cigarettes After Sex - Apocalypse",
-        "chords": "F Bb F"
+        "title": "radiohead - high and dry",
+        "chords": "B E B"
+      },
+      {
+        "title": "Cranberries - Linger",
+        "chords": "A D A"
       }
     ]
   },
   {
     "loop": "diatonic diatonic",
     "length": 2,
-    "songCount": 126,
+    "songCount": 1714,
     "constraints": [
       "diatonic"
     ],
-    "exampleChords": "A G A",
+    "exampleChords": "Bm A Bm",
     "topSongs": [
       {
-        "title": "Nirvana - Come As You Are",
-        "chords": "Em D Em"
-      },
-      {
-        "title": "Radiohead - Karma Police",
+        "title": "radiohead - karma police",
         "chords": "Bm Am Bm"
       },
       {
-        "title": "Red Hot Chili Peppers - Californication",
+        "title": "foo fighters - everlong",
+        "chords": "D E D"
+      },
+      {
+        "title": "police - every breath you take",
+        "chords": "D# F D#"
+      },
+      {
+        "title": "a-ha - take on me",
+        "chords": "D C#m D"
+      },
+      {
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "C#m B C#m"
+      },
+      {
+        "title": "jackson michael - beat it",
         "chords": "C# B C#"
       },
       {
-        "title": "The Police - Every Breath You Take",
-        "chords": "E F# E"
+        "title": "green day - basket case",
+        "chords": "G# A# G#"
       },
       {
-        "title": "a-ha - Take On Me",
-        "chords": "E F#m E"
-      },
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "A G A"
-      },
-      {
-        "title": "Coldplay - Sparks",
-        "chords": "Db Eb Db"
-      },
-      {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "G Am G"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic dom7 dom7",
-    "length": 3,
-    "songCount": 76,
-    "constraints": [
-      "diatonic",
-      "dom7"
-    ],
-    "exampleChords": "A B E A",
-    "topSongs": [
-      {
-        "title": "Radiohead - Karma Police",
-        "chords": "G Am D G"
-      },
-      {
-        "title": "The Police - Every Breath You Take",
-        "chords": "Db Eb Ab Db"
-      },
-      {
-        "title": "Lana Del Rey - Young And Beautiful",
-        "chords": "G A D G"
-      },
-      {
-        "title": "Mac Demarco - Chamber of Reflection",
-        "chords": "G#m7 A#m D#m7 G#m7"
-      },
-      {
-        "title": "The Walters - I Love You So",
-        "chords": "Bb Cm7 F Bb"
-      },
-      {
-        "title": "Billy Joel - Piano Man",
-        "chords": "C D7 G C"
-      },
-      {
-        "title": "The Ronettes - Be My Baby",
-        "chords": "E F#m B7 E"
-      },
-      {
-        "title": "Weezer - Say It Ain't So",
-        "chords": "Eb F Bb Eb"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic fifth fifth",
-    "length": 3,
-    "songCount": 68,
-    "constraints": [
-      "fifth",
-      "diatonic"
-    ],
-    "exampleChords": "A G D A",
-    "topSongs": [
-      {
-        "title": "Red Hot Chili Peppers - Californication",
-        "chords": "G F C G"
-      },
-      {
-        "title": "a-ha - Take On Me",
-        "chords": "E D A E"
-      },
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "A G D A"
-      },
-      {
-        "title": "The Cure - Friday I'm In Love",
-        "chords": "A G D A"
-      },
-      {
-        "title": "Pink Floyd - Wish You Were Here",
-        "chords": "D C G D"
-      },
-      {
-        "title": "Billy Joel - Piano Man",
-        "chords": "G F C G"
-      },
-      {
-        "title": "Olivia Rodrigo - Drivers License",
-        "chords": "F Ebmaj7 Bb F"
-      },
-      {
-        "title": "Van Morrison - Brown Eyed Girl",
-        "chords": "D C G D"
-      }
-    ]
-  },
-  {
-    "loop": "dom7 fifth dom7 fifth",
-    "length": 4,
-    "songCount": 65,
-    "constraints": [
-      "fifth",
-      "dom7"
-    ],
-    "exampleChords": "A D A D A",
-    "topSongs": [
-      {
-        "title": "Radiohead - Karma Police",
-        "chords": "D G D G D"
-      },
-      {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "Em Am Em Am Em"
-      },
-      {
-        "title": "Cigarettes After Sex - Apocalypse",
-        "chords": "F Bb F Bb F"
-      },
-      {
-        "title": "Billy Joel - Piano Man",
-        "chords": "C F C F C"
-      },
-      {
-        "title": "Creedence Clearwater Revival - Have You Ever Seen The Rain",
-        "chords": "G C G C G"
-      },
-      {
-        "title": "Wheatus - Teenage Dirtbag",
-        "chords": "E Asus2 E Asus2 E"
-      },
-      {
-        "title": "Olivia Rodrigo - Drivers License",
-        "chords": "Bb Ebmaj7 Bb Ebmaj7 Bb"
-      },
-      {
-        "title": "Oasis - Don't Look Back In Anger",
-        "chords": "C F C F C"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic diatonic diatonic",
-    "length": 4,
-    "songCount": 47,
-    "constraints": [
-      "diatonic"
-    ],
-    "exampleChords": "Em D Em D Em",
-    "topSongs": [
-      {
-        "title": "Nirvana - Come As You Are",
-        "chords": "Em D Em D Em"
-      },
-      {
-        "title": "The Police - Every Breath You Take",
-        "chords": "E F# E F# E"
-      },
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "A G A G A"
-      },
-      {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "G Am G Am G"
-      },
-      {
-        "title": "The Cure - Friday I'm In Love",
-        "chords": "A Bm A Bm A"
-      },
-      {
-        "title": "The Walters - I Love You So",
-        "chords": "Cm7 Bb Cm7 Bb Cm7"
-      },
-      {
-        "title": "Bob Dylan - Like a Rolling Stone",
-        "chords": "F G F G F"
-      },
-      {
-        "title": "Glass Animals - Heat Waves",
-        "chords": "G#m F# E F# G#m"
+        "title": "ABBA - dancing queen",
+        "chords": "F#m E F#m"
       }
     ]
   },
   {
     "loop": "relative relative",
     "length": 2,
-    "songCount": 41,
+    "songCount": 883,
     "constraints": [
       "relative"
     ],
-    "exampleChords": "C#m E C#m",
+    "exampleChords": "Fm G# Fm",
     "topSongs": [
       {
-        "title": "Radiohead - Karma Police",
-        "chords": "Bm D Bm"
-      },
-      {
-        "title": "Red Hot Chili Peppers - Californication",
+        "title": "foo fighters - everlong",
         "chords": "D Bm D"
       },
       {
-        "title": "The Police - Every Breath You Take",
-        "chords": "Fm Ab Fm"
-      },
-      {
-        "title": "Oasis - Wonderwall",
-        "chords": "A F#m A"
-      },
-      {
-        "title": "Coldplay - Sparks",
-        "chords": "Dbmaj7 Bbm7 Dbmaj7"
-      },
-      {
-        "title": "Lana Del Rey - Video Games",
+        "title": "red hot chilli peppers - under the bridge",
         "chords": "F#m A F#m"
       },
       {
-        "title": "Cyndi Lauper - Girls Just Want To Have Fun",
-        "chords": "G Em G"
+        "title": "green day - basket case",
+        "chords": "D# Cm D#"
       },
       {
-        "title": "The Strokes - The Adults Are Talking",
-        "chords": "F Dm F"
+        "title": "Cranberries - Zombie",
+        "chords": "Em G Em"
+      },
+      {
+        "title": "radiohead - fake plastic trees",
+        "chords": "A F#m A"
+      },
+      {
+        "title": "soundgarden - black hole sun",
+        "chords": "Fm G# Fm"
+      },
+      {
+        "title": "weezer - buddy holly",
+        "chords": "F#m A F#m"
+      },
+      {
+        "title": "nirvana - dumb",
+        "chords": "Em G Em"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic diatonic diatonic diatonic",
+    "length": 4,
+    "songCount": 745,
+    "constraints": [
+      "diatonic"
+    ],
+    "exampleChords": "C D C D C",
+    "topSongs": [
+      {
+        "title": "police - every breath you take",
+        "chords": "D# F D# F D#"
+      },
+      {
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "C#m B C#m B C#m"
+      },
+      {
+        "title": "jackson michael - beat it",
+        "chords": "C# B C# B C#"
+      },
+      {
+        "title": "radiohead - high and dry",
+        "chords": "E F#m E F#m E"
+      },
+      {
+        "title": "toto - africa",
+        "chords": "G#m A G#m A G#m"
+      },
+      {
+        "title": "AC DC - highway to hell",
+        "chords": "A G A G A"
+      },
+      {
+        "title": "aerosmith - dream on",
+        "chords": "D# C# D# C# D#"
+      },
+      {
+        "title": "Bon Jovi - you give love a bad name",
+        "chords": "G# A# G# A# G#"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 fifth dom7 fifth",
+    "length": 4,
+    "songCount": 676,
+    "constraints": [
+      "fifth",
+      "dom7"
+    ],
+    "exampleChords": "E A E A E",
+    "topSongs": [
+      {
+        "title": "green day - basket case",
+        "chords": "D# G# D# G# D#"
+      },
+      {
+        "title": "ABBA - dancing queen",
+        "chords": "E A E A E"
+      },
+      {
+        "title": "nirvana - all apologies",
+        "chords": "C# F# C# F# C#"
+      },
+      {
+        "title": "nirvana - rape me",
+        "chords": "Em Am Em Am Em"
+      },
+      {
+        "title": "foo fighters - my hero",
+        "chords": "B E B E B"
+      },
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "D G D G D"
+      },
+      {
+        "title": "radiohead - subterranean homesick alien",
+        "chords": "G C G C G"
+      },
+      {
+        "title": "joel billy - piano man",
+        "chords": "C F C F C"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic dom7 dom7",
+    "length": 3,
+    "songCount": 664,
+    "constraints": [
+      "diatonic",
+      "dom7"
+    ],
+    "exampleChords": "G# A# D# G#",
+    "topSongs": [
+      {
+        "title": "weezer - buddy holly",
+        "chords": "G A D G"
+      },
+      {
+        "title": "pink floyd - the great gig in the sky",
+        "chords": "D# F A# D#"
+      },
+      {
+        "title": "foo fighters - my hero",
+        "chords": "E F#m B E"
+      },
+      {
+        "title": "sublime - santeria",
+        "chords": "A B E A"
+      },
+      {
+        "title": "green day - when i come around",
+        "chords": "B C# F# B"
+      },
+      {
+        "title": "joel billy - uptown girl",
+        "chords": "G Am Dm G"
+      },
+      {
+        "title": "Billy Joel - Uptown Girl",
+        "chords": "G Am Dm G"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "B C# F# B"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic fifth fifth",
+    "length": 3,
+    "songCount": 432,
+    "constraints": [
+      "fifth",
+      "diatonic"
+    ],
+    "exampleChords": "D C G D",
+    "topSongs": [
+      {
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "B A E B"
+      },
+      {
+        "title": "Queen - bohemian rhapsody",
+        "chords": "A# G# D# A#"
+      },
+      {
+        "title": "Queen - Queen Bohemian Rhapsody",
+        "chords": "A# G# D# A#"
+      },
+      {
+        "title": "CCR - Fortunate Son",
+        "chords": "G F C G"
+      },
+      {
+        "title": "Bon Jovi - you give love a bad name",
+        "chords": "F D# A# F"
+      },
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "D C G D"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "C# B F# C#"
+      },
+      {
+        "title": "Rollin STones - Gimme Shelter",
+        "chords": "B A E B"
       }
     ]
   },
   {
     "loop": "diatonic diatonic dom7 fifth",
     "length": 4,
-    "songCount": 40,
+    "songCount": 377,
     "constraints": [
       "fifth",
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "G F G C G",
+    "exampleChords": "E D E A E",
     "topSongs": [
       {
-        "title": "a-ha - Take On Me",
+        "title": "jackson michael - beat it",
+        "chords": "C# B C# F# C#"
+      },
+      {
+        "title": "ABBA - dancing queen",
         "chords": "E F#m E A E"
       },
       {
-        "title": "Pink Floyd - Wish You Were Here",
-        "chords": "G Am G C G"
+        "title": "earth wind fire - september",
+        "chords": "E F#m E A E"
       },
       {
-        "title": "Oasis - Don't Look Back In Anger",
-        "chords": "G Am G C G"
-      },
-      {
-        "title": "Van Morrison - Brown Eyed Girl",
+        "title": "Boston - more than a feeling",
         "chords": "D C D G D"
       },
       {
-        "title": "Billy Joel - Vienna",
-        "chords": "C D C F C"
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "C# B C# F# C#"
       },
       {
-        "title": "Phoebe Bridgers - Motion Sickness",
-        "chords": "Ab Gb Ab Db Ab"
+        "title": "joel billy - piano man",
+        "chords": "C Dm C F C"
       },
       {
-        "title": "The La's - There She Goes",
+        "title": "Billy Joel - Piano Man",
+        "chords": "C Dm C F C"
+      },
+      {
+        "title": "van morrison - brown eyed girl",
         "chords": "D C D G D"
-      },
-      {
-        "title": "Billie Eilish - idontwannabeyouanymore",
-        "chords": "Gmaj7 Am7 Gmaj7 Cmaj7 Gmaj7"
-      }
-    ]
-  },
-  {
-    "loop": "dom7 dom7 fifth fifth",
-    "length": 4,
-    "songCount": 32,
-    "constraints": [
-      "fifth",
-      "dom7"
-    ],
-    "exampleChords": "A D G D A",
-    "topSongs": [
-      {
-        "title": "The Cure - Friday I'm In Love",
-        "chords": "A D G D A"
-      },
-      {
-        "title": "Wheatus - Teenage Dirtbag",
-        "chords": "Bsus4 E A E Bsus4"
-      },
-      {
-        "title": "Van Morrison - Brown Eyed Girl",
-        "chords": "D G C G D"
-      },
-      {
-        "title": "Elvis Presley - Can't Help Falling In Love",
-        "chords": "A D G D A"
-      },
-      {
-        "title": "Bob Marley & The Wailers - Three Little Birds (A)",
-        "chords": "E A D A E"
-      },
-      {
-        "title": "Bob Marley & The Wailers - Three Little Birds (D)",
-        "chords": "A D G D A"
-      },
-      {
-        "title": "The Beatles - Hey Jude",
-        "chords": "C F Bb F7 C"
-      },
-      {
-        "title": "Phoebe Bridgers - Motion Sickness",
-        "chords": "Ab Db Gb Db Ab"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic relative fifth",
-    "length": 3,
-    "songCount": 32,
-    "constraints": [
-      "fifth",
-      "diatonic",
-      "relative"
-    ],
-    "exampleChords": "D Em G D",
-    "topSongs": [
-      {
-        "title": "Red Hot Chili Peppers - Californication",
-        "chords": "A Bm D A"
-      },
-      {
-        "title": "Dua Lipa - Don't Start Now",
-        "chords": "A Bm D A"
-      },
-      {
-        "title": "Billy Joel - Vienna",
-        "chords": "F Gm Bb F"
-      },
-      {
-        "title": "Elton John - Your Song",
-        "chords": "Eb Fm Ab Eb"
-      },
-      {
-        "title": "Dolly Parton - Jolene",
-        "chords": "B C#m E B"
-      },
-      {
-        "title": "Eric Clapton - Tears in Heaven",
-        "chords": "E F#m A E"
-      },
-      {
-        "title": "Lynyrd Skynyrd - Simple Man",
-        "chords": "G Am C G"
-      },
-      {
-        "title": "Simon & Garfunkel - The Sound of Silence",
-        "chords": "C# D#m F# C#"
-      }
-    ]
-  },
-  {
-    "loop": "dom7 dom7 dom7 relative",
-    "length": 4,
-    "songCount": 28,
-    "constraints": [
-      "relative",
-      "dom7"
-    ],
-    "exampleChords": "Em7 Am D7 G Em7",
-    "topSongs": [
-      {
-        "title": "Cigarettes After Sex - Apocalypse",
-        "chords": "Dm Gm C F Dm"
-      },
-      {
-        "title": "Lana Del Rey - Young And Beautiful",
-        "chords": "F#m Bm Em A F#m"
-      },
-      {
-        "title": "The Strokes - The Adults Are Talking",
-        "chords": "Gm C F Bb Gm"
-      },
-      {
-        "title": "Joji - Glimpse of Us",
-        "chords": "Fm Bbm7 Eb7 Ab Fm"
-      },
-      {
-        "title": "Mitski - Nobody",
-        "chords": "Gm C Fmaj7 Bb Gm"
-      },
-      {
-        "title": "Frankie Valli - Can't Take My Eyes Off You",
-        "chords": "C#m F#m7 B E C#m"
-      },
-      {
-        "title": "Frank Sinatra - My Way",
-        "chords": "F#m7 Bm7 Em7 A7 F#m7"
-      },
-      {
-        "title": "10cc - I'm Not In Love",
-        "chords": "Em7 Am D7 G Em7"
-      }
-    ]
-  },
-  {
-    "loop": "borrowed dom7",
-    "length": 2,
-    "songCount": 27,
-    "constraints": [
-      "borrowed",
-      "dom7"
-    ],
-    "exampleChords": "Dm A Dm",
-    "topSongs": [
-      {
-        "title": "Radiohead - No Surprises",
-        "chords": "Bbm F Bbm"
-      },
-      {
-        "title": "Elvis Presley - Can't Help Falling In Love",
-        "chords": "F#m C#7 F#m"
-      },
-      {
-        "title": "The Turtles - Happy Together",
-        "chords": "F#m C# F#m"
-      },
-      {
-        "title": "Lou Reed - Perfect Day",
-        "chords": "Bbm F Bbm"
-      },
-      {
-        "title": "R.E.M. - Everybody Hurts",
-        "chords": "Bm F# Bm"
-      },
-      {
-        "title": "The Rolling Stones - Paint It Black",
-        "chords": "Em B7 Em"
-      },
-      {
-        "title": "Billie Eilish - Therefore I Am",
-        "chords": "Dm A Dm"
-      },
-      {
-        "title": "The Kinks - Sunny Afternoon",
-        "chords": "Dm A7 Dm"
-      }
-    ]
-  },
-  {
-    "loop": "borrowed borrowed",
-    "length": 2,
-    "songCount": 21,
-    "constraints": [
-      "borrowed"
-    ],
-    "exampleChords": "G Bb G",
-    "topSongs": [
-      {
-        "title": "Nirvana - Come As You Are",
-        "chords": "Asus4 Csus2 Asus4"
-      },
-      {
-        "title": "Red Hot Chili Peppers - Californication",
-        "chords": "E C# E"
-      },
-      {
-        "title": "Van Morrison - Brown Eyed Girl",
-        "chords": "B G B"
-      },
-      {
-        "title": "Billy Joel - Vienna",
-        "chords": "Bb G7 Bb"
-      },
-      {
-        "title": "The Velvet Underground - Sunday Morning",
-        "chords": "A C A"
-      },
-      {
-        "title": "The Turtles - Happy Together",
-        "chords": "F# A F#"
-      },
-      {
-        "title": "The Beatles - Here Comes The Sun",
-        "chords": "A C# A"
-      },
-      {
-        "title": "Lynyrd Skynyrd - Simple Man",
-        "chords": "E G E"
       }
     ]
   },
   {
     "loop": "diatonic diatonic fifth dom7",
     "length": 4,
-    "songCount": 20,
+    "songCount": 356,
     "constraints": [
       "fifth",
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "C Dm C G7 C",
+    "exampleChords": "F Gm F C F",
     "topSongs": [
       {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "Am G Am Em Am"
+        "title": "green day - basket case",
+        "chords": "G# A# G# D# G#"
       },
       {
-        "title": "Billy Joel - Piano Man",
+        "title": "radiohead - high and dry",
+        "chords": "E F#m E B E"
+      },
+      {
+        "title": "Cranberries - Linger",
+        "chords": "C D C G C"
+      },
+      {
+        "title": "spice girls - wannabe",
+        "chords": "E F# E B E"
+      },
+      {
+        "title": "oasis - don't look back in anger",
         "chords": "F G F C F"
       },
       {
-        "title": "Elton John - Your Song",
-        "chords": "Ab Bb Ab Eb Ab"
+        "title": "Cyndi Lauper - Time after Time",
+        "chords": "F Em F C F"
       },
       {
-        "title": "The Beatles - Here Comes The Sun",
-        "chords": "A Bm7 A E A"
+        "title": "green day - brain stew",
+        "chords": "G A G D G"
       },
       {
-        "title": "Neil Young - Harvest Moon",
-        "chords": "D Em7 D A7 D"
+        "title": "prince - purple rain",
+        "chords": "D E D A D"
+      }
+    ]
+  },
+  {
+    "loop": "borrowed borrowed",
+    "length": 2,
+    "songCount": 348,
+    "constraints": [
+      "borrowed"
+    ],
+    "exampleChords": "G# F G#",
+    "topSongs": [
+      {
+        "title": "jackson michael - billie jean",
+        "chords": "B D B"
       },
       {
-        "title": "Simon & Garfunkel - The Boxer",
-        "chords": "Am G Am Em7 Am"
+        "title": "ABBA - dancing queen",
+        "chords": "E C# E"
       },
       {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "Bb C Bb F Bb"
+        "title": "nirvana - heart shaped box",
+        "chords": "F D F"
       },
       {
-        "title": "David Bowie - Space Oddity",
-        "chords": "F G F C F"
+        "title": "weezer - buddy holly",
+        "chords": "D F# D"
+      },
+      {
+        "title": "nirvana - dumb",
+        "chords": "A C A"
+      },
+      {
+        "title": "nirvana - in bloom",
+        "chords": "D A# D"
+      },
+      {
+        "title": "nirvana - rape me",
+        "chords": "A C A"
+      },
+      {
+        "title": "dire straits - sultans of swing",
+        "chords": "C A C"
       }
     ]
   },
   {
     "loop": "diatonic dom7 relative",
     "length": 3,
-    "songCount": 20,
+    "songCount": 324,
     "constraints": [
       "diatonic",
       "relative",
       "dom7"
     ],
-    "exampleChords": "Cm Bb7 Eb Cm",
+    "exampleChords": "Fm D# G# Fm",
     "topSongs": [
       {
-        "title": "Pink Floyd - Wish You Were Here",
-        "chords": "Am G C Am"
-      },
-      {
-        "title": "Cigarettes After Sex - Apocalypse",
-        "chords": "Gm Fmaj7 Bb Gm"
-      },
-      {
-        "title": "The Pixies - Where Is My Mind",
+        "title": "jackson michael - billie jean",
         "chords": "C#m B E C#m"
       },
       {
-        "title": "Cyndi Lauper - Girls Just Want To Have Fun",
+        "title": "radiohead - karma police",
+        "chords": "Bm Am D Bm"
+      },
+      {
+        "title": "police - every breath you take",
         "chords": "Em D G Em"
       },
       {
-        "title": "The Strokes - The Adults Are Talking",
-        "chords": "Dm C F Dm"
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "C#m B E C#m"
       },
       {
-        "title": "Olivia Rodrigo - Drivers License",
-        "chords": "Gm F Bb Gm"
+        "title": "ABBA - dancing queen",
+        "chords": "F#m E A F#m"
       },
       {
-        "title": "Oasis - Don't Look Back In Anger",
-        "chords": "Am G C Am"
+        "title": "radiohead - fake plastic trees",
+        "chords": "Bm A D Bm"
       },
       {
-        "title": "Dua Lipa - Don't Start Now",
+        "title": "REM - Losing My Religion",
+        "chords": "Em Dm G Em"
+      },
+      {
+        "title": "nirvana - dumb",
         "chords": "Em D G Em"
       }
     ]
   },
   {
-    "loop": "diatonic fifth dom7 fifth fifth",
-    "length": 5,
-    "songCount": 17,
+    "loop": "parallel parallel",
+    "length": 2,
+    "songCount": 274,
+    "constraints": [
+      "parallel"
+    ],
+    "exampleChords": "Bm B Bm",
+    "topSongs": [
+      {
+        "title": "nirvana - lithium",
+        "chords": "Am A Am"
+      },
+      {
+        "title": "jackson michael - beat it",
+        "chords": "D#m D# D#m"
+      },
+      {
+        "title": "nirvana - dumb",
+        "chords": "Em E Em"
+      },
+      {
+        "title": "rage against the machine - killing in the name of",
+        "chords": "Dm D Dm"
+      },
+      {
+        "title": "earth wind fire - september",
+        "chords": "C#m C# C#m"
+      },
+      {
+        "title": "pearl jam - even flow",
+        "chords": "Dm D Dm"
+      },
+      {
+        "title": "weezer - say it ain't so",
+        "chords": "G Gm G"
+      },
+      {
+        "title": "Rollin STones - Gimme Shelter",
+        "chords": "C# C#m C#"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 dom7 fifth fifth",
+    "length": 4,
+    "songCount": 267,
+    "constraints": [
+      "fifth",
+      "dom7"
+    ],
+    "exampleChords": "E A D A E",
+    "topSongs": [
+      {
+        "title": "ABBA - dancing queen",
+        "chords": "E A D A E"
+      },
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "D G C G D"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "C# F# B F# C#"
+      },
+      {
+        "title": "joel billy - piano man",
+        "chords": "G C F C G"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "G C F C G"
+      },
+      {
+        "title": "Cyndi Lauper - Time after Time",
+        "chords": "G C F C G"
+      },
+      {
+        "title": "van morrison - brown eyed girl",
+        "chords": "D G C G D"
+      },
+      {
+        "title": "nirvana - the man who sold the world",
+        "chords": "C F A# F C"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic diatonic relative relative",
+    "length": 4,
+    "songCount": 246,
+    "constraints": [
+      "diatonic",
+      "relative"
+    ],
+    "exampleChords": "F#m E F#m A F#m",
+    "topSongs": [
+      {
+        "title": "radiohead - karma police",
+        "chords": "Bm Am Bm D Bm"
+      },
+      {
+        "title": "foo fighters - everlong",
+        "chords": "D E D Bm D"
+      },
+      {
+        "title": "ABBA - dancing queen",
+        "chords": "F#m E F#m A F#m"
+      },
+      {
+        "title": "toto - africa",
+        "chords": "G#m A G#m B G#m"
+      },
+      {
+        "title": "Depech Mode - enjoy the silence",
+        "chords": "C#m B C#m E C#m"
+      },
+      {
+        "title": "depeche mode - enjoy the silence",
+        "chords": "C#m B C#m E C#m"
+      },
+      {
+        "title": "dire straits - sultans of swing",
+        "chords": "Gm Am Gm A# Gm"
+      },
+      {
+        "title": "spice girls - wannabe",
+        "chords": "F# E F# D#m F#"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic relative fifth",
+    "length": 3,
+    "songCount": 244,
     "constraints": [
       "fifth",
       "diatonic",
-      "dom7"
+      "relative"
     ],
-    "exampleChords": "B A E A E B",
+    "exampleChords": "C Dm F C",
     "topSongs": [
       {
-        "title": "Billy Joel - Piano Man",
-        "chords": "G F C Fmaj7 C G"
+        "title": "radiohead - high and dry",
+        "chords": "E F#m A E"
       },
       {
-        "title": "Olivia Rodrigo - Drivers License",
-        "chords": "F Ebmaj7 Bb Ebmaj7 Bb F"
+        "title": "Queen - bohemian rhapsody",
+        "chords": "D# Fm G# D#"
       },
       {
-        "title": "Bob Marley & The Wailers - Three Little Birds (A)",
-        "chords": "E D A D A E"
+        "title": "Queen - Queen Bohemian Rhapsody",
+        "chords": "D# Fm G# D#"
       },
       {
-        "title": "Bob Marley & The Wailers - Three Little Birds (D)",
-        "chords": "A G D G D A"
+        "title": "AC DC - back in black",
+        "chords": "D Em G D"
       },
       {
-        "title": "The Velvet Underground - Sunday Morning",
-        "chords": "C Bb F Bb F C"
+        "title": "Depech Mode - enjoy the silence",
+        "chords": "E F#m A E"
       },
       {
-        "title": "The Beatles - Let It Be",
-        "chords": "G F C F C G"
+        "title": "depeche mode - enjoy the silence",
+        "chords": "E F#m A E"
       },
       {
-        "title": "Simon & Garfunkel - The Boxer",
-        "chords": "G F C F C G"
+        "title": "pink floyd - the great gig in the sky",
+        "chords": "F Gm A# F"
       },
       {
-        "title": "The Beatles - With A Little Help From My Friends",
-        "chords": "E D A D A E"
+        "title": "green day - when i come around",
+        "chords": "C# D#m F# C#"
+      }
+    ]
+  },
+  {
+    "loop": "relative relative relative relative",
+    "length": 4,
+    "songCount": 234,
+    "constraints": [
+      "relative"
+    ],
+    "exampleChords": "C Am C Am C",
+    "topSongs": [
+      {
+        "title": "weezer - buddy holly",
+        "chords": "F#m A F#m A F#m"
+      },
+      {
+        "title": "nirvana - dumb",
+        "chords": "Em G Em G Em"
+      },
+      {
+        "title": "nirvana - in bloom",
+        "chords": "A# Gm A# Gm A#"
+      },
+      {
+        "title": "toto - africa",
+        "chords": "F#m A F#m A F#m"
+      },
+      {
+        "title": "pink floyd - wish you were here",
+        "chords": "G Em G Em G"
+      },
+      {
+        "title": "dire straits - sultans of swing",
+        "chords": "Dm F Dm F Dm"
+      },
+      {
+        "title": "pearl jam - even flow",
+        "chords": "A# Gm A# Gm A#"
+      },
+      {
+        "title": "Black Sabbath - paranoid",
+        "chords": "G Em G Em G"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic relative dom7",
+    "length": 3,
+    "songCount": 199,
+    "constraints": [
+      "diatonic",
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "C#m B G#m C#m",
+    "topSongs": [
+      {
+        "title": "radiohead - karma police",
+        "chords": "D C Am D"
+      },
+      {
+        "title": "REM - Losing My Religion",
+        "chords": "G F Dm G"
+      },
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "Am G Em Am"
+      },
+      {
+        "title": "nirvana - polly",
+        "chords": "D C Am D"
+      },
+      {
+        "title": "led zepplin - stairway to heaven",
+        "chords": "D C Am D"
+      },
+      {
+        "title": "nirvana - territorial pissings",
+        "chords": "F#m E C#m F#m"
+      },
+      {
+        "title": "nirvana - pennyroyal tea",
+        "chords": "A G Em A"
+      },
+      {
+        "title": "Rollin STones - Sympathy for the Devil",
+        "chords": "D C Am D"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic diatonic relative",
+    "length": 3,
+    "songCount": 198,
+    "constraints": [
+      "diatonic",
+      "relative"
+    ],
+    "exampleChords": "G F Em G",
+    "topSongs": [
+      {
+        "title": "toto - africa",
+        "chords": "F#m G#m A F#m"
+      },
+      {
+        "title": "radiohead - subterranean homesick alien",
+        "chords": "Em F G Em"
+      },
+      {
+        "title": "Rollin STones - Gimme Shelter",
+        "chords": "A G#m F#m A"
+      },
+      {
+        "title": "rolling stones - gimme shelter",
+        "chords": "A G#m F#m A"
+      },
+      {
+        "title": "spice girls - wannabe",
+        "chords": "D#m E F# D#m"
+      },
+      {
+        "title": "Metallica - one",
+        "chords": "G F Em G"
+      },
+      {
+        "title": "Europe - The Final Countdown",
+        "chords": "E D C#m E"
+      },
+      {
+        "title": "kansas - dust in the wind",
+        "chords": "F Em Dm F"
       }
     ]
   },
   {
     "loop": "diatonic diatonic diatonic dom7 dom7",
     "length": 5,
-    "songCount": 17,
+    "songCount": 172,
     "constraints": [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "Bb C Bb C F Bb",
+    "exampleChords": "C D Em D G C",
     "topSongs": [
       {
-        "title": "The Walters - I Love You So",
-        "chords": "Bb Cm7 Bb Cm7 F Bb"
+        "title": "earth wind fire - september",
+        "chords": "A Bm A Bm E A"
       },
       {
-        "title": "Louis Armstrong - What A Wonderful World",
-        "chords": "F Gm F Gm C7 F"
+        "title": "sublime - santeria",
+        "chords": "A B A B E A"
       },
       {
-        "title": "Lukas Graham - 7 Years",
-        "chords": "Eb F Gm F Bb Eb"
+        "title": "green day - when i come around",
+        "chords": "B C# D#m C# F# B"
       },
       {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "Bb C Bb C F Bb"
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "B C# B C# F# B"
       },
       {
-        "title": "The Righteous Brothers - Unchained Melody",
-        "chords": "F Eb F G C F"
+        "title": "van morrison - brown eyed girl",
+        "chords": "C D C D G C"
       },
       {
-        "title": "Steely Dan - Dirty Work",
-        "chords": "B C# D#m7 C# F# B"
+        "title": "prince - purple rain",
+        "chords": "D E D E A D"
       },
       {
-        "title": "Lady Gaga - Always Remember Us This Way",
+        "title": "dire straits - walk of life",
+        "chords": "A B A B E A"
+      },
+      {
+        "title": "nirvana - sliver",
         "chords": "F G F G C F"
+      }
+    ]
+  },
+  {
+    "loop": "borrowed dom7",
+    "length": 2,
+    "songCount": 160,
+    "constraints": [
+      "borrowed",
+      "dom7"
+    ],
+    "exampleChords": "Am E Am",
+    "topSongs": [
+      {
+        "title": "nirvana - lithium",
+        "chords": "Am E Am"
       },
       {
-        "title": "Finneas - Break My Heart Again",
-        "chords": "D C D Em Am7 D"
+        "title": "nirvana - in bloom",
+        "chords": "Gm D Gm"
+      },
+      {
+        "title": "dire straits - sultans of swing",
+        "chords": "Dm A Dm"
+      },
+      {
+        "title": "TLC - No Scrubs",
+        "chords": "G#m D# G#m"
+      },
+      {
+        "title": "doors the - people are strange",
+        "chords": "Fm C Fm"
+      },
+      {
+        "title": "AC DC - thunderstruck",
+        "chords": "Em B Em"
+      },
+      {
+        "title": "Metallica - master of puppets",
+        "chords": "Em B Em"
+      },
+      {
+        "title": "nirvana - the man who sold the world",
+        "chords": "Dm A Dm"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 relative relative fifth",
+    "length": 4,
+    "songCount": 155,
+    "constraints": [
+      "fifth",
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "D G Em G D",
+    "topSongs": [
+      {
+        "title": "Depech Mode - enjoy the silence",
+        "chords": "E A F#m A E"
+      },
+      {
+        "title": "depeche mode - enjoy the silence",
+        "chords": "E A F#m A E"
+      },
+      {
+        "title": "led zepplin - stairway to heaven",
+        "chords": "G C Am C G"
+      },
+      {
+        "title": "fleetwood mac - rhiannon",
+        "chords": "G C Am C G"
+      },
+      {
+        "title": "U2 - One",
+        "chords": "G C Am C G"
+      },
+      {
+        "title": "spin doctors - two princes",
+        "chords": "D G Em G D"
+      },
+      {
+        "title": "Madonna - like a virgin",
+        "chords": "F# B G#m B F#"
+      },
+      {
+        "title": "Bryan Adams - heaven",
+        "chords": "C F Dm F C"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic dom7 dom7 fifth dom7",
+    "length": 5,
+    "songCount": 152,
+    "constraints": [
+      "fifth",
+      "diatonic",
+      "dom7"
+    ],
+    "exampleChords": "D# F A# D# A# D#",
+    "topSongs": [
+      {
+        "title": "foo fighters - my hero",
+        "chords": "E F#m B E B E"
+      },
+      {
+        "title": "Cyndi Lauper - Time after Time",
+        "chords": "F G C F C F"
+      },
+      {
+        "title": "pink floyd - hey you",
+        "chords": "Dm Em Am Dm Am Dm"
+      },
+      {
+        "title": "Beatles - let it be",
+        "chords": "F G C F C F"
+      },
+      {
+        "title": "Beatles - yellow submarine",
+        "chords": "F Gm C F C F"
+      },
+      {
+        "title": "spin doctors - two princes",
+        "chords": "G A D G D G"
+      },
+      {
+        "title": "Goo Goo Dolls - Iris",
+        "chords": "G A D G D G"
+      },
+      {
+        "title": "dire straits - walk of life",
+        "chords": "A B E A E A"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic fifth dom7 fifth fifth",
+    "length": 5,
+    "songCount": 138,
+    "constraints": [
+      "fifth",
+      "diatonic",
+      "dom7"
+    ],
+    "exampleChords": "G F C F C G",
+    "topSongs": [
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "D C G C G D"
+      },
+      {
+        "title": "oasis - don't look back in anger",
+        "chords": "G F C F C G"
+      },
+      {
+        "title": "CCR - Bad Moon Rising",
+        "chords": "A G D G D A"
+      },
+      {
+        "title": "jackson michael - black or white",
+        "chords": "B A E A E B"
+      },
+      {
+        "title": "Goo Goo Dolls - Iris",
+        "chords": "A G D G D A"
+      },
+      {
+        "title": "dire straits - walk of life",
+        "chords": "B A E A E B"
+      },
+      {
+        "title": "Bryan Adams - heaven",
+        "chords": "G F C F C G"
+      },
+      {
+        "title": "who the - pinball wizard",
+        "chords": "B A E A E B"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 fifth relative relative",
+    "length": 4,
+    "songCount": 137,
+    "constraints": [
+      "fifth",
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "A D A F#m A",
+    "topSongs": [
+      {
+        "title": "ABBA - dancing queen",
+        "chords": "A D A F#m A"
+      },
+      {
+        "title": "Black Sabbath - paranoid",
+        "chords": "G C G Em G"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want to Have Fun",
+        "chords": "F# B F# D#m F#"
+      },
+      {
+        "title": "joel billy - piano man",
+        "chords": "C F C Am C"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "C F C Am C"
+      },
+      {
+        "title": "Rollin STones - Gimme Shelter",
+        "chords": "E A E C#m E"
+      },
+      {
+        "title": "rolling stones - gimme shelter",
+        "chords": "E A E C#m E"
+      },
+      {
+        "title": "SmashMouth - All Star",
+        "chords": "F# B F# D#m F#"
       }
     ]
   },
   {
     "loop": "diatonic fifth fifth dom7 fifth",
     "length": 5,
-    "songCount": 16,
+    "songCount": 115,
     "constraints": [
       "fifth",
       "diatonic",
@@ -773,1000 +1083,703 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "exampleChords": "E D A E A E",
     "topSongs": [
       {
-        "title": "Taylor Swift - Lover",
-        "chords": "D C G D G D"
+        "title": "SmashMouth - All Star",
+        "chords": "F# E B F# B F#"
       },
       {
-        "title": "The Beatles - Hey Jude",
-        "chords": "C Bb F C F C"
+        "title": "imbruglia natalie - torn",
+        "chords": "C A# F C F C"
       },
       {
-        "title": "The La's - There She Goes",
-        "chords": "D C G D G D"
-      },
-      {
-        "title": "The Velvet Underground - Sunday Morning",
-        "chords": "C Bb F C F C"
-      },
-      {
-        "title": "John Denver - Take Me Home Country Roads",
-        "chords": "E D A E A E"
-      },
-      {
-        "title": "The Beatles - With A Little Help From My Friends",
-        "chords": "E D A E A E"
-      },
-      {
-        "title": "Patti Smith - Because the Night",
+        "title": "pearl jam - jeremy",
         "chords": "A G D A D A"
       },
       {
-        "title": "Cat Stevens - Wild World",
-        "chords": "G F C G C G"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic diatonic fifth fifth",
-    "length": 5,
-    "songCount": 14,
-    "constraints": [
-      "fifth",
-      "diatonic"
-    ],
-    "exampleChords": "Em7 F Em Dm Am Em7",
-    "topSongs": [
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "A G A G D A"
+        "title": "simple minds - dont you forget about me",
+        "chords": "A G D A D A"
       },
       {
-        "title": "Billy Joel - Piano Man",
-        "chords": "G F G F C G"
+        "title": "Queen - under pressure",
+        "chords": "A G D A D A"
       },
       {
-        "title": "Taylor Swift - Lover",
-        "chords": "D Em D C G D"
+        "title": "Eric Clapton - wonderful tonight",
+        "chords": "D C G D G D"
       },
       {
-        "title": "John Denver - Take Me Home Country Roads",
-        "chords": "E F#m E D A E"
+        "title": "green day - longview",
+        "chords": "A# G# D# A# D# A#"
       },
       {
-        "title": "Gerry Rafferty - Right Down The Line",
-        "chords": "G Am G F C G"
-      },
-      {
-        "title": "The Beach Boys - God Only Knows",
-        "chords": "A G A G D A"
-      },
-      {
-        "title": "America - Sister Golden Hair",
-        "chords": "B A B A E B"
-      },
-      {
-        "title": "Cat Stevens - Wild World",
-        "chords": "G F G F C G"
-      }
-    ]
-  },
-  {
-    "loop": "dom7 fifth relative relative",
-    "length": 4,
-    "songCount": 14,
-    "constraints": [
-      "fifth",
-      "relative",
-      "dom7"
-    ],
-    "exampleChords": "C7 F C Am C7",
-    "topSongs": [
-      {
-        "title": "Radiohead - Karma Police",
-        "chords": "D G D Bm D"
-      },
-      {
-        "title": "Billy Joel - Piano Man",
-        "chords": "G7 C G Em G7"
-      },
-      {
-        "title": "Phoebe Bridgers - Motion Sickness",
-        "chords": "Db Gb Db Bbm Db"
-      },
-      {
-        "title": "The Beatles - Let It Be",
-        "chords": "C F C Am C"
-      },
-      {
-        "title": "Neil Young - Heart of Gold",
-        "chords": "G C G Em G"
-      },
-      {
-        "title": "Simon & Garfunkel - The Sound of Silence",
-        "chords": "F# B F# D#m F#"
-      },
-      {
-        "title": "Nico - These Days",
-        "chords": "F Bbmaj7 F Dm7 F"
-      },
-      {
-        "title": "Noah Cyrus - July",
-        "chords": "C F C Am C"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic relative",
-    "length": 3,
-    "songCount": 14,
-    "constraints": [
-      "diatonic",
-      "relative"
-    ],
-    "exampleChords": "F Em Dm F",
-    "topSongs": [
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "Em F#m G Em"
-      },
-      {
-        "title": "Mac Demarco - Chamber of Reflection",
-        "chords": "G#m7 A#m Bmaj7 G#m7"
-      },
-      {
-        "title": "The Rolling Stones - Wild Horses",
-        "chords": "C Bm Am7 C"
-      },
-      {
-        "title": "Bruno Mars - Count On Me",
-        "chords": "Dm Em F Dm"
-      },
-      {
-        "title": "Billie Eilish - Getting Older",
-        "chords": "Bb Ab Gm Bb"
-      },
-      {
-        "title": "Sia - Unstoppable",
-        "chords": "C#m D E C#m"
-      },
-      {
-        "title": "Air Supply - All Out of Love",
-        "chords": "F Em Dm F"
-      },
-      {
-        "title": "Elton John - I Guess That's Why They Call It The Blues",
-        "chords": "Em7 F G Em7"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic dom7 dom7 fifth dom7",
-    "length": 5,
-    "songCount": 13,
-    "constraints": [
-      "fifth",
-      "diatonic",
-      "dom7"
-    ],
-    "exampleChords": "Bb C F Bb F Bb",
-    "topSongs": [
-      {
-        "title": "Phoebe Bridgers - Motion Sickness",
-        "chords": "Gb Ab Db Gb Db Gb"
-      },
-      {
-        "title": "Bob Dylan - Blowin' in the Wind",
-        "chords": "G A D G D G"
-      },
-      {
-        "title": "ABBA - Waterloo",
-        "chords": "D E A D A D"
-      },
-      {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "Bb C F Bb F Bb"
-      },
-      {
-        "title": "ABBA - Slipping Through My Fingers",
-        "chords": "Bb C F Bb F Bb"
-      },
-      {
-        "title": "The Beatles - Lady Madonna",
-        "chords": "D E A D A D"
-      },
-      {
-        "title": "Air Supply - All Out of Love",
-        "chords": "F G C F C F"
-      },
-      {
-        "title": "The Pogues - Fairytale of New York",
-        "chords": "G A D G D G"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic diatonic fifth",
-    "length": 4,
-    "songCount": 13,
-    "constraints": [
-      "fifth",
-      "diatonic"
-    ],
-    "exampleChords": "G Am Bm C G",
-    "topSongs": [
-      {
-        "title": "Wheatus - Teenage Dirtbag",
-        "chords": "G#m A B C#m G#m"
-      },
-      {
-        "title": "The Righteous Brothers - Unchained Melody",
-        "chords": "Em F G Am Em"
-      },
-      {
-        "title": "Miley Cyrus - Midnight Sky",
-        "chords": "Bm C D Em Bm"
-      },
-      {
-        "title": "King Princess - 1950",
-        "chords": "E F#m G#m A E"
-      },
-      {
-        "title": "Elton John - I Guess That's Why They Call It The Blues",
-        "chords": "Em7 F G Am Em7"
-      },
-      {
-        "title": "The Beatles - Sexy Sadie",
-        "chords": "G Am7 Bm7 C7 G"
-      },
-      {
-        "title": "Neil Young - After The Gold Rush",
-        "chords": "G A Bm C G"
-      },
-      {
-        "title": "Alessia Cara - Out Of Love",
-        "chords": "G Am Bm C G"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic relative dom7",
-    "length": 4,
-    "songCount": 13,
-    "constraints": [
-      "diatonic",
-      "relative",
-      "dom7"
-    ],
-    "exampleChords": "C D Em G C",
-    "topSongs": [
-      {
-        "title": "Lana Del Rey - Young And Beautiful",
-        "chords": "G A Bm D G"
-      },
-      {
-        "title": "Glass Animals - Heat Waves",
-        "chords": "E F# G#m B E"
-      },
-      {
-        "title": "Billie Eilish - Ocean Eyes",
-        "chords": "C D Em G C"
-      },
-      {
-        "title": "Lukas Graham - 7 Years",
-        "chords": "Eb F Gm Bb Eb"
-      },
-      {
-        "title": "Noah Cyrus - July",
-        "chords": "F G Am C F"
-      },
-      {
-        "title": "The Rolling Stones - Angie",
-        "chords": "F G Am C F"
-      },
-      {
-        "title": "Miley Cyrus - Midnight Sky",
-        "chords": "Cmaj7 D Em G Cmaj7"
-      },
-      {
-        "title": "Duran Duran - Come Undone",
-        "chords": "Ab Bb Cm Eb Ab"
-      }
-    ]
-  },
-  {
-    "loop": "borrowed dom7 borrowed dom7",
-    "length": 4,
-    "songCount": 13,
-    "constraints": [
-      "borrowed",
-      "dom7"
-    ],
-    "exampleChords": "Dm A Dm A Dm",
-    "topSongs": [
-      {
-        "title": "Radiohead - No Surprises",
-        "chords": "Bbm F Bbm F Bbm"
-      },
-      {
-        "title": "Elvis Presley - Can't Help Falling In Love",
-        "chords": "F#m C#7 F#m C#7 F#m"
-      },
-      {
-        "title": "The Turtles - Happy Together",
-        "chords": "F#m C# F#m C# F#m"
-      },
-      {
-        "title": "R.E.M. - Everybody Hurts",
-        "chords": "Bm F# Bm F# Bm"
-      },
-      {
-        "title": "The Rolling Stones - Paint It Black",
-        "chords": "Em B7 Em B7 Em"
-      },
-      {
-        "title": "Billie Eilish - Therefore I Am",
-        "chords": "Dm A Dm A Dm"
-      },
-      {
-        "title": "The Kinks - Sunny Afternoon",
-        "chords": "Dm A7 Dm A7 Dm"
-      },
-      {
-        "title": "The Animals - House of the Rising Sun",
-        "chords": "Am E Am E Am"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic dom7 dom7 dom7 fifth",
-    "length": 5,
-    "songCount": 12,
-    "constraints": [
-      "fifth",
-      "diatonic",
-      "dom7"
-    ],
-    "exampleChords": "C D7 G C Fmaj7 C",
-    "topSongs": [
-      {
-        "title": "a-ha - Take On Me",
-        "chords": "A Bm E A D A"
-      },
-      {
-        "title": "Billy Joel - Piano Man",
-        "chords": "C D7 G C Fmaj7 C"
-      },
-      {
-        "title": "Joji - Glimpse of Us",
-        "chords": "Eb Fm Bbm7 Eb7 Ab Eb"
-      },
-      {
-        "title": "Taylor Swift - Lover",
-        "chords": "D Em Am D G D"
-      },
-      {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "F Gm7 C F Bb F"
-      },
-      {
-        "title": "The Beatles - All My Loving",
-        "chords": "E F#m B7 E A7 E"
-      },
-      {
-        "title": "Elvis Presley - Always On My Mind",
-        "chords": "G Am D G C G"
-      },
-      {
-        "title": "Eagles - Desperado",
-        "chords": "D Em7 A7 D7 G D"
-      }
-    ]
-  },
-  {
-    "loop": "borrowed diatonic diatonic",
-    "length": 3,
-    "songCount": 12,
-    "constraints": [
-      "diatonic",
-      "borrowed"
-    ],
-    "exampleChords": "D Bb C D",
-    "topSongs": [
-      {
-        "title": "Red Hot Chili Peppers - Californication",
-        "chords": "E G# F# E"
-      },
-      {
-        "title": "Ben E. King - Stand By Me",
-        "chords": "D F# E D"
-      },
-      {
-        "title": "Lynyrd Skynyrd - Simple Man",
-        "chords": "C E D C"
-      },
-      {
-        "title": "The Beatles - Something",
-        "chords": "Eb G F Eb"
-      },
-      {
-        "title": "David Bowie - Space Oddity",
-        "chords": "E C D E"
-      },
-      {
-        "title": "The Beatles - Strawberry Fields Forever",
-        "chords": "F#7 D E F#7"
-      },
-      {
-        "title": "The Beatles - I Am The Walrus",
-        "chords": "A F G A"
-      },
-      {
-        "title": "Chris Stapleton - Tennessee Whiskey",
-        "chords": "A C# B A"
+        "title": "Chumba Wumba - Tubthumping",
+        "chords": "A G D A D A"
       }
     ]
   },
   {
     "loop": "diatonic dom7 fifth dom7 dom7",
     "length": 5,
-    "songCount": 11,
+    "songCount": 109,
     "constraints": [
       "fifth",
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "G A D A D G",
+    "exampleChords": "D# F A# F A# D#",
     "topSongs": [
       {
-        "title": "Creedence Clearwater Revival - Have You Ever Seen The Rain",
-        "chords": "F G C G C F"
-      },
-      {
-        "title": "Wheatus - Teenage Dirtbag",
-        "chords": "A B E Bsus4 E A"
-      },
-      {
-        "title": "Van Morrison - Brown Eyed Girl",
-        "chords": "C D G D7 G C"
-      },
-      {
-        "title": "ABBA - Waterloo",
+        "title": "weezer - buddy holly",
         "chords": "G A D A D G"
       },
       {
-        "title": "The Beatles - Here Comes The Sun",
-        "chords": "D E7 A E7 A D"
+        "title": "Cranberries - dreams",
+        "chords": "A B E B E A"
       },
       {
-        "title": "The Beatles - Lucy In The Sky With Diamonds",
+        "title": "CCR - Have You Ever Seen The Rain",
+        "chords": "F G C G C F"
+      },
+      {
+        "title": "van morrison - brown eyed girl",
         "chords": "C D G D G C"
       },
       {
-        "title": "John Lennon - Imagine",
-        "chords": "F G C G7 C F"
+        "title": "Europe - The Final Countdown",
+        "chords": "D E A E A D"
       },
       {
-        "title": "Leonard Cohen - Hallelujah",
+        "title": "Bon Jovi - Wanted Dead Or Alive",
+        "chords": "C D G D G C"
+      },
+      {
+        "title": "van halen - jump",
         "chords": "F G C G C F"
+      },
+      {
+        "title": "CCR - Up Around The Bend",
+        "chords": "G A D A D G"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 dom7 dom7 relative",
+    "length": 4,
+    "songCount": 106,
+    "constraints": [
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "G#m C# F# B G#m",
+    "topSongs": [
+      {
+        "title": "a-ha - take on me",
+        "chords": "Bm E A D Bm"
+      },
+      {
+        "title": "Queen - bohemian rhapsody",
+        "chords": "Gm Cm F A# Gm"
+      },
+      {
+        "title": "Queen - Queen Bohemian Rhapsody",
+        "chords": "Gm Cm F A# Gm"
+      },
+      {
+        "title": "Europe - The Final Countdown",
+        "chords": "Bm E A D Bm"
+      },
+      {
+        "title": "Beatles - here comes the sun",
+        "chords": "Bm E A D Bm"
+      },
+      {
+        "title": "Bon Jovi - Wanted Dead Or Alive",
+        "chords": "Am D G C Am"
+      },
+      {
+        "title": "ABBA - fernando",
+        "chords": "F#m Bm E A F#m"
+      },
+      {
+        "title": "Beach Boys - kokomo",
+        "chords": "Am Dm G C Am"
       }
     ]
   },
   {
     "loop": "diatonic dom7 diatonic fifth",
     "length": 4,
-    "songCount": 11,
+    "songCount": 95,
     "constraints": [
       "fifth",
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "D E A G D",
+    "exampleChords": "G Am D C G",
     "topSongs": [
       {
-        "title": "R.E.M. - Losing My Religion",
-        "chords": "Em Dm G Am Em"
+        "title": "radiohead - karma police",
+        "chords": "Bm Am D Em Bm"
       },
       {
-        "title": "Glass Animals - Heat Waves",
+        "title": "dire straits - sultans of swing",
+        "chords": "F Gm C A# F"
+      },
+      {
+        "title": "Rollin STones - Sympathy for the Devil",
+        "chords": "G A D C G"
+      },
+      {
+        "title": "sublime - wrong way",
+        "chords": "E F# B A E"
+      },
+      {
+        "title": "morisette alanis - ironic",
         "chords": "B C#m F# E B"
       },
       {
-        "title": "ABBA - Waterloo",
-        "chords": "D E A G D"
+        "title": "Beatles - while my guitar gently weeps",
+        "chords": "D E Am G D"
       },
       {
-        "title": "The Rolling Stones - Wild Horses",
-        "chords": "C D G F C"
+        "title": "U2 - Sunday Bloody Sunday",
+        "chords": "A#m G#m C# D#m A#m"
       },
       {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "F Gm7 C Bb F"
-      },
-      {
-        "title": "Commodores - Easy",
-        "chords": "Db Ebm7 Ab Gbmaj7 Db"
-      },
-      {
-        "title": "Queen - You're My Best Friend",
-        "chords": "G Am D C G"
-      },
-      {
-        "title": "Van Morrison - And It Stoned Me",
-        "chords": "G Am7 D C G"
+        "title": "Beatles - a day in the life",
+        "chords": "A B E D A"
       }
     ]
   },
   {
     "loop": "borrowed fifth diatonic",
     "length": 3,
-    "songCount": 11,
+    "songCount": 94,
     "constraints": [
       "fifth",
       "diatonic",
       "borrowed"
     ],
-    "exampleChords": "C Eb Bb C",
+    "exampleChords": "C D# A# C",
     "topSongs": [
       {
-        "title": "Radiohead - Let Down",
-        "chords": "F# A E F#"
-      },
-      {
-        "title": "Lana Del Rey - Young And Beautiful",
+        "title": "police - every breath you take",
         "chords": "A C G A"
       },
       {
-        "title": "Pink Floyd - Comfortably Numb",
+        "title": "pink floyd - comfortably numb",
         "chords": "A C G A"
       },
       {
-        "title": "The Beatles - Yesterday",
-        "chords": "G7 Bb F G7"
-      },
-      {
-        "title": "Lynyrd Skynyrd - Simple Man",
-        "chords": "A C G A"
-      },
-      {
-        "title": "Lady Gaga - Always Remember Us This Way",
-        "chords": "G Bb F G"
-      },
-      {
-        "title": "Chris Stapleton - Tennessee Whiskey",
-        "chords": "F# A E F#"
-      },
-      {
-        "title": "David Bowie - Moonage Daydream",
+        "title": "pink floyd - brain damage",
         "chords": "E G D E"
+      },
+      {
+        "title": "Beatles - something",
+        "chords": "D F C D"
+      },
+      {
+        "title": "sublime - wrong way",
+        "chords": "B D A B"
+      },
+      {
+        "title": "rolling stones - you can't always get what you want",
+        "chords": "D F C D"
+      },
+      {
+        "title": "Beatles - i want to hold your hand",
+        "chords": "A C G A"
+      },
+      {
+        "title": "led zepplin - good times bad times",
+        "chords": "B D A B"
       }
     ]
   },
   {
-    "loop": "diatonic relative dom7",
-    "length": 3,
-    "songCount": 10,
+    "loop": "leadingTone leadingTone",
+    "length": 2,
+    "songCount": 94,
     "constraints": [
-      "diatonic",
-      "relative",
-      "dom7"
+      "leadingTone"
     ],
-    "exampleChords": "C Bb Gm7 C",
+    "exampleChords": "F Edim F",
     "topSongs": [
       {
-        "title": "Cigarettes After Sex - Apocalypse",
-        "chords": "Gm F Dm Gm"
+        "title": "nirvana - all apologies",
+        "chords": "F# Fdim F#"
       },
       {
-        "title": "Olivia Rodrigo - Drivers License",
-        "chords": "F Ebmaj7 Cm F"
+        "title": "Boston - more than a feeling",
+        "chords": "G F#dim G"
       },
       {
-        "title": "Sufjan Stevens - Fourth of July",
-        "chords": "E D Bm E"
+        "title": "joel billy - piano man",
+        "chords": "C Bdim C"
       },
       {
-        "title": "Bob Dylan - Mr. Tambourine Man",
-        "chords": "C Bb Gm7 C"
+        "title": "fleetwood mac - landslide",
+        "chords": "Adim A# Adim"
       },
       {
-        "title": "The Beatles - With A Little Help From My Friends",
-        "chords": "F# E C#m7 F#"
+        "title": "nirvana - lounge act",
+        "chords": "G# Gdim G#"
       },
       {
-        "title": "Cat Stevens - Father And Son",
-        "chords": "Am7 G Em Am7"
+        "title": "doors the - touch me",
+        "chords": "C Bdim C"
       },
       {
-        "title": "John Lennon - Woman",
-        "chords": "Fm7 Eb Cm Fm7"
+        "title": "ABBA - fernando",
+        "chords": "G#dim A G#dim"
       },
       {
-        "title": "John Lennon - Watching The Wheels",
-        "chords": "G F Dm G"
+        "title": "BareNaked Ladies - One Week",
+        "chords": "A G#dim A"
       }
     ]
   },
   {
-    "loop": "borrowed dom7 dom7 dom7",
-    "length": 4,
-    "songCount": 9,
+    "loop": "diatonic diatonic diatonic fifth fifth",
+    "length": 5,
+    "songCount": 92,
     "constraints": [
+      "fifth",
+      "diatonic"
+    ],
+    "exampleChords": "A G A G D A",
+    "topSongs": [
+      {
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "B C#m B A E B"
+      },
+      {
+        "title": "SmashMouth - All Star",
+        "chords": "F# G#m F# E B F#"
+      },
+      {
+        "title": "rage against the machine - bulls on parade",
+        "chords": "E D E D A E"
+      },
+      {
+        "title": "Rollin STones - Sympathy for the Devil",
+        "chords": "D C D C G D"
+      },
+      {
+        "title": "smashing pumpkins - today",
+        "chords": "B A B A E B"
+      },
+      {
+        "title": "Queen - under pressure",
+        "chords": "A G A G D A"
+      },
+      {
+        "title": "houston whitney - i will always love you",
+        "chords": "E D E D A E"
+      },
+      {
+        "title": "prince - kiss",
+        "chords": "E D E D A E"
+      }
+    ]
+  },
+  {
+    "loop": "borrowed dom7 diatonic",
+    "length": 3,
+    "songCount": 92,
+    "constraints": [
+      "diatonic",
       "borrowed",
       "dom7"
     ],
-    "exampleChords": "A F# B E A",
+    "exampleChords": "G E A G",
     "topSongs": [
       {
-        "title": "The Ronettes - Be My Baby",
-        "chords": "B7 G#7 C#7 F# B7"
+        "title": "nirvana - the man who sold the world",
+        "chords": "C A Dm C"
       },
       {
-        "title": "Blondie - Heart Of Glass",
-        "chords": "A F# B E A"
+        "title": "Europe - The Final Countdown",
+        "chords": "G E A G"
       },
       {
-        "title": "Elton John - Daniel",
-        "chords": "C A Dm G C"
+        "title": "mamas and the papas - california dreaming",
+        "chords": "C A Dm C"
       },
       {
-        "title": "Elton John - Can You Feel The Love Tonight",
-        "chords": "Eb C F Bb Eb"
+        "title": "Bee Bees - how deep is your love",
+        "chords": "D# C Fm D#"
       },
       {
-        "title": "Sonny & Cher - I Got You Babe",
-        "chords": "Eb C F Bb Eb"
+        "title": "beegees - how deep is your love",
+        "chords": "D# C Fm D#"
       },
       {
-        "title": "The Beatles - Your Mother Should Know",
-        "chords": "C A7 Dm G7 C"
+        "title": "Beatles - something",
+        "chords": "F D G F"
       },
       {
-        "title": "Grateful Dead - Ripple",
-        "chords": "C A D G C"
+        "title": "CCR - Proud Mary",
+        "chords": "G E A G"
       },
       {
-        "title": "Mariah Carey - All I Want For Christmas",
-        "chords": "D B7 Em Am7 D"
+        "title": "Bon Jovi - Wanted Dead Or Alive",
+        "chords": "F D G F"
       }
     ]
   },
   {
-    "loop": "diatonic dom7 diatonic relative",
-    "length": 4,
-    "songCount": 9,
+    "loop": "diatonic diatonic parallel",
+    "length": 3,
+    "songCount": 84,
+    "constraints": [
+      "diatonic",
+      "parallel"
+    ],
+    "exampleChords": "A#m G# A# A#m",
+    "topSongs": [
+      {
+        "title": "toto - africa",
+        "chords": "F#m G#m F# F#m"
+      },
+      {
+        "title": "pearl jam - even flow",
+        "chords": "D C Dm D"
+      },
+      {
+        "title": "pearl jam - alive",
+        "chords": "Bm A B Bm"
+      },
+      {
+        "title": "kansas - dust in the wind",
+        "chords": "D Em Dm D"
+      },
+      {
+        "title": "Rollin STones - Sympathy for the Devil",
+        "chords": "D C Dm D"
+      },
+      {
+        "title": "SEAL - kiss from a rose",
+        "chords": "G#m F# G# G#m"
+      },
+      {
+        "title": "wonder stevie - isn't she lovely",
+        "chords": "Dm C D Dm"
+      },
+      {
+        "title": "REM - Shiny Happy People",
+        "chords": "A G Am A"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic diatonic diatonic dom7 relative",
+    "length": 5,
+    "songCount": 82,
     "constraints": [
       "diatonic",
       "relative",
       "dom7"
     ],
-    "exampleChords": "F G C Dm7 F",
+    "exampleChords": "Gm F Gm F A# Gm",
     "topSongs": [
       {
-        "title": "Radiohead - Karma Police",
-        "chords": "G Am D Em G"
+        "title": "red hot chilli peppers - under the bridge",
+        "chords": "C#m B C#m B E C#m"
       },
       {
-        "title": "a-ha - Take On Me",
-        "chords": "A Bm E F#m A"
+        "title": "radiohead - fake plastic trees",
+        "chords": "Bm A Bm A D Bm"
       },
       {
-        "title": "Lana Del Rey - Young And Beautiful",
-        "chords": "D Em A Bm D"
+        "title": "pearl jam - even flow",
+        "chords": "Bm Am G Am D Bm"
       },
       {
-        "title": "Johnny Cash - Hurt",
-        "chords": "C D G Am C"
+        "title": "pink floyd - hey you",
+        "chords": "Em F Em D G Em"
       },
       {
-        "title": "Bob Dylan - Like a Rolling Stone",
-        "chords": "F G C Dm7 F"
+        "title": "Aqua - barbie girl",
+        "chords": "F#m E F#m E A F#m"
       },
       {
-        "title": "The Rolling Stones - Wild Horses",
-        "chords": "C D G Am7 C"
+        "title": "Madonna - like a virgin",
+        "chords": "G#m F# G#m F# B G#m"
       },
       {
-        "title": "Taylor Swift - Everything Has Changed",
-        "chords": "Bsus2 C#sus4 F# G#m Bsus2"
+        "title": "Beatles - i want to hold your hand",
+        "chords": "Am G Am G C Am"
       },
       {
-        "title": "Elvis Presley - Always On My Mind",
-        "chords": "C D G Am7 C"
+        "title": "earth wind fire - boogie wonderland",
+        "chords": "Am Gm Am Gm C Am"
       }
     ]
   },
   {
-    "loop": "diatonic diatonic fifth relative",
+    "loop": "borrowed borrowed borrowed borrowed",
     "length": 4,
-    "songCount": 9,
+    "songCount": 81,
     "constraints": [
-      "fifth",
-      "diatonic",
-      "relative"
-    ],
-    "exampleChords": "G#m F# E B G#m",
-    "topSongs": [
-      {
-        "title": "Pink Floyd - Comfortably Numb",
-        "chords": "Bm A G D Bm"
-      },
-      {
-        "title": "Glass Animals - Heat Waves",
-        "chords": "G#m F# E B G#m"
-      },
-      {
-        "title": "Mitski - Nobody",
-        "chords": "Am G Fmaj7 C Am"
-      },
-      {
-        "title": "Tracy Chapman - Fast Car",
-        "chords": "F#m Esus4 D A F#m"
-      },
-      {
-        "title": "Simon & Garfunkel - The Boxer",
-        "chords": "Am G F C Am"
-      },
-      {
-        "title": "John Denver - Take Me Home Country Roads",
-        "chords": "F#m E D A F#m"
-      },
-      {
-        "title": "Lady Gaga - Always Remember Us This Way",
-        "chords": "Am G F C Am"
-      },
-      {
-        "title": "Taylor Swift - Everything Has Changed",
-        "chords": "D#m7 C#sus4 Bsus2 F# D#m7"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic diatonic diatonic diatonic relative",
-    "length": 5,
-    "songCount": 8,
-    "constraints": [
-      "diatonic",
-      "relative"
-    ],
-    "exampleChords": "F Em Dm C Dm F",
-    "topSongs": [
-      {
-        "title": "Radiohead - Karma Police",
-        "chords": "D Cmaj7 Bm Am Bm D"
-      },
-      {
-        "title": "Tears For Fears - Everybody Wants To Rule The World",
-        "chords": "Em F#m G A G Em"
-      },
-      {
-        "title": "Bob Dylan - Like a Rolling Stone",
-        "chords": "F Em Dm7 C Dm7 F"
-      },
-      {
-        "title": "Bruno Mars - Count On Me",
-        "chords": "Dm Em F G F Dm"
-      },
-      {
-        "title": "Black Sabbath - Changes",
-        "chords": "F Em Dm C Dm F"
-      },
-      {
-        "title": "Seals & Crofts - Summer Breeze",
-        "chords": "G Am7 G F Em G"
-      },
-      {
-        "title": "Jackson Browne - Late For The Sky",
-        "chords": "G Am G F Em G"
-      },
-      {
-        "title": "Pink - Just Give Me A Reason",
-        "chords": "D Em D C Bm D"
-      }
-    ]
-  },
-  {
-    "loop": "diatonic relative fifth dom7 fifth",
-    "length": 5,
-    "songCount": 8,
-    "constraints": [
-      "fifth",
-      "diatonic",
-      "relative",
-      "dom7"
-    ],
-    "exampleChords": "Db Ebm7 Gb Db Gb Db",
-    "topSongs": [
-      {
-        "title": "Eric Clapton - Tears in Heaven",
-        "chords": "E F#m A E A E"
-      },
-      {
-        "title": "Commodores - Easy",
-        "chords": "Db Ebm7 Gb Db Gbmaj7 Db"
-      },
-      {
-        "title": "King Princess - 1950",
-        "chords": "E F#m A E A E"
-      },
-      {
-        "title": "Elvis Presley - Always On My Mind",
-        "chords": "G Am7 C G C G"
-      },
-      {
-        "title": "Lewis Capaldi - Hold Me While You Wait",
-        "chords": "F# G#m B F# B F#"
-      },
-      {
-        "title": "Fleetwood Mac - Songbird",
-        "chords": "F Gm Bb F Bb F"
-      },
-      {
-        "title": "Bob Dylan - Make You Feel My Love",
-        "chords": "Db Ebm7 Gb Db Gb Db"
-      },
-      {
-        "title": "Pink - Just Give Me A Reason",
-        "chords": "G Am C G C G"
-      }
-    ]
-  },
-  {
-    "loop": "relative relative relative relative",
-    "length": 4,
-    "songCount": 7,
-    "constraints": [
-      "relative"
-    ],
-    "exampleChords": "C#m E C#m E C#m",
-    "topSongs": [
-      {
-        "title": "Coldplay - Sparks",
-        "chords": "Dbmaj7 Bbm7 Dbmaj7 Bbm7 Dbmaj7"
-      },
-      {
-        "title": "The Strokes - The Adults Are Talking",
-        "chords": "F Dm F Dm F"
-      },
-      {
-        "title": "The Beatles - All My Loving",
-        "chords": "E C#m E C#m E"
-      },
-      {
-        "title": "Leonard Cohen - Hallelujah",
-        "chords": "C Am C Am C"
-      },
-      {
-        "title": "Carpenters - Yesterday Once More",
-        "chords": "E C#m E C#m E"
-      },
-      {
-        "title": "Big Thief - Masterpiece",
-        "chords": "C#m E C#m E C#m"
-      },
-      {
-        "title": "Elvis Presley - If I Can Dream",
-        "chords": "D Bm D Bm D"
-      }
-    ]
-  },
-  {
-    "loop": "borrowed fifth fifth fifth",
-    "length": 4,
-    "songCount": 7,
-    "constraints": [
-      "fifth",
       "borrowed"
     ],
-    "exampleChords": "F Ab Eb Bb F",
+    "exampleChords": "G# F G# F G#",
     "topSongs": [
       {
-        "title": "Pink Floyd - Comfortably Numb",
-        "chords": "A C G D A"
+        "title": "jackson michael - billie jean",
+        "chords": "B D B D B"
       },
       {
-        "title": "Billy Joel - Vienna",
-        "chords": "F Ab Eb Bb F"
+        "title": "weezer - buddy holly",
+        "chords": "D F# D F# D"
       },
       {
-        "title": "The Beatles - A Day In The Life",
-        "chords": "E G D A E"
+        "title": "nirvana - dumb",
+        "chords": "A C A C A"
       },
       {
-        "title": "Neil Young - After The Gold Rush",
-        "chords": "A C G D A"
+        "title": "Blur - song 2",
+        "chords": "G# F G# F G#"
       },
       {
-        "title": "Johnny Nash - I Can See Clearly Now",
-        "chords": "D F C G D"
+        "title": "doors the - people are strange",
+        "chords": "C G# C G# C"
       },
       {
-        "title": "Seals & Crofts - Summer Breeze",
-        "chords": "E G D A E"
+        "title": "Black Sabbath - ironman",
+        "chords": "D# B D# F# D#"
       },
       {
-        "title": "Paul McCartney - Maybe I’m Amazed",
-        "chords": "G Bb F C G"
+        "title": "Tears for Fears - Head Over Heels",
+        "chords": "A C A C A"
+      },
+      {
+        "title": "Blur - girls and boys",
+        "chords": "D# G D# G D#"
       }
     ]
   },
   {
-    "loop": "diatonic diatonic diatonic dom7",
+    "loop": "borrowed borrowed diatonic diatonic",
     "length": 4,
-    "songCount": 7,
+    "songCount": 79,
     "constraints": [
       "diatonic",
-      "dom7"
+      "borrowed"
     ],
-    "exampleChords": "F Em Dm C F",
+    "exampleChords": "E C# E F#m E",
     "topSongs": [
       {
-        "title": "Bob Dylan - Like a Rolling Stone",
-        "chords": "F Em Dm7 C F"
+        "title": "Eric Clapton - cocaine",
+        "chords": "G E G A G"
       },
       {
-        "title": "Sufjan Stevens - Fourth of July",
-        "chords": "F#m E D C#m F#m"
+        "title": "SEAL - kiss from a rose",
+        "chords": "E G# E D#m E"
       },
       {
-        "title": "Neil Diamond - Sweet Caroline",
-        "chords": "E D#m7 C#m7 B E"
+        "title": "Tears for Fears - Head Over Heels",
+        "chords": "A C A Bm A"
       },
       {
-        "title": "Carole King - It's Too Late",
-        "chords": "Bbmaj7 Am7 Gm7 Fmaj7 Bbmaj7"
+        "title": "Beatles - something",
+        "chords": "D F D C D"
       },
       {
-        "title": "Duran Duran - Come Undone",
-        "chords": "Cm Bb Ab Gm Cm"
+        "title": "stone temple pilots - plush",
+        "chords": "C D# C Bm C"
       },
       {
-        "title": "Joni Mitchell - River",
-        "chords": "F Em Dm C F"
+        "title": "jamiroquai - virtual insanity",
+        "chords": "G# B G# A# G#"
       },
       {
-        "title": "Black Sabbath - Changes",
-        "chords": "F Em Dm C F"
+        "title": "Alice In Chains - rooster",
+        "chords": "G# F G# A# G#"
+      },
+      {
+        "title": "Alice In Chains - no excuses",
+        "chords": "B D B A B"
       }
     ]
   },
   {
-    "loop": "borrowed dom7 parallel",
+    "loop": "diatonic fifth relative",
     "length": 3,
-    "songCount": 7,
+    "songCount": 78,
     "constraints": [
-      "borrowed",
-      "parallel",
-      "dom7"
+      "fifth",
+      "diatonic",
+      "relative"
     ],
-    "exampleChords": "Bbm F Bb Bbm",
+    "exampleChords": "C# D#m A#m C#",
     "topSongs": [
       {
-        "title": "David Bowie - Space Oddity",
-        "chords": "Fm C F Fm"
+        "title": "nirvana - rape me",
+        "chords": "G Am Em G"
       },
       {
-        "title": "ABBA - Slipping Through My Fingers",
-        "chords": "Bbm F Bb Bbm"
+        "title": "Metallica - one",
+        "chords": "G Am Em G"
       },
       {
-        "title": "Cavetown - This Is Home",
-        "chords": "Cm G Cmaj7 Cm"
+        "title": "Bon Jovi - it's my life",
+        "chords": "A# Cm Gm A#"
       },
       {
-        "title": "Ricky Montgomery - Mr Loverman",
-        "chords": "Fm C F Fm"
+        "title": "kansas - dust in the wind",
+        "chords": "G Am Em G"
       },
       {
-        "title": "John Lennon - Watching The Wheels",
-        "chords": "Fm7 C F Fm7"
+        "title": "depeche mode - personal jesus",
+        "chords": "A# Cm Gm A#"
       },
       {
-        "title": "Mariah Carey - All I Want For Christmas",
-        "chords": "Cm G C Cm"
+        "title": "Depech Mode - personal jesus",
+        "chords": "A# Cm Gm A#"
       },
       {
-        "title": "Sasha Sloan - Only Child",
-        "chords": "Bbm F Bb Bbm"
+        "title": "ABBA - waterloo",
+        "chords": "D Em Bm D"
+      },
+      {
+        "title": "U2 - Sunday Bloody Sunday",
+        "chords": "C# D#m A#m C#"
+      }
+    ]
+  },
+  {
+    "loop": "dom7 relative fifth relative",
+    "length": 4,
+    "songCount": 77,
+    "constraints": [
+      "fifth",
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "G C Am Em G",
+    "topSongs": [
+      {
+        "title": "aerosmith - dream on",
+        "chords": "Fm A#m C# G# Fm"
+      },
+      {
+        "title": "joel billy - piano man",
+        "chords": "C F Dm Am C"
+      },
+      {
+        "title": "ABBA - waterloo",
+        "chords": "D G Em Bm D"
+      },
+      {
+        "title": "Beatles - lucy in the sky with diamonds",
+        "chords": "F A# Gm Dm F"
+      },
+      {
+        "title": "Queen - the show must go on",
+        "chords": "D G Em Bm D"
+      },
+      {
+        "title": "nirvana - school",
+        "chords": "G C Am Em G"
+      },
+      {
+        "title": "Metallica - fade to black",
+        "chords": "Em Am C G Em"
+      },
+      {
+        "title": "osbourne ozzy - mr crowley",
+        "chords": "Am Dm F C Am"
+      }
+    ]
+  },
+  {
+    "loop": "borrowed diatonic diatonic",
+    "length": 3,
+    "songCount": 74,
+    "constraints": [
+      "diatonic",
+      "borrowed"
+    ],
+    "exampleChords": "C G# A# C",
+    "topSongs": [
+      {
+        "title": "Metallica - master of puppets",
+        "chords": "C E D C"
+      },
+      {
+        "title": "nirvana - pennyroyal tea",
+        "chords": "D A# C D"
+      },
+      {
+        "title": "SEAL - kiss from a rose",
+        "chords": "G# E F# G#"
+      },
+      {
+        "title": "rush - tom sawyer",
+        "chords": "C E D C"
+      },
+      {
+        "title": "simon %26 garfunkel - mrs. robinson",
+        "chords": "D F# E D"
+      },
+      {
+        "title": "jamiroquai - virtual insanity",
+        "chords": "F# D# Fm F#"
+      },
+      {
+        "title": "garbage - only happy when it rains",
+        "chords": "A F# G#m A"
+      },
+      {
+        "title": "Sheryl Crow - All I Wanna Do",
+        "chords": "G# E F# G#"
+      }
+    ]
+  },
+  {
+    "loop": "diatonic dom7 fifth dom7 relative",
+    "length": 5,
+    "songCount": 67,
+    "constraints": [
+      "fifth",
+      "diatonic",
+      "relative",
+      "dom7"
+    ],
+    "exampleChords": "Bm A D A D Bm",
+    "topSongs": [
+      {
+        "title": "ABBA - dancing queen",
+        "chords": "F#m E A E A F#m"
+      },
+      {
+        "title": "Boston - more than a feeling",
+        "chords": "Em D G D G Em"
+      },
+      {
+        "title": "pink floyd - hey you",
+        "chords": "Em D G D G Em"
+      },
+      {
+        "title": "goo goo dolls - iris",
+        "chords": "Em D G D G Em"
+      },
+      {
+        "title": "fatboy slim - praise you",
+        "chords": "G#m F# B F# B G#m"
+      },
+      {
+        "title": "ABBA - chiquitita",
+        "chords": "Bm A D A D Bm"
+      },
+      {
+        "title": "MatchBox 20 - Push",
+        "chords": "D#m C# F# C# F# D#m"
+      },
+      {
+        "title": "Rollin STones - Satisfaction",
+        "chords": "F#m E A E A F#m"
       }
     ]
   }

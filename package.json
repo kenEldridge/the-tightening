@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "pack": "npm run build && electron-builder --dir",
-    "dist": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder",
+    "parse-midi": "tsx analysis/parse-midi.ts",
+    "analyze": "tsx analysis/analyze-songs.ts"
   },
   "build": {
     "appId": "com.keneldridge.the-tightening",
@@ -47,9 +49,13 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.106.0",
+    "@tonejs/midi": "^2.0.28",
+    "@types/adm-zip": "^0.5.8",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.0",
+    "adm-zip": "^0.5.17",
     "electron": "^33.0.0",
     "electron-builder": "^26.15.3",
     "pdf-parse": "^1.1.1",

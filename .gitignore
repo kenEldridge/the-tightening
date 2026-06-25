@@ -6,3 +6,6 @@ music/
 debug/
 .env
 analysis/songs.csv
+analysis/midi-songs.csv
+analysis/parse-midi.log
+analysis/parse-midi.err

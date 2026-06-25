@@ -338,8 +338,10 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             const y2 = toNode.y - uy * (toNode.r + pad);
             if (fromNode.r + toNode.r + pad * 2 >= len) return null;
 
-            // Left-of-travel perp: (-uy, ux)
-            const bulge = Math.min(48, len * 0.28);
+            // Only arc when the reverse direction also appears in the path;
+            // otherwise a straight line avoids unnecessary crossings.
+            const reverseKey = `${toNode.id}→${fromNode.id}`;
+            const bulge = groups.has(reverseKey) ? Math.min(48, len * 0.28) : 0;
             const qx = (x1 + x2) / 2 - uy * bulge;
             const qy = (y1 + y2) / 2 + ux * bulge;
 
