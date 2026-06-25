@@ -297,75 +297,101 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
         <circle cx={CX} cy={CY} r={R_MINOR} fill="none" stroke="#21262d" strokeWidth={1} />
         <circle cx={CX} cy={CY} r={R_DIM} fill="none" stroke="#21262d" strokeWidth={1} />
 
-        {/* Walk mode: Path edges */}
-        {hasPath && walkPath.nodes.slice(0, -1).map((fromName, i) => {
-          const toName = walkPath.nodes[i + 1];
-          const fromNode = NODE_BY_NAME.get(fromName);
-          const toNode = NODE_BY_NAME.get(toName);
-          if (!fromNode || !toNode) return null;
+        {/* Walk mode: Path edges (arced) + step labels.
+            Edges are grouped by directed node pair so that same-direction
+            duplicates share one arc (with multiple step-number labels spaced
+            along it). Arc bulges LEFT of direction of travel, which puts it
+            toward the circle centre — forward A→B and return B→A therefore
+            curve to opposite sides naturally. */}
+        {hasPath && (() => {
+          // Build directed-pair groups in encounter order.
+          const groups = new Map<string, {
+            fromNode: RingNode; toNode: RingNode;
+            steps: { i: number; edgeType: EdgeType; isDone: boolean; isActive: boolean }[];
+          }>();
+          walkPath.nodes.slice(0, -1).forEach((fromName, i) => {
+            const toName = walkPath.nodes[i + 1];
+            const fromNode = NODE_BY_NAME.get(fromName);
+            const toNode = NODE_BY_NAME.get(toName);
+            if (!fromNode || !toNode || fromNode.id === toNode.id) return;
+            const key = `${fromNode.id}→${toNode.id}`;
+            if (!groups.has(key)) groups.set(key, { fromNode, toNode, steps: [] });
+            groups.get(key)!.steps.push({
+              i,
+              edgeType: walkPath.edgeTypes[i],
+              isDone: i < walkPath.currentStep - 1,
+              isActive: i === walkPath.currentStep - 1,
+            });
+          });
 
-          const edgeType = walkPath.edgeTypes[i];
-          const color = edgeTypeColor(edgeType);
-          const isDone = i < walkPath.currentStep - 1;
-          const isActive = i === walkPath.currentStep - 1;
-          const dx = toNode.x - fromNode.x;
-          const dy = toNode.y - fromNode.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          if (len === 0) return null;
+          return Array.from(groups.values()).map(({ fromNode, toNode, steps }) => {
+            const dx = toNode.x - fromNode.x;
+            const dy = toNode.y - fromNode.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len === 0) return null;
+            const ux = dx / len;
+            const uy = dy / len;
+            const pad = 4;
+            const x1 = fromNode.x + ux * (fromNode.r + pad);
+            const y1 = fromNode.y + uy * (fromNode.r + pad);
+            const x2 = toNode.x - ux * (toNode.r + pad);
+            const y2 = toNode.y - uy * (toNode.r + pad);
+            if (fromNode.r + toNode.r + pad * 2 >= len) return null;
 
-          const ux = dx / len;
-          const uy = dy / len;
-          const pad = 4;
-          const startInset = fromNode.r + pad;
-          const endInset = toNode.r + pad;
-          if (startInset + endInset >= len) return null;
+            // Left-of-travel perp: (-uy, ux)
+            const bulge = Math.min(48, len * 0.28);
+            const qx = (x1 + x2) / 2 - uy * bulge;
+            const qy = (y1 + y2) / 2 + ux * bulge;
 
-          return (
-            <line
-              key={`edge-${i}`}
-              x1={fromNode.x + ux * startInset}
-              y1={fromNode.y + uy * startInset}
-              x2={toNode.x - ux * endInset}
-              y2={toNode.y - uy * endInset}
-              stroke={color}
-              strokeWidth={isDone || isActive ? 3.5 : 2.5}
-              opacity={isDone ? 0.4 : 0.9}
-              strokeLinecap="round"
-              markerEnd="url(#cof-arrow)"
-            >
-              <title>{`${fromName} -> ${toName}\n${EDGE_TYPE_INFO[edgeType].label}: ${EDGE_TYPE_INFO[edgeType].description}`}</title>
-            </line>
-          );
-        })}
+            // Pick the most salient step's colour for the arc.
+            const primary = steps.find(s => s.isActive) ?? steps.find(s => !s.isDone) ?? steps[0];
+            const color = edgeTypeColor(primary.edgeType);
+            const arcOpacity = primary.isDone ? 0.4 : 0.9;
+            const strokeWidth = primary.isActive || primary.isDone ? 3.5 : 2.5;
 
-        {/* Walk mode: Step number labels on edges */}
-        {hasPath && walkPath.nodes.slice(0, -1).map((fromName, i) => {
-          const toName = walkPath.nodes[i + 1];
-          const fromNode = NODE_BY_NAME.get(fromName);
-          const toNode = NODE_BY_NAME.get(toName);
-          if (!fromNode || !toNode) return null;
+            // Evenly space labels between t=0.3 and t=0.7 along the bezier.
+            const tValues = steps.length === 1
+              ? [0.5]
+              : steps.map((_, j) => 0.3 + (j / (steps.length - 1)) * 0.4);
 
-          const mx = (fromNode.x + toNode.x) / 2;
-          const my = (fromNode.y + toNode.y) / 2;
-          const edgeType = walkPath.edgeTypes[i];
-
-          return (
-            <g key={`label-${i}`}>
-              <title>{`${fromName} -> ${toName}\n${EDGE_TYPE_INFO[edgeType].label}: ${EDGE_TYPE_INFO[edgeType].description}`}</title>
-              <circle cx={mx} cy={my} r={9} fill="#0d1117" stroke="#30363d" strokeWidth={1} />
-              <text
-                x={mx} y={my + 1}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={9}
-                fontWeight={700}
-                fill="#c9d1d9"
-              >
-                {i + 1}
-              </text>
-            </g>
-          );
-        })}
+            const groupKey = `${fromNode.id}→${toNode.id}`;
+            return (
+              <g key={groupKey}>
+                <path
+                  d={`M ${x1} ${y1} Q ${qx} ${qy} ${x2} ${y2}`}
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  opacity={arcOpacity}
+                  fill="none"
+                  strokeLinecap="round"
+                  markerEnd="url(#cof-arrow)"
+                >
+                  <title>{steps.map(s =>
+                    `${walkPath.nodes[s.i]} → ${walkPath.nodes[s.i + 1]} (step ${s.i + 1})\n${EDGE_TYPE_INFO[s.edgeType].label}`
+                  ).join('\n')}</title>
+                </path>
+                {steps.map((step, j) => {
+                  const t = tValues[j];
+                  const lx = (1-t)*(1-t)*x1 + 2*(1-t)*t*qx + t*t*x2;
+                  const ly = (1-t)*(1-t)*y1 + 2*(1-t)*t*qy + t*t*y2;
+                  return (
+                    <g key={step.i} opacity={step.isDone ? 0.5 : 1}>
+                      <circle cx={lx} cy={ly} r={9} fill="#0d1117" stroke="#30363d" strokeWidth={1} />
+                      <text
+                        x={lx} y={ly + 1}
+                        textAnchor="middle" dominantBaseline="middle"
+                        fontSize={9} fontWeight={700} fill="#c9d1d9"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        {step.i + 1}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          });
+        })()}
 
         {/* Jam mode: Progression edges (clipped to node borders) */}
         {isJamMode && jamEdges.map((edge) => {
