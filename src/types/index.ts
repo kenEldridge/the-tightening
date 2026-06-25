@@ -73,13 +73,19 @@ export type AppMode = 'home' | 'jam' | 'walk';
 export interface WalkState {
   fromChord: string;
   toChord: string;
-  /** "Must include" constraints for the outbound path, plus the trip flags. */
+  /** Must-include constraints for the outbound path, plus the trip flags. */
   options: Partial<Record<EdgeType, boolean>> & {
     returnTrip: boolean;
     endless: boolean;
   };
-  /** Independent "must include" constraints for the return leg (B→A). */
+  /** Must-include constraints for the return leg (B→A). */
   returnOptions: Partial<Record<EdgeType, boolean>>;
+  /**
+   * Active cycle preset edge sequence. Each element is one direct hop of that
+   * edge type in order: outbound = edges[0..n-2], closing = edges[n-1].
+   * When set, path construction uses findExactCyclePath instead of Dijkstra.
+   */
+  cycleEdgeTypes?: EdgeType[];
   /** Current path result (null if not yet computed or no path exists) */
   path: WalkPathResult | null;
   /** Index of the step the player is currently on (0 = first chord) */

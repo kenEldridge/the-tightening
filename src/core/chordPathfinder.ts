@@ -39,7 +39,8 @@ interface SearchCost {
 }
 
 export interface PathOptions {
-  [key: string]: boolean | undefined;
+  [key: string]: boolean | undefined | Set<EdgeType>;
+  allowedTypes?: Set<EdgeType>; // whitelist — path may only use these edge types
 }
 
 // ---------- Node ID ↔ Chord name mapping ----------
@@ -339,6 +340,7 @@ export function findConstrainedPath(
   fromId: string,
   toId: string,
   requiredTypes: Set<EdgeType>,
+  allowedTypes?: Set<EdgeType>,
 ): PathResult | null {
   // Build bitmask mapping for required types
   const typeToBit = new Map<EdgeType, number>();
@@ -389,6 +391,9 @@ export function findConstrainedPath(
     if (!neighbors) continue;
 
     for (const edge of neighbors) {
+      // Whitelist filter: skip edges not in the allowed set
+      if (allowedTypes && !allowedTypes.has(edge.type)) continue;
+
       // Compute new mask: set bit if this edge type is required
       const edgeBit = typeToBit.get(edge.type) ?? 0;
       const newMask = uMask | edgeBit;
@@ -495,10 +500,11 @@ export function findChordPath(
   const graph = getPathGraph();
   const requiredTypes = new Set<EdgeType>();
   for (const edgeType of CONSTRAINABLE_TYPES) {
-    if (options[edgeType]) requiredTypes.add(edgeType);
+    if (options[edgeType] === true) requiredTypes.add(edgeType);
   }
+  const allowedTypes = options.allowedTypes instanceof Set ? options.allowedTypes : undefined;
 
-  const result = findConstrainedPath(graph, fromId, toId, requiredTypes);
+  const result = findConstrainedPath(graph, fromId, toId, requiredTypes, allowedTypes);
   if (!result) return null;
 
   const chordNames = result.path.map(nodeIdToChordName);
@@ -515,6 +521,77 @@ export function findChordPath(
 }
 
 /**
+ * For a cycle preset with the given outbound edge types, return all valid
+ * destination chords reachable from `from` by following each edge type in
+ * sequence using exactly one direct graph hop per step.
+ */
+/**
+ * For a cycle preset with the given outbound edge types, return all valid
+ * destination chords reachable from `from` by following each edge type in
+ * sequence using exactly one direct graph hop per step. If `closingEdgeType`
+ * is provided, only endpoints from which a single closing-edge hop returns
+ * to `from` are included (i.e. the full cycle can actually close).
+ */
+export function getCycleEndpoints(
+  from: string,
+  outEdgeTypes: EdgeType[],
+  closingEdgeType?: EdgeType,
+): Set<string> {
+  const fromId = chordNameToNodeId(from);
+  if (!fromId || outEdgeTypes.length === 0) return new Set();
+  const graph = getPathGraph();
+
+  let current = new Set([fromId]);
+  for (const edgeType of outEdgeTypes) {
+    const next = new Set<string>();
+    for (const nodeId of current) {
+      for (const edge of (graph.get(nodeId) ?? [])) {
+        if (edge.type === edgeType) next.add(edge.target);
+      }
+    }
+    current = next;
+  }
+
+  const result = new Set<string>();
+  for (const nodeId of current) {
+    if (nodeId === fromId) continue;
+    // If a closing edge type is given, verify a direct closing hop leads back to from.
+    if (closingEdgeType) {
+      const canClose = (graph.get(nodeId) ?? []).some(
+        e => e.type === closingEdgeType && e.target === fromId,
+      );
+      if (!canClose) continue;
+    }
+    result.add(nodeIdToChordName(nodeId));
+  }
+  return result;
+}
+
+/**
+ * Find the exact chord sequence from `from` to `to` by following `edgeTypes`
+ * in order, one direct graph hop per step. Returns null if no such path exists.
+ */
+export function findExactCyclePath(from: string, to: string, edgeTypes: EdgeType[]): string[] | null {
+  const fromId = chordNameToNodeId(from);
+  const toId = chordNameToNodeId(to);
+  if (!fromId || !toId) return null;
+  const graph = getPathGraph();
+
+  function dfs(nodeId: string, stepIdx: number, path: string[]): string[] | null {
+    if (stepIdx === edgeTypes.length) return nodeId === toId ? path : null;
+    const edgeType = edgeTypes[stepIdx];
+    for (const edge of (graph.get(nodeId) ?? [])) {
+      if (edge.type !== edgeType) continue;
+      const result = dfs(edge.target, stepIdx + 1, [...path, nodeIdToChordName(edge.target)]);
+      if (result !== null) return result;
+    }
+    return null;
+  }
+
+  return dfs(fromId, 0, [from]);
+}
+
+/**
  * Return the set of chord names reachable from `from` under `options`.
  * A chord is reachable if findChordPath returns a result. The source itself
  * is excluded. Results are cached per (from, options-key) so repeated calls
@@ -523,7 +600,10 @@ export function findChordPath(
 const _reachCache = new Map<string, Set<string>>();
 
 export function getReachableDestinations(from: string, options: PathOptions): Set<string> {
-  const key = from + '|' + CONSTRAINABLE_TYPES.filter(t => options[t]).sort().join(',');
+  const allowedTypes = options.allowedTypes instanceof Set ? options.allowedTypes : undefined;
+  const allowedKey = allowedTypes ? 'allow:' + [...allowedTypes].sort().join(',') : '';
+  const requiredKey = CONSTRAINABLE_TYPES.filter(t => options[t] === true).sort().join(',');
+  const key = from + '|' + requiredKey + '|' + allowedKey;
   if (_reachCache.has(key)) return _reachCache.get(key)!;
 
   const { major, minor, dim } = getAllChordNames();

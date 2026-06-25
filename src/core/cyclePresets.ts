@@ -8,6 +8,7 @@ export interface CyclePreset {
   songCount: number;    // songs in the library containing this cycle
   constraints: EdgeType[];  // Walk constraints needed to traverse it
   exampleChords: string;   // concrete chord instance, e.g. "D A D"
+  topSongs: Array<{ title: string; chords: string }>;
 }
 
 export const CYCLE_PRESETS: CyclePreset[] = [
@@ -19,7 +20,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "dom7"
     ],
-    "exampleChords": "F Bb F"
+    "exampleChords": "F Bb F",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "D G D"
+      },
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "E A E"
+      },
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "A D A"
+      },
+      {
+        "title": "Amy Winehouse - Back To Black",
+        "chords": "Dm Gm Dm"
+      },
+      {
+        "title": "Radiohead - Let Down",
+        "chords": "G# C# G#"
+      },
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "Em Am Em"
+      },
+      {
+        "title": "The Cure - Friday I'm In Love",
+        "chords": "D G D"
+      },
+      {
+        "title": "Cigarettes After Sex - Apocalypse",
+        "chords": "F Bb F"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic",
@@ -28,7 +63,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "constraints": [
       "diatonic"
     ],
-    "exampleChords": "A G A"
+    "exampleChords": "A G A",
+    "topSongs": [
+      {
+        "title": "Nirvana - Come As You Are",
+        "chords": "Em D Em"
+      },
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "Bm Am Bm"
+      },
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "C# B C#"
+      },
+      {
+        "title": "The Police - Every Breath You Take",
+        "chords": "E F# E"
+      },
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "E F#m E"
+      },
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "A G A"
+      },
+      {
+        "title": "Coldplay - Sparks",
+        "chords": "Db Eb Db"
+      },
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "G Am G"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 dom7",
@@ -38,7 +107,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "A B E A"
+    "exampleChords": "A B E A",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "G Am D G"
+      },
+      {
+        "title": "The Police - Every Breath You Take",
+        "chords": "Db Eb Ab Db"
+      },
+      {
+        "title": "Lana Del Rey - Young And Beautiful",
+        "chords": "G A D G"
+      },
+      {
+        "title": "Mac Demarco - Chamber of Reflection",
+        "chords": "G#m7 A#m D#m7 G#m7"
+      },
+      {
+        "title": "The Walters - I Love You So",
+        "chords": "Bb Cm7 F Bb"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "C D7 G C"
+      },
+      {
+        "title": "The Ronettes - Be My Baby",
+        "chords": "E F#m B7 E"
+      },
+      {
+        "title": "Weezer - Say It Ain't So",
+        "chords": "Eb F Bb Eb"
+      }
+    ]
   },
   {
     "loop": "diatonic fifth fifth",
@@ -48,7 +151,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "diatonic"
     ],
-    "exampleChords": "A G D A"
+    "exampleChords": "A G D A",
+    "topSongs": [
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "G F C G"
+      },
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "E D A E"
+      },
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "A G D A"
+      },
+      {
+        "title": "The Cure - Friday I'm In Love",
+        "chords": "A G D A"
+      },
+      {
+        "title": "Pink Floyd - Wish You Were Here",
+        "chords": "D C G D"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "G F C G"
+      },
+      {
+        "title": "Olivia Rodrigo - Drivers License",
+        "chords": "F Ebmaj7 Bb F"
+      },
+      {
+        "title": "Van Morrison - Brown Eyed Girl",
+        "chords": "D C G D"
+      }
+    ]
   },
   {
     "loop": "dom7 fifth dom7 fifth",
@@ -58,7 +195,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "dom7"
     ],
-    "exampleChords": "A D A D A"
+    "exampleChords": "A D A D A",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "D G D G D"
+      },
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "Em Am Em Am Em"
+      },
+      {
+        "title": "Cigarettes After Sex - Apocalypse",
+        "chords": "F Bb F Bb F"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "C F C F C"
+      },
+      {
+        "title": "Creedence Clearwater Revival - Have You Ever Seen The Rain",
+        "chords": "G C G C G"
+      },
+      {
+        "title": "Wheatus - Teenage Dirtbag",
+        "chords": "E Asus2 E Asus2 E"
+      },
+      {
+        "title": "Olivia Rodrigo - Drivers License",
+        "chords": "Bb Ebmaj7 Bb Ebmaj7 Bb"
+      },
+      {
+        "title": "Oasis - Don't Look Back In Anger",
+        "chords": "C F C F C"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic diatonic",
@@ -67,7 +238,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "constraints": [
       "diatonic"
     ],
-    "exampleChords": "Em D Em D Em"
+    "exampleChords": "Em D Em D Em",
+    "topSongs": [
+      {
+        "title": "Nirvana - Come As You Are",
+        "chords": "Em D Em D Em"
+      },
+      {
+        "title": "The Police - Every Breath You Take",
+        "chords": "E F# E F# E"
+      },
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "A G A G A"
+      },
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "G Am G Am G"
+      },
+      {
+        "title": "The Cure - Friday I'm In Love",
+        "chords": "A Bm A Bm A"
+      },
+      {
+        "title": "The Walters - I Love You So",
+        "chords": "Cm7 Bb Cm7 Bb Cm7"
+      },
+      {
+        "title": "Bob Dylan - Like a Rolling Stone",
+        "chords": "F G F G F"
+      },
+      {
+        "title": "Glass Animals - Heat Waves",
+        "chords": "G#m F# E F# G#m"
+      }
+    ]
   },
   {
     "loop": "relative relative",
@@ -76,7 +281,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "constraints": [
       "relative"
     ],
-    "exampleChords": "C#m E C#m"
+    "exampleChords": "C#m E C#m",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "Bm D Bm"
+      },
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "D Bm D"
+      },
+      {
+        "title": "The Police - Every Breath You Take",
+        "chords": "Fm Ab Fm"
+      },
+      {
+        "title": "Oasis - Wonderwall",
+        "chords": "A F#m A"
+      },
+      {
+        "title": "Coldplay - Sparks",
+        "chords": "Dbmaj7 Bbm7 Dbmaj7"
+      },
+      {
+        "title": "Lana Del Rey - Video Games",
+        "chords": "F#m A F#m"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want To Have Fun",
+        "chords": "G Em G"
+      },
+      {
+        "title": "The Strokes - The Adults Are Talking",
+        "chords": "F Dm F"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic dom7 fifth",
@@ -87,7 +326,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "G F G C G"
+    "exampleChords": "G F G C G",
+    "topSongs": [
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "E F#m E A E"
+      },
+      {
+        "title": "Pink Floyd - Wish You Were Here",
+        "chords": "G Am G C G"
+      },
+      {
+        "title": "Oasis - Don't Look Back In Anger",
+        "chords": "G Am G C G"
+      },
+      {
+        "title": "Van Morrison - Brown Eyed Girl",
+        "chords": "D C D G D"
+      },
+      {
+        "title": "Billy Joel - Vienna",
+        "chords": "C D C F C"
+      },
+      {
+        "title": "Phoebe Bridgers - Motion Sickness",
+        "chords": "Ab Gb Ab Db Ab"
+      },
+      {
+        "title": "The La's - There She Goes",
+        "chords": "D C D G D"
+      },
+      {
+        "title": "Billie Eilish - idontwannabeyouanymore",
+        "chords": "Gmaj7 Am7 Gmaj7 Cmaj7 Gmaj7"
+      }
+    ]
   },
   {
     "loop": "dom7 dom7 fifth fifth",
@@ -97,7 +370,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "dom7"
     ],
-    "exampleChords": "A D G D A"
+    "exampleChords": "A D G D A",
+    "topSongs": [
+      {
+        "title": "The Cure - Friday I'm In Love",
+        "chords": "A D G D A"
+      },
+      {
+        "title": "Wheatus - Teenage Dirtbag",
+        "chords": "Bsus4 E A E Bsus4"
+      },
+      {
+        "title": "Van Morrison - Brown Eyed Girl",
+        "chords": "D G C G D"
+      },
+      {
+        "title": "Elvis Presley - Can't Help Falling In Love",
+        "chords": "A D G D A"
+      },
+      {
+        "title": "Bob Marley & The Wailers - Three Little Birds (A)",
+        "chords": "E A D A E"
+      },
+      {
+        "title": "Bob Marley & The Wailers - Three Little Birds (D)",
+        "chords": "A D G D A"
+      },
+      {
+        "title": "The Beatles - Hey Jude",
+        "chords": "C F Bb F7 C"
+      },
+      {
+        "title": "Phoebe Bridgers - Motion Sickness",
+        "chords": "Ab Db Gb Db Ab"
+      }
+    ]
   },
   {
     "loop": "diatonic relative fifth",
@@ -108,7 +415,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "relative"
     ],
-    "exampleChords": "D Em G D"
+    "exampleChords": "D Em G D",
+    "topSongs": [
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "A Bm D A"
+      },
+      {
+        "title": "Dua Lipa - Don't Start Now",
+        "chords": "A Bm D A"
+      },
+      {
+        "title": "Billy Joel - Vienna",
+        "chords": "F Gm Bb F"
+      },
+      {
+        "title": "Elton John - Your Song",
+        "chords": "Eb Fm Ab Eb"
+      },
+      {
+        "title": "Dolly Parton - Jolene",
+        "chords": "B C#m E B"
+      },
+      {
+        "title": "Eric Clapton - Tears in Heaven",
+        "chords": "E F#m A E"
+      },
+      {
+        "title": "Lynyrd Skynyrd - Simple Man",
+        "chords": "G Am C G"
+      },
+      {
+        "title": "Simon & Garfunkel - The Sound of Silence",
+        "chords": "C# D#m F# C#"
+      }
+    ]
   },
   {
     "loop": "dom7 dom7 dom7 relative",
@@ -118,7 +459,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "Em7 Am D7 G Em7"
+    "exampleChords": "Em7 Am D7 G Em7",
+    "topSongs": [
+      {
+        "title": "Cigarettes After Sex - Apocalypse",
+        "chords": "Dm Gm C F Dm"
+      },
+      {
+        "title": "Lana Del Rey - Young And Beautiful",
+        "chords": "F#m Bm Em A F#m"
+      },
+      {
+        "title": "The Strokes - The Adults Are Talking",
+        "chords": "Gm C F Bb Gm"
+      },
+      {
+        "title": "Joji - Glimpse of Us",
+        "chords": "Fm Bbm7 Eb7 Ab Fm"
+      },
+      {
+        "title": "Mitski - Nobody",
+        "chords": "Gm C Fmaj7 Bb Gm"
+      },
+      {
+        "title": "Frankie Valli - Can't Take My Eyes Off You",
+        "chords": "C#m F#m7 B E C#m"
+      },
+      {
+        "title": "Frank Sinatra - My Way",
+        "chords": "F#m7 Bm7 Em7 A7 F#m7"
+      },
+      {
+        "title": "10cc - I'm Not In Love",
+        "chords": "Em7 Am D7 G Em7"
+      }
+    ]
   },
   {
     "loop": "borrowed dom7",
@@ -128,7 +503,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "borrowed",
       "dom7"
     ],
-    "exampleChords": "Dm A Dm"
+    "exampleChords": "Dm A Dm",
+    "topSongs": [
+      {
+        "title": "Radiohead - No Surprises",
+        "chords": "Bbm F Bbm"
+      },
+      {
+        "title": "Elvis Presley - Can't Help Falling In Love",
+        "chords": "F#m C#7 F#m"
+      },
+      {
+        "title": "The Turtles - Happy Together",
+        "chords": "F#m C# F#m"
+      },
+      {
+        "title": "Lou Reed - Perfect Day",
+        "chords": "Bbm F Bbm"
+      },
+      {
+        "title": "R.E.M. - Everybody Hurts",
+        "chords": "Bm F# Bm"
+      },
+      {
+        "title": "The Rolling Stones - Paint It Black",
+        "chords": "Em B7 Em"
+      },
+      {
+        "title": "Billie Eilish - Therefore I Am",
+        "chords": "Dm A Dm"
+      },
+      {
+        "title": "The Kinks - Sunny Afternoon",
+        "chords": "Dm A7 Dm"
+      }
+    ]
   },
   {
     "loop": "borrowed borrowed",
@@ -137,7 +546,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "constraints": [
       "borrowed"
     ],
-    "exampleChords": "G Bb G"
+    "exampleChords": "G Bb G",
+    "topSongs": [
+      {
+        "title": "Nirvana - Come As You Are",
+        "chords": "Asus4 Csus2 Asus4"
+      },
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "E C# E"
+      },
+      {
+        "title": "Van Morrison - Brown Eyed Girl",
+        "chords": "B G B"
+      },
+      {
+        "title": "Billy Joel - Vienna",
+        "chords": "Bb G7 Bb"
+      },
+      {
+        "title": "The Velvet Underground - Sunday Morning",
+        "chords": "A C A"
+      },
+      {
+        "title": "The Turtles - Happy Together",
+        "chords": "F# A F#"
+      },
+      {
+        "title": "The Beatles - Here Comes The Sun",
+        "chords": "A C# A"
+      },
+      {
+        "title": "Lynyrd Skynyrd - Simple Man",
+        "chords": "E G E"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic fifth dom7",
@@ -148,7 +591,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "C Dm C G7 C"
+    "exampleChords": "C Dm C G7 C",
+    "topSongs": [
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "Am G Am Em Am"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "F G F C F"
+      },
+      {
+        "title": "Elton John - Your Song",
+        "chords": "Ab Bb Ab Eb Ab"
+      },
+      {
+        "title": "The Beatles - Here Comes The Sun",
+        "chords": "A Bm7 A E A"
+      },
+      {
+        "title": "Neil Young - Harvest Moon",
+        "chords": "D Em7 D A7 D"
+      },
+      {
+        "title": "Simon & Garfunkel - The Boxer",
+        "chords": "Am G Am Em7 Am"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "Bb C Bb F Bb"
+      },
+      {
+        "title": "David Bowie - Space Oddity",
+        "chords": "F G F C F"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 relative",
@@ -159,7 +636,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "Cm Bb7 Eb Cm"
+    "exampleChords": "Cm Bb7 Eb Cm",
+    "topSongs": [
+      {
+        "title": "Pink Floyd - Wish You Were Here",
+        "chords": "Am G C Am"
+      },
+      {
+        "title": "Cigarettes After Sex - Apocalypse",
+        "chords": "Gm Fmaj7 Bb Gm"
+      },
+      {
+        "title": "The Pixies - Where Is My Mind",
+        "chords": "C#m B E C#m"
+      },
+      {
+        "title": "Cyndi Lauper - Girls Just Want To Have Fun",
+        "chords": "Em D G Em"
+      },
+      {
+        "title": "The Strokes - The Adults Are Talking",
+        "chords": "Dm C F Dm"
+      },
+      {
+        "title": "Olivia Rodrigo - Drivers License",
+        "chords": "Gm F Bb Gm"
+      },
+      {
+        "title": "Oasis - Don't Look Back In Anger",
+        "chords": "Am G C Am"
+      },
+      {
+        "title": "Dua Lipa - Don't Start Now",
+        "chords": "Em D G Em"
+      }
+    ]
   },
   {
     "loop": "diatonic fifth dom7 fifth fifth",
@@ -170,7 +681,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "B A E A E B"
+    "exampleChords": "B A E A E B",
+    "topSongs": [
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "G F C Fmaj7 C G"
+      },
+      {
+        "title": "Olivia Rodrigo - Drivers License",
+        "chords": "F Ebmaj7 Bb Ebmaj7 Bb F"
+      },
+      {
+        "title": "Bob Marley & The Wailers - Three Little Birds (A)",
+        "chords": "E D A D A E"
+      },
+      {
+        "title": "Bob Marley & The Wailers - Three Little Birds (D)",
+        "chords": "A G D G D A"
+      },
+      {
+        "title": "The Velvet Underground - Sunday Morning",
+        "chords": "C Bb F Bb F C"
+      },
+      {
+        "title": "The Beatles - Let It Be",
+        "chords": "G F C F C G"
+      },
+      {
+        "title": "Simon & Garfunkel - The Boxer",
+        "chords": "G F C F C G"
+      },
+      {
+        "title": "The Beatles - With A Little Help From My Friends",
+        "chords": "E D A D A E"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic dom7 dom7",
@@ -180,7 +725,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "Bb C Bb C F Bb"
+    "exampleChords": "Bb C Bb C F Bb",
+    "topSongs": [
+      {
+        "title": "The Walters - I Love You So",
+        "chords": "Bb Cm7 Bb Cm7 F Bb"
+      },
+      {
+        "title": "Louis Armstrong - What A Wonderful World",
+        "chords": "F Gm F Gm C7 F"
+      },
+      {
+        "title": "Lukas Graham - 7 Years",
+        "chords": "Eb F Gm F Bb Eb"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "Bb C Bb C F Bb"
+      },
+      {
+        "title": "The Righteous Brothers - Unchained Melody",
+        "chords": "F Eb F G C F"
+      },
+      {
+        "title": "Steely Dan - Dirty Work",
+        "chords": "B C# D#m7 C# F# B"
+      },
+      {
+        "title": "Lady Gaga - Always Remember Us This Way",
+        "chords": "F G F G C F"
+      },
+      {
+        "title": "Finneas - Break My Heart Again",
+        "chords": "D C D Em Am7 D"
+      }
+    ]
   },
   {
     "loop": "diatonic fifth fifth dom7 fifth",
@@ -191,7 +770,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "E D A E A E"
+    "exampleChords": "E D A E A E",
+    "topSongs": [
+      {
+        "title": "Taylor Swift - Lover",
+        "chords": "D C G D G D"
+      },
+      {
+        "title": "The Beatles - Hey Jude",
+        "chords": "C Bb F C F C"
+      },
+      {
+        "title": "The La's - There She Goes",
+        "chords": "D C G D G D"
+      },
+      {
+        "title": "The Velvet Underground - Sunday Morning",
+        "chords": "C Bb F C F C"
+      },
+      {
+        "title": "John Denver - Take Me Home Country Roads",
+        "chords": "E D A E A E"
+      },
+      {
+        "title": "The Beatles - With A Little Help From My Friends",
+        "chords": "E D A E A E"
+      },
+      {
+        "title": "Patti Smith - Because the Night",
+        "chords": "A G D A D A"
+      },
+      {
+        "title": "Cat Stevens - Wild World",
+        "chords": "G F C G C G"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic fifth fifth",
@@ -201,7 +814,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "diatonic"
     ],
-    "exampleChords": "Em7 F Em Dm Am Em7"
+    "exampleChords": "Em7 F Em Dm Am Em7",
+    "topSongs": [
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "A G A G D A"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "G F G F C G"
+      },
+      {
+        "title": "Taylor Swift - Lover",
+        "chords": "D Em D C G D"
+      },
+      {
+        "title": "John Denver - Take Me Home Country Roads",
+        "chords": "E F#m E D A E"
+      },
+      {
+        "title": "Gerry Rafferty - Right Down The Line",
+        "chords": "G Am G F C G"
+      },
+      {
+        "title": "The Beach Boys - God Only Knows",
+        "chords": "A G A G D A"
+      },
+      {
+        "title": "America - Sister Golden Hair",
+        "chords": "B A B A E B"
+      },
+      {
+        "title": "Cat Stevens - Wild World",
+        "chords": "G F G F C G"
+      }
+    ]
   },
   {
     "loop": "dom7 fifth relative relative",
@@ -212,7 +859,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "C7 F C Am C7"
+    "exampleChords": "C7 F C Am C7",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "D G D Bm D"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "G7 C G Em G7"
+      },
+      {
+        "title": "Phoebe Bridgers - Motion Sickness",
+        "chords": "Db Gb Db Bbm Db"
+      },
+      {
+        "title": "The Beatles - Let It Be",
+        "chords": "C F C Am C"
+      },
+      {
+        "title": "Neil Young - Heart of Gold",
+        "chords": "G C G Em G"
+      },
+      {
+        "title": "Simon & Garfunkel - The Sound of Silence",
+        "chords": "F# B F# D#m F#"
+      },
+      {
+        "title": "Nico - These Days",
+        "chords": "F Bbmaj7 F Dm7 F"
+      },
+      {
+        "title": "Noah Cyrus - July",
+        "chords": "C F C Am C"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic relative",
@@ -222,7 +903,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "relative"
     ],
-    "exampleChords": "F Em Dm F"
+    "exampleChords": "F Em Dm F",
+    "topSongs": [
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "Em F#m G Em"
+      },
+      {
+        "title": "Mac Demarco - Chamber of Reflection",
+        "chords": "G#m7 A#m Bmaj7 G#m7"
+      },
+      {
+        "title": "The Rolling Stones - Wild Horses",
+        "chords": "C Bm Am7 C"
+      },
+      {
+        "title": "Bruno Mars - Count On Me",
+        "chords": "Dm Em F Dm"
+      },
+      {
+        "title": "Billie Eilish - Getting Older",
+        "chords": "Bb Ab Gm Bb"
+      },
+      {
+        "title": "Sia - Unstoppable",
+        "chords": "C#m D E C#m"
+      },
+      {
+        "title": "Air Supply - All Out of Love",
+        "chords": "F Em Dm F"
+      },
+      {
+        "title": "Elton John - I Guess That's Why They Call It The Blues",
+        "chords": "Em7 F G Em7"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 dom7 fifth dom7",
@@ -233,7 +948,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "Bb C F Bb F Bb"
+    "exampleChords": "Bb C F Bb F Bb",
+    "topSongs": [
+      {
+        "title": "Phoebe Bridgers - Motion Sickness",
+        "chords": "Gb Ab Db Gb Db Gb"
+      },
+      {
+        "title": "Bob Dylan - Blowin' in the Wind",
+        "chords": "G A D G D G"
+      },
+      {
+        "title": "ABBA - Waterloo",
+        "chords": "D E A D A D"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "Bb C F Bb F Bb"
+      },
+      {
+        "title": "ABBA - Slipping Through My Fingers",
+        "chords": "Bb C F Bb F Bb"
+      },
+      {
+        "title": "The Beatles - Lady Madonna",
+        "chords": "D E A D A D"
+      },
+      {
+        "title": "Air Supply - All Out of Love",
+        "chords": "F G C F C F"
+      },
+      {
+        "title": "The Pogues - Fairytale of New York",
+        "chords": "G A D G D G"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic fifth",
@@ -243,7 +992,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "diatonic"
     ],
-    "exampleChords": "G Am Bm C G"
+    "exampleChords": "G Am Bm C G",
+    "topSongs": [
+      {
+        "title": "Wheatus - Teenage Dirtbag",
+        "chords": "G#m A B C#m G#m"
+      },
+      {
+        "title": "The Righteous Brothers - Unchained Melody",
+        "chords": "Em F G Am Em"
+      },
+      {
+        "title": "Miley Cyrus - Midnight Sky",
+        "chords": "Bm C D Em Bm"
+      },
+      {
+        "title": "King Princess - 1950",
+        "chords": "E F#m G#m A E"
+      },
+      {
+        "title": "Elton John - I Guess That's Why They Call It The Blues",
+        "chords": "Em7 F G Am Em7"
+      },
+      {
+        "title": "The Beatles - Sexy Sadie",
+        "chords": "G Am7 Bm7 C7 G"
+      },
+      {
+        "title": "Neil Young - After The Gold Rush",
+        "chords": "G A Bm C G"
+      },
+      {
+        "title": "Alessia Cara - Out Of Love",
+        "chords": "G Am Bm C G"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic relative dom7",
@@ -254,7 +1037,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "C D Em G C"
+    "exampleChords": "C D Em G C",
+    "topSongs": [
+      {
+        "title": "Lana Del Rey - Young And Beautiful",
+        "chords": "G A Bm D G"
+      },
+      {
+        "title": "Glass Animals - Heat Waves",
+        "chords": "E F# G#m B E"
+      },
+      {
+        "title": "Billie Eilish - Ocean Eyes",
+        "chords": "C D Em G C"
+      },
+      {
+        "title": "Lukas Graham - 7 Years",
+        "chords": "Eb F Gm Bb Eb"
+      },
+      {
+        "title": "Noah Cyrus - July",
+        "chords": "F G Am C F"
+      },
+      {
+        "title": "The Rolling Stones - Angie",
+        "chords": "F G Am C F"
+      },
+      {
+        "title": "Miley Cyrus - Midnight Sky",
+        "chords": "Cmaj7 D Em G Cmaj7"
+      },
+      {
+        "title": "Duran Duran - Come Undone",
+        "chords": "Ab Bb Cm Eb Ab"
+      }
+    ]
   },
   {
     "loop": "borrowed dom7 borrowed dom7",
@@ -264,7 +1081,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "borrowed",
       "dom7"
     ],
-    "exampleChords": "Dm A Dm A Dm"
+    "exampleChords": "Dm A Dm A Dm",
+    "topSongs": [
+      {
+        "title": "Radiohead - No Surprises",
+        "chords": "Bbm F Bbm F Bbm"
+      },
+      {
+        "title": "Elvis Presley - Can't Help Falling In Love",
+        "chords": "F#m C#7 F#m C#7 F#m"
+      },
+      {
+        "title": "The Turtles - Happy Together",
+        "chords": "F#m C# F#m C# F#m"
+      },
+      {
+        "title": "R.E.M. - Everybody Hurts",
+        "chords": "Bm F# Bm F# Bm"
+      },
+      {
+        "title": "The Rolling Stones - Paint It Black",
+        "chords": "Em B7 Em B7 Em"
+      },
+      {
+        "title": "Billie Eilish - Therefore I Am",
+        "chords": "Dm A Dm A Dm"
+      },
+      {
+        "title": "The Kinks - Sunny Afternoon",
+        "chords": "Dm A7 Dm A7 Dm"
+      },
+      {
+        "title": "The Animals - House of the Rising Sun",
+        "chords": "Am E Am E Am"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 dom7 dom7 fifth",
@@ -275,7 +1126,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "C D7 G C Fmaj7 C"
+    "exampleChords": "C D7 G C Fmaj7 C",
+    "topSongs": [
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "A Bm E A D A"
+      },
+      {
+        "title": "Billy Joel - Piano Man",
+        "chords": "C D7 G C Fmaj7 C"
+      },
+      {
+        "title": "Joji - Glimpse of Us",
+        "chords": "Eb Fm Bbm7 Eb7 Ab Eb"
+      },
+      {
+        "title": "Taylor Swift - Lover",
+        "chords": "D Em Am D G D"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "F Gm7 C F Bb F"
+      },
+      {
+        "title": "The Beatles - All My Loving",
+        "chords": "E F#m B7 E A7 E"
+      },
+      {
+        "title": "Elvis Presley - Always On My Mind",
+        "chords": "G Am D G C G"
+      },
+      {
+        "title": "Eagles - Desperado",
+        "chords": "D Em7 A7 D7 G D"
+      }
+    ]
   },
   {
     "loop": "borrowed diatonic diatonic",
@@ -285,7 +1170,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "borrowed"
     ],
-    "exampleChords": "D Bb C D"
+    "exampleChords": "D Bb C D",
+    "topSongs": [
+      {
+        "title": "Red Hot Chili Peppers - Californication",
+        "chords": "E G# F# E"
+      },
+      {
+        "title": "Ben E. King - Stand By Me",
+        "chords": "D F# E D"
+      },
+      {
+        "title": "Lynyrd Skynyrd - Simple Man",
+        "chords": "C E D C"
+      },
+      {
+        "title": "The Beatles - Something",
+        "chords": "Eb G F Eb"
+      },
+      {
+        "title": "David Bowie - Space Oddity",
+        "chords": "E C D E"
+      },
+      {
+        "title": "The Beatles - Strawberry Fields Forever",
+        "chords": "F#7 D E F#7"
+      },
+      {
+        "title": "The Beatles - I Am The Walrus",
+        "chords": "A F G A"
+      },
+      {
+        "title": "Chris Stapleton - Tennessee Whiskey",
+        "chords": "A C# B A"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 fifth dom7 dom7",
@@ -296,7 +1215,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "G A D A D G"
+    "exampleChords": "G A D A D G",
+    "topSongs": [
+      {
+        "title": "Creedence Clearwater Revival - Have You Ever Seen The Rain",
+        "chords": "F G C G C F"
+      },
+      {
+        "title": "Wheatus - Teenage Dirtbag",
+        "chords": "A B E Bsus4 E A"
+      },
+      {
+        "title": "Van Morrison - Brown Eyed Girl",
+        "chords": "C D G D7 G C"
+      },
+      {
+        "title": "ABBA - Waterloo",
+        "chords": "G A D A D G"
+      },
+      {
+        "title": "The Beatles - Here Comes The Sun",
+        "chords": "D E7 A E7 A D"
+      },
+      {
+        "title": "The Beatles - Lucy In The Sky With Diamonds",
+        "chords": "C D G D G C"
+      },
+      {
+        "title": "John Lennon - Imagine",
+        "chords": "F G C G7 C F"
+      },
+      {
+        "title": "Leonard Cohen - Hallelujah",
+        "chords": "F G C G C F"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 diatonic fifth",
@@ -307,7 +1260,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "D E A G D"
+    "exampleChords": "D E A G D",
+    "topSongs": [
+      {
+        "title": "R.E.M. - Losing My Religion",
+        "chords": "Em Dm G Am Em"
+      },
+      {
+        "title": "Glass Animals - Heat Waves",
+        "chords": "B C#m F# E B"
+      },
+      {
+        "title": "ABBA - Waterloo",
+        "chords": "D E A G D"
+      },
+      {
+        "title": "The Rolling Stones - Wild Horses",
+        "chords": "C D G F C"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "F Gm7 C Bb F"
+      },
+      {
+        "title": "Commodores - Easy",
+        "chords": "Db Ebm7 Ab Gbmaj7 Db"
+      },
+      {
+        "title": "Queen - You're My Best Friend",
+        "chords": "G Am D C G"
+      },
+      {
+        "title": "Van Morrison - And It Stoned Me",
+        "chords": "G Am7 D C G"
+      }
+    ]
   },
   {
     "loop": "borrowed fifth diatonic",
@@ -318,7 +1305,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "borrowed"
     ],
-    "exampleChords": "C Eb Bb C"
+    "exampleChords": "C Eb Bb C",
+    "topSongs": [
+      {
+        "title": "Radiohead - Let Down",
+        "chords": "F# A E F#"
+      },
+      {
+        "title": "Lana Del Rey - Young And Beautiful",
+        "chords": "A C G A"
+      },
+      {
+        "title": "Pink Floyd - Comfortably Numb",
+        "chords": "A C G A"
+      },
+      {
+        "title": "The Beatles - Yesterday",
+        "chords": "G7 Bb F G7"
+      },
+      {
+        "title": "Lynyrd Skynyrd - Simple Man",
+        "chords": "A C G A"
+      },
+      {
+        "title": "Lady Gaga - Always Remember Us This Way",
+        "chords": "G Bb F G"
+      },
+      {
+        "title": "Chris Stapleton - Tennessee Whiskey",
+        "chords": "F# A E F#"
+      },
+      {
+        "title": "David Bowie - Moonage Daydream",
+        "chords": "E G D E"
+      }
+    ]
   },
   {
     "loop": "diatonic relative dom7",
@@ -329,7 +1350,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "C Bb Gm7 C"
+    "exampleChords": "C Bb Gm7 C",
+    "topSongs": [
+      {
+        "title": "Cigarettes After Sex - Apocalypse",
+        "chords": "Gm F Dm Gm"
+      },
+      {
+        "title": "Olivia Rodrigo - Drivers License",
+        "chords": "F Ebmaj7 Cm F"
+      },
+      {
+        "title": "Sufjan Stevens - Fourth of July",
+        "chords": "E D Bm E"
+      },
+      {
+        "title": "Bob Dylan - Mr. Tambourine Man",
+        "chords": "C Bb Gm7 C"
+      },
+      {
+        "title": "The Beatles - With A Little Help From My Friends",
+        "chords": "F# E C#m7 F#"
+      },
+      {
+        "title": "Cat Stevens - Father And Son",
+        "chords": "Am7 G Em Am7"
+      },
+      {
+        "title": "John Lennon - Woman",
+        "chords": "Fm7 Eb Cm Fm7"
+      },
+      {
+        "title": "John Lennon - Watching The Wheels",
+        "chords": "G F Dm G"
+      }
+    ]
   },
   {
     "loop": "borrowed dom7 dom7 dom7",
@@ -339,7 +1394,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "borrowed",
       "dom7"
     ],
-    "exampleChords": "A F# B E A"
+    "exampleChords": "A F# B E A",
+    "topSongs": [
+      {
+        "title": "The Ronettes - Be My Baby",
+        "chords": "B7 G#7 C#7 F# B7"
+      },
+      {
+        "title": "Blondie - Heart Of Glass",
+        "chords": "A F# B E A"
+      },
+      {
+        "title": "Elton John - Daniel",
+        "chords": "C A Dm G C"
+      },
+      {
+        "title": "Elton John - Can You Feel The Love Tonight",
+        "chords": "Eb C F Bb Eb"
+      },
+      {
+        "title": "Sonny & Cher - I Got You Babe",
+        "chords": "Eb C F Bb Eb"
+      },
+      {
+        "title": "The Beatles - Your Mother Should Know",
+        "chords": "C A7 Dm G7 C"
+      },
+      {
+        "title": "Grateful Dead - Ripple",
+        "chords": "C A D G C"
+      },
+      {
+        "title": "Mariah Carey - All I Want For Christmas",
+        "chords": "D B7 Em Am7 D"
+      }
+    ]
   },
   {
     "loop": "diatonic dom7 diatonic relative",
@@ -350,7 +1439,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "F G C Dm7 F"
+    "exampleChords": "F G C Dm7 F",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "G Am D Em G"
+      },
+      {
+        "title": "a-ha - Take On Me",
+        "chords": "A Bm E F#m A"
+      },
+      {
+        "title": "Lana Del Rey - Young And Beautiful",
+        "chords": "D Em A Bm D"
+      },
+      {
+        "title": "Johnny Cash - Hurt",
+        "chords": "C D G Am C"
+      },
+      {
+        "title": "Bob Dylan - Like a Rolling Stone",
+        "chords": "F G C Dm7 F"
+      },
+      {
+        "title": "The Rolling Stones - Wild Horses",
+        "chords": "C D G Am7 C"
+      },
+      {
+        "title": "Taylor Swift - Everything Has Changed",
+        "chords": "Bsus2 C#sus4 F# G#m Bsus2"
+      },
+      {
+        "title": "Elvis Presley - Always On My Mind",
+        "chords": "C D G Am7 C"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic fifth relative",
@@ -361,7 +1484,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "relative"
     ],
-    "exampleChords": "G#m F# E B G#m"
+    "exampleChords": "G#m F# E B G#m",
+    "topSongs": [
+      {
+        "title": "Pink Floyd - Comfortably Numb",
+        "chords": "Bm A G D Bm"
+      },
+      {
+        "title": "Glass Animals - Heat Waves",
+        "chords": "G#m F# E B G#m"
+      },
+      {
+        "title": "Mitski - Nobody",
+        "chords": "Am G Fmaj7 C Am"
+      },
+      {
+        "title": "Tracy Chapman - Fast Car",
+        "chords": "F#m Esus4 D A F#m"
+      },
+      {
+        "title": "Simon & Garfunkel - The Boxer",
+        "chords": "Am G F C Am"
+      },
+      {
+        "title": "John Denver - Take Me Home Country Roads",
+        "chords": "F#m E D A F#m"
+      },
+      {
+        "title": "Lady Gaga - Always Remember Us This Way",
+        "chords": "Am G F C Am"
+      },
+      {
+        "title": "Taylor Swift - Everything Has Changed",
+        "chords": "D#m7 C#sus4 Bsus2 F# D#m7"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic diatonic relative",
@@ -371,7 +1528,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "relative"
     ],
-    "exampleChords": "F Em Dm C Dm F"
+    "exampleChords": "F Em Dm C Dm F",
+    "topSongs": [
+      {
+        "title": "Radiohead - Karma Police",
+        "chords": "D Cmaj7 Bm Am Bm D"
+      },
+      {
+        "title": "Tears For Fears - Everybody Wants To Rule The World",
+        "chords": "Em F#m G A G Em"
+      },
+      {
+        "title": "Bob Dylan - Like a Rolling Stone",
+        "chords": "F Em Dm7 C Dm7 F"
+      },
+      {
+        "title": "Bruno Mars - Count On Me",
+        "chords": "Dm Em F G F Dm"
+      },
+      {
+        "title": "Black Sabbath - Changes",
+        "chords": "F Em Dm C Dm F"
+      },
+      {
+        "title": "Seals & Crofts - Summer Breeze",
+        "chords": "G Am7 G F Em G"
+      },
+      {
+        "title": "Jackson Browne - Late For The Sky",
+        "chords": "G Am G F Em G"
+      },
+      {
+        "title": "Pink - Just Give Me A Reason",
+        "chords": "D Em D C Bm D"
+      }
+    ]
   },
   {
     "loop": "diatonic relative fifth dom7 fifth",
@@ -383,7 +1574,41 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "relative",
       "dom7"
     ],
-    "exampleChords": "Db Ebm7 Gb Db Gb Db"
+    "exampleChords": "Db Ebm7 Gb Db Gb Db",
+    "topSongs": [
+      {
+        "title": "Eric Clapton - Tears in Heaven",
+        "chords": "E F#m A E A E"
+      },
+      {
+        "title": "Commodores - Easy",
+        "chords": "Db Ebm7 Gb Db Gbmaj7 Db"
+      },
+      {
+        "title": "King Princess - 1950",
+        "chords": "E F#m A E A E"
+      },
+      {
+        "title": "Elvis Presley - Always On My Mind",
+        "chords": "G Am7 C G C G"
+      },
+      {
+        "title": "Lewis Capaldi - Hold Me While You Wait",
+        "chords": "F# G#m B F# B F#"
+      },
+      {
+        "title": "Fleetwood Mac - Songbird",
+        "chords": "F Gm Bb F Bb F"
+      },
+      {
+        "title": "Bob Dylan - Make You Feel My Love",
+        "chords": "Db Ebm7 Gb Db Gb Db"
+      },
+      {
+        "title": "Pink - Just Give Me A Reason",
+        "chords": "G Am C G C G"
+      }
+    ]
   },
   {
     "loop": "relative relative relative relative",
@@ -392,7 +1617,37 @@ export const CYCLE_PRESETS: CyclePreset[] = [
     "constraints": [
       "relative"
     ],
-    "exampleChords": "C#m E C#m E C#m"
+    "exampleChords": "C#m E C#m E C#m",
+    "topSongs": [
+      {
+        "title": "Coldplay - Sparks",
+        "chords": "Dbmaj7 Bbm7 Dbmaj7 Bbm7 Dbmaj7"
+      },
+      {
+        "title": "The Strokes - The Adults Are Talking",
+        "chords": "F Dm F Dm F"
+      },
+      {
+        "title": "The Beatles - All My Loving",
+        "chords": "E C#m E C#m E"
+      },
+      {
+        "title": "Leonard Cohen - Hallelujah",
+        "chords": "C Am C Am C"
+      },
+      {
+        "title": "Carpenters - Yesterday Once More",
+        "chords": "E C#m E C#m E"
+      },
+      {
+        "title": "Big Thief - Masterpiece",
+        "chords": "C#m E C#m E C#m"
+      },
+      {
+        "title": "Elvis Presley - If I Can Dream",
+        "chords": "D Bm D Bm D"
+      }
+    ]
   },
   {
     "loop": "borrowed fifth fifth fifth",
@@ -402,7 +1657,37 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "fifth",
       "borrowed"
     ],
-    "exampleChords": "F Ab Eb Bb F"
+    "exampleChords": "F Ab Eb Bb F",
+    "topSongs": [
+      {
+        "title": "Pink Floyd - Comfortably Numb",
+        "chords": "A C G D A"
+      },
+      {
+        "title": "Billy Joel - Vienna",
+        "chords": "F Ab Eb Bb F"
+      },
+      {
+        "title": "The Beatles - A Day In The Life",
+        "chords": "E G D A E"
+      },
+      {
+        "title": "Neil Young - After The Gold Rush",
+        "chords": "A C G D A"
+      },
+      {
+        "title": "Johnny Nash - I Can See Clearly Now",
+        "chords": "D F C G D"
+      },
+      {
+        "title": "Seals & Crofts - Summer Breeze",
+        "chords": "E G D A E"
+      },
+      {
+        "title": "Paul McCartney - Maybe I’m Amazed",
+        "chords": "G Bb F C G"
+      }
+    ]
   },
   {
     "loop": "diatonic diatonic diatonic dom7",
@@ -412,7 +1697,37 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "diatonic",
       "dom7"
     ],
-    "exampleChords": "F Em Dm C F"
+    "exampleChords": "F Em Dm C F",
+    "topSongs": [
+      {
+        "title": "Bob Dylan - Like a Rolling Stone",
+        "chords": "F Em Dm7 C F"
+      },
+      {
+        "title": "Sufjan Stevens - Fourth of July",
+        "chords": "F#m E D C#m F#m"
+      },
+      {
+        "title": "Neil Diamond - Sweet Caroline",
+        "chords": "E D#m7 C#m7 B E"
+      },
+      {
+        "title": "Carole King - It's Too Late",
+        "chords": "Bbmaj7 Am7 Gm7 Fmaj7 Bbmaj7"
+      },
+      {
+        "title": "Duran Duran - Come Undone",
+        "chords": "Cm Bb Ab Gm Cm"
+      },
+      {
+        "title": "Joni Mitchell - River",
+        "chords": "F Em Dm C F"
+      },
+      {
+        "title": "Black Sabbath - Changes",
+        "chords": "F Em Dm C F"
+      }
+    ]
   },
   {
     "loop": "borrowed dom7 parallel",
@@ -423,6 +1738,36 @@ export const CYCLE_PRESETS: CyclePreset[] = [
       "parallel",
       "dom7"
     ],
-    "exampleChords": "Bbm F Bb Bbm"
+    "exampleChords": "Bbm F Bb Bbm",
+    "topSongs": [
+      {
+        "title": "David Bowie - Space Oddity",
+        "chords": "Fm C F Fm"
+      },
+      {
+        "title": "ABBA - Slipping Through My Fingers",
+        "chords": "Bbm F Bb Bbm"
+      },
+      {
+        "title": "Cavetown - This Is Home",
+        "chords": "Cm G Cmaj7 Cm"
+      },
+      {
+        "title": "Ricky Montgomery - Mr Loverman",
+        "chords": "Fm C F Fm"
+      },
+      {
+        "title": "John Lennon - Watching The Wheels",
+        "chords": "Fm7 C F Fm7"
+      },
+      {
+        "title": "Mariah Carey - All I Want For Christmas",
+        "chords": "Cm G C Cm"
+      },
+      {
+        "title": "Sasha Sloan - Only Child",
+        "chords": "Bbm F Bb Bbm"
+      }
+    ]
   }
 ];

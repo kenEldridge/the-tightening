@@ -62,7 +62,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - CI: GitHub Actions (`.github/workflows/release.yml`):
   - push to `master` → `npm run build` + `node tests/chord-walk.test.mjs` only (no release)
   - push a `v*` tag → also builds the Windows installer and publishes a GitHub release
-- Remote name: `the-tightening` (not `origin`) — github.com/kenEldridge/the-tightening.git
+- Remote name: `origin` — github.com/kenEldridge/the-tightening.git
 - To release: bump `package.json` version, commit, then `git tag vX.Y.Z && git push the-tightening vX.Y.Z`. Release name/tag = the pushed tag (`github.ref_name`).
 
 ## Related project

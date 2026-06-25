@@ -122,102 +122,102 @@ CHORD PROGRESSION ANALYSIS — THE TIGHTENING SONG LIBRARY
 ── TOP EDGE-TYPE CYCLES (key-agnostic, 5+ songs) ────────────────────
 
   [2-step, 168 songs, 1933×]  dom7 fifth → fifth (closes)
-    e.g. "F Bb F"  — ABBA - Slipping Through My Fingers / ABBA - Waterloo / Air Supply - All Out of Love
+    e.g. "F Bb F"  — Radiohead - Karma Police / Red Hot Chili Peppers - Californication / a-ha - Take On Me
   [2-step, 126 songs, 1196×]  diatonic diatonic → diatonic (closes)
-    e.g. "A G A"  — ABBA - Waterloo / Air Supply - All Out of Love / America - A Horse with No Name
+    e.g. "A G A"  — Nirvana - Come As You Are / Radiohead - Karma Police / Red Hot Chili Peppers - Californication
   [3-step, 76 songs, 641×]  diatonic dom7 dom7 → dom7 (closes)
-    e.g. "A B E A"  — 10cc - I'm Not In Love / ABBA - Slipping Through My Fingers / ABBA - Waterloo
+    e.g. "A B E A"  — Radiohead - Karma Police / The Police - Every Breath You Take / Lana Del Rey - Young And Beautiful
   [3-step, 68 songs, 1037×]  diatonic fifth fifth → fifth (closes)
-    e.g. "A G D A"  — ABBA - Waterloo / Air Supply - All Out of Love / America - Sister Golden Hair
+    e.g. "A G D A"  — Red Hot Chili Peppers - Californication / a-ha - Take On Me / Tears For Fears - Everybody Wants To Rule The World
   [4-step, 65 songs, 528×]  dom7 fifth dom7 fifth → fifth (closes)
-    e.g. "A D A D A"  — ABBA - Waterloo / Air Supply - All Out of Love / Audrey Hepburn - Moon River
+    e.g. "A D A D A"  — Radiohead - Karma Police / R.E.M. - Losing My Religion / Cigarettes After Sex - Apocalypse
   [4-step, 47 songs, 566×]  diatonic diatonic diatonic diatonic → diatonic (closes)
-    e.g. "Em D Em D Em"  — America - A Horse with No Name / Bill Withers - Lean on Me / Black Sabbath - Changes
+    e.g. "Em D Em D Em"  — Nirvana - Come As You Are / The Police - Every Breath You Take / Tears For Fears - Everybody Wants To Rule The World
   [2-step, 41 songs, 233×]  relative relative → relative (closes)
-    e.g. "C#m E C#m"  — Big Thief - Masterpiece / Billy Joel - Vienna / Carpenters - Yesterday Once More
+    e.g. "C#m E C#m"  — Radiohead - Karma Police / Red Hot Chili Peppers - Californication / The Police - Every Breath You Take
   [4-step, 40 songs, 244×]  diatonic diatonic dom7 fifth → fifth (closes)
-    e.g. "G F G C G"  — Air Supply - All Out of Love / Bette Midler - The Rose / Billie Eilish - idontwannabeyouanymore
+    e.g. "G F G C G"  — a-ha - Take On Me / Pink Floyd - Wish You Were Here / Oasis - Don't Look Back In Anger
   [4-step, 32 songs, 438×]  dom7 dom7 fifth fifth → fifth (closes)
-    e.g. "A D G D A"  — ABBA - Waterloo / Barry Manilow - Mandy / Bob Marley & The Wailers - Three Little Birds (A)
+    e.g. "A D G D A"  — The Cure - Friday I'm In Love / Wheatus - Teenage Dirtbag / Van Morrison - Brown Eyed Girl
   [3-step, 32 songs, 273×]  diatonic relative fifth → fifth (closes)
-    e.g. "D Em G D"  — Alessia Cara - Out Of Love / Bee Gees - To Love Somebody / Big Thief - Masterpiece
+    e.g. "D Em G D"  — Red Hot Chili Peppers - Californication / Dua Lipa - Don't Start Now / Billy Joel - Vienna
   [4-step, 28 songs, 251×]  dom7 dom7 dom7 relative → relative (closes)
-    e.g. "Em7 Am D7 G Em7"  — 10cc - I'm Not In Love / ABBA - Waterloo / Auld Lang Syne (key of C)
+    e.g. "Em7 Am D7 G Em7"  — Cigarettes After Sex - Apocalypse / Lana Del Rey - Young And Beautiful / The Strokes - The Adults Are Talking
   [2-step, 27 songs, 209×]  borrowed dom7 → dom7 (closes)
-    e.g. "Dm A Dm"  — Billie Eilish - Therefore I Am / Carole King - You’ve Got a Friend / Christmas - O Holy Night
+    e.g. "Dm A Dm"  — Radiohead - No Surprises / Elvis Presley - Can't Help Falling In Love / The Turtles - Happy Together
   [2-step, 21 songs, 78×]  borrowed borrowed → borrowed (closes)
-    e.g. "G Bb G"  — Barry Manilow - Mandy / Billy Joel - Vienna / Céline Dion - My Heart Will Go On
+    e.g. "G Bb G"  — Nirvana - Come As You Are / Red Hot Chili Peppers - Californication / Van Morrison - Brown Eyed Girl
   [4-step, 20 songs, 78×]  diatonic diatonic fifth dom7 → dom7 (closes)
-    e.g. "C Dm C G7 C"  — Bill Withers - Lean on Me / Billy Joel - Honesty / Billy Joel - Piano Man
+    e.g. "C Dm C G7 C"  — R.E.M. - Losing My Religion / Billy Joel - Piano Man / Elton John - Your Song
   [3-step, 20 songs, 112×]  diatonic dom7 relative → relative (closes)
-    e.g. "Cm Bb7 Eb Cm"  — Buddy Holly - Everyday / Cat Stevens - Father And Son / Christmas - Winter Wonderland
+    e.g. "Cm Bb7 Eb Cm"  — Pink Floyd - Wish You Were Here / Cigarettes After Sex - Apocalypse / The Pixies - Where Is My Mind
   [5-step, 17 songs, 158×]  diatonic fifth dom7 fifth fifth → fifth (closes)
-    e.g. "B A E A E B"  — Big Thief - Masterpiece / Billy Joel - Piano Man / Bob Marley & The Wailers - Three Little Birds (A)
+    e.g. "B A E A E B"  — Billy Joel - Piano Man / Olivia Rodrigo - Drivers License / Bob Marley & The Wailers - Three Little Birds (A)
   [5-step, 17 songs, 122×]  diatonic diatonic diatonic dom7 dom7 → dom7 (closes)
-    e.g. "Bb C Bb C F Bb"  — Bob Dylan - Mr. Tambourine Man / Carpenters - Yesterday Once More / Finneas - Break My Heart Again
+    e.g. "Bb C Bb C F Bb"  — The Walters - I Love You So / Louis Armstrong - What A Wonderful World / Lukas Graham - 7 Years
   [5-step, 16 songs, 73×]  diatonic fifth fifth dom7 fifth → fifth (closes)
-    e.g. "E D A E A E"  — Bee Gees - To Love Somebody / Bonnie Raitt - John Prine - Angel from Montgomery / Cat Stevens - Father And Son
+    e.g. "E D A E A E"  — Taylor Swift - Lover / The Beatles - Hey Jude / The La's - There She Goes
   [5-step, 14 songs, 74×]  diatonic diatonic diatonic fifth fifth → fifth (closes)
-    e.g. "Em7 F Em Dm Am Em7"  — Air Supply - All Out of Love / America - Sister Golden Hair / Billy Joel - Piano Man
+    e.g. "Em7 F Em Dm Am Em7"  — Tears For Fears - Everybody Wants To Rule The World / Billy Joel - Piano Man / Taylor Swift - Lover
   [4-step, 14 songs, 95×]  dom7 fifth relative relative → relative (closes)
-    e.g. "C7 F C Am C7"  — Audrey Hepburn - Moon River / Big Thief - Masterpiece / Billy Joel - Piano Man
+    e.g. "C7 F C Am C7"  — Radiohead - Karma Police / Billy Joel - Piano Man / Phoebe Bridgers - Motion Sickness
   [3-step, 14 songs, 73×]  diatonic diatonic relative → relative (closes)
-    e.g. "F Em Dm F"  — Air Supply - All Out of Love / Billie Eilish - Getting Older / Billy Joel - Honesty
+    e.g. "F Em Dm F"  — Tears For Fears - Everybody Wants To Rule The World / Mac Demarco - Chamber of Reflection / The Rolling Stones - Wild Horses
   [5-step, 13 songs, 162×]  diatonic dom7 dom7 fifth dom7 → dom7 (closes)
-    e.g. "Bb C F Bb F Bb"  — ABBA - Slipping Through My Fingers / ABBA - Waterloo / Air Supply - All Out of Love
+    e.g. "Bb C F Bb F Bb"  — Phoebe Bridgers - Motion Sickness / Bob Dylan - Blowin' in the Wind / ABBA - Waterloo
   [4-step, 13 songs, 103×]  diatonic diatonic diatonic fifth → fifth (closes)
-    e.g. "G Am Bm C G"  — Alessia Cara - Out Of Love / Bob Dylan - Lay, Lady, Lay / Charlie Puth ft. Selena Gomez - We Don't Talk Anymore
+    e.g. "G Am Bm C G"  — Wheatus - Teenage Dirtbag / The Righteous Brothers - Unchained Melody / Miley Cyrus - Midnight Sky
   [4-step, 13 songs, 122×]  diatonic diatonic relative dom7 → dom7 (closes)
-    e.g. "C D Em G C"  — Billie Eilish - Ocean Eyes / Billy Joel - She's Got A Way / Duran Duran - Come Undone
+    e.g. "C D Em G C"  — Lana Del Rey - Young And Beautiful / Glass Animals - Heat Waves / Billie Eilish - Ocean Eyes
   [4-step, 13 songs, 79×]  borrowed dom7 borrowed dom7 → dom7 (closes)
-    e.g. "Dm A Dm A Dm"  — Billie Eilish - Therefore I Am / Carole King - You’ve Got a Friend / Elvis Presley - Can't Help Falling In Love
+    e.g. "Dm A Dm A Dm"  — Radiohead - No Surprises / Elvis Presley - Can't Help Falling In Love / The Turtles - Happy Together
   [5-step, 12 songs, 108×]  diatonic dom7 dom7 dom7 fifth → fifth (closes)
-    e.g. "C D7 G C Fmaj7 C"  — Billy Joel - Piano Man / Bob Dylan - Make You Feel My Love / Bob Dylan - Mr. Tambourine Man
+    e.g. "C D7 G C Fmaj7 C"  — a-ha - Take On Me / Billy Joel - Piano Man / Joji - Glimpse of Us
   [3-step, 12 songs, 27×]  borrowed diatonic diatonic → diatonic (closes)
-    e.g. "D Bb C D"  — Barry Manilow - Mandy / Ben E. King - Stand By Me / Chris Stapleton - Tennessee Whiskey
+    e.g. "D Bb C D"  — Red Hot Chili Peppers - Californication / Ben E. King - Stand By Me / Lynyrd Skynyrd - Simple Man
   [5-step, 11 songs, 67×]  diatonic dom7 fifth dom7 dom7 → dom7 (closes)
-    e.g. "G A D A D G"  — ABBA - Waterloo / Bonnie Raitt - John Prine - Angel from Montgomery / Creedence Clearwater Revival - Have You Ever Seen The Rain
+    e.g. "G A D A D G"  — Creedence Clearwater Revival - Have You Ever Seen The Rain / Wheatus - Teenage Dirtbag / Van Morrison - Brown Eyed Girl
   [4-step, 11 songs, 39×]  diatonic dom7 diatonic fifth → fifth (closes)
-    e.g. "D E A G D"  — ABBA - Waterloo / Bob Dylan - Mr. Tambourine Man / Bonnie Raitt - John Prine - Angel from Montgomery
+    e.g. "D E A G D"  — R.E.M. - Losing My Religion / Glass Animals - Heat Waves / ABBA - Waterloo
   [3-step, 11 songs, 62×]  borrowed fifth diatonic → diatonic (closes)
-    e.g. "C Eb Bb C"  — Barry Manilow - Mandy / Chris Stapleton - Tennessee Whiskey / Corinne Bailey Rae _ Ritt Momney - Put Your Records On
+    e.g. "C Eb Bb C"  — Radiohead - Let Down / Lana Del Rey - Young And Beautiful / Pink Floyd - Comfortably Numb
   [3-step, 10 songs, 28×]  diatonic relative dom7 → dom7 (closes)
-    e.g. "C Bb Gm7 C"  — Bob Dylan - Mr. Tambourine Man / Cat Stevens - Father And Son / Cigarettes After Sex - Apocalypse
+    e.g. "C Bb Gm7 C"  — Cigarettes After Sex - Apocalypse / Olivia Rodrigo - Drivers License / Sufjan Stevens - Fourth of July
   [4-step, 9 songs, 52×]  borrowed dom7 dom7 dom7 → dom7 (closes)
-    e.g. "A F# B E A"  — Blondie - Heart Of Glass / Christmas - Have Yourself A Merry Little Christmas / Elton John - Can You Feel The Love Tonight
+    e.g. "A F# B E A"  — The Ronettes - Be My Baby / Blondie - Heart Of Glass / Elton John - Daniel
   [4-step, 9 songs, 47×]  diatonic dom7 diatonic relative → relative (closes)
-    e.g. "F G C Dm7 F"  — Bob Dylan - Like a Rolling Stone / Eagles - Desperado / Elvis Presley - Always On My Mind
+    e.g. "F G C Dm7 F"  — Radiohead - Karma Police / a-ha - Take On Me / Lana Del Rey - Young And Beautiful
   [4-step, 9 songs, 187×]  diatonic diatonic fifth relative → relative (closes)
-    e.g. "G#m F# E B G#m"  — Glass Animals - Heat Waves / Jackson Browne  - Doctor My Eyes / John Denver - Take Me Home Country Roads
+    e.g. "G#m F# E B G#m"  — Pink Floyd - Comfortably Numb / Glass Animals - Heat Waves / Mitski - Nobody
   [5-step, 8 songs, 26×]  diatonic diatonic diatonic diatonic relative → relative (closes)
-    e.g. "F Em Dm C Dm F"  — Black Sabbath - Changes / Bob Dylan - Like a Rolling Stone / Bruno Mars - Count On Me
+    e.g. "F Em Dm C Dm F"  — Radiohead - Karma Police / Tears For Fears - Everybody Wants To Rule The World / Bob Dylan - Like a Rolling Stone
   [5-step, 8 songs, 22×]  diatonic relative fifth dom7 fifth → fifth (closes)
-    e.g. "Db Ebm7 Gb Db Gb Db"  — Bob Dylan - Make You Feel My Love / Commodores - Easy / Elvis Presley - Always On My Mind
+    e.g. "Db Ebm7 Gb Db Gb Db"  — Eric Clapton - Tears in Heaven / Commodores - Easy / King Princess - 1950
   [4-step, 7 songs, 25×]  relative relative relative relative → relative (closes)
-    e.g. "C#m E C#m E C#m"  — Big Thief - Masterpiece / Carpenters - Yesterday Once More / Coldplay - Sparks
+    e.g. "C#m E C#m E C#m"  — Coldplay - Sparks / The Strokes - The Adults Are Talking / The Beatles - All My Loving
   [4-step, 7 songs, 53×]  borrowed fifth fifth fifth → fifth (closes)
-    e.g. "F Ab Eb Bb F"  — Billy Joel - Vienna / Johnny Nash - I Can See Clearly Now / Neil Young - After The Gold Rush
+    e.g. "F Ab Eb Bb F"  — Pink Floyd - Comfortably Numb / Billy Joel - Vienna / The Beatles - A Day In The Life
   [4-step, 7 songs, 28×]  diatonic diatonic diatonic dom7 → dom7 (closes)
-    e.g. "F Em Dm C F"  — Black Sabbath - Changes / Bob Dylan - Like a Rolling Stone / Carole King - It's Too Late
+    e.g. "F Em Dm C F"  — Bob Dylan - Like a Rolling Stone / Sufjan Stevens - Fourth of July / Neil Diamond - Sweet Caroline
   [3-step, 7 songs, 51×]  borrowed dom7 parallel → parallel (closes)
-    e.g. "Bbm F Bb Bbm"  — ABBA - Slipping Through My Fingers / Cavetown - This Is Home / David Bowie - Space Oddity
+    e.g. "Bbm F Bb Bbm"  — David Bowie - Space Oddity / ABBA - Slipping Through My Fingers / Cavetown - This Is Home
   [3-step, 7 songs, 27×]  borrowed diatonic fifth → fifth (closes)
-    e.g. "D F G D"  — John Lennon - Love / Neil Young - After The Gold Rush / Oasis - Wonderwall
+    e.g. "D F G D"  — Oasis - Wonderwall / The Beatles - With A Little Help From My Friends / The Beatles - I Am The Walrus
   [5-step, 6 songs, 25×]  diatonic fifth relative dom7 dom7 → dom7 (closes)
-    e.g. "G7 F C Am Dm7 G7"  — Audrey Hepburn - Moon River / Killing Me Softly With His Song (lower key) / Killing Me Softly With His Song (original key)
+    e.g. "G7 F C Am Dm7 G7"  — Taylor Swift - Lover / Pure Prairie League - Amie / Audrey Hepburn - Moon River
   [5-step, 6 songs, 10×]  borrowed diatonic diatonic diatonic diatonic → diatonic (closes)
-    e.g. "D Bb C Bb C D"  — Barry Manilow - Mandy / Ben E. King - Stand By Me / Chris Stapleton - Tennessee Whiskey
+    e.g. "D Bb C Bb C D"  — Ben E. King - Stand By Me / The Beatles - Something / The Beatles - A Day In The Life
   [5-step, 6 songs, 40×]  diatonic diatonic fifth diatonic fifth → fifth (closes)
-    e.g. "A G A E D7 A"  — Bee Gees - To Love Somebody / Carly Simon - You're So Vain / Jackson Browne - Late For The Sky
+    e.g. "A G A E D7 A"  — Pink Floyd - Wish You Were Here / Carly Simon - You're So Vain / Lady Gaga - Always Remember Us This Way
   [5-step, 6 songs, 74×]  diatonic relative dom7 fifth fifth → fifth (closes)
-    e.g. "B C#m E A E B"  — Big Thief - Masterpiece / Elton John - I Guess That's Why They Call It The Blues / Elvis Presley - Always On My Mind
+    e.g. "B C#m E A E B"  — Eric Clapton - Tears in Heaven / Elton John - I Guess That's Why They Call It The Blues / Elvis Presley - Always On My Mind
   [4-step, 6 songs, 19×]  borrowed borrowed diatonic diatonic → diatonic (closes)
-    e.g. "B G# B C# B"  — Céline Dion - My Heart Will Go On / John Lennon - Love / Otis Redding - (Sittin’ On) the Dock of the Bay
+    e.g. "B G# B C# B"  — Red Hot Chili Peppers - Californication / The Beatles - Here Comes The Sun / Sam Cooke - Bring It On Home to Me
   [3-step, 6 songs, 13×]  borrowed dom7 diatonic → diatonic (closes)
-    e.g. "C A D C"  — Barry Manilow - Mandy / David Bowie - The Man Who Sold The World / Elton John - Can You Feel The Love Tonight
+    e.g. "C A D C"  — The Police - Every Breath You Take / The Kinks - Sunny Afternoon / David Bowie - The Man Who Sold The World
   [5-step, 5 songs, 15×]  diatonic dom7 dom7 fifth relative → relative (closes)
-    e.g. "Cm Bb7 Eb Ab Eb Cm"  — Buddy Holly - Everyday / John Denver - Take Me Home Country Roads / Lady Gaga and Bradley Cooper - Shallow
+    e.g. "Cm Bb7 Eb Ab Eb Cm"  — The Strokes - The Adults Are Talking / Olivia Rodrigo - Drivers License / John Denver - Take Me Home Country Roads
   [5-step, 5 songs, 30×]  borrowed dom7 dom7 dom7 dom7 → dom7 (closes)
-    e.g. "G B Em7 A7 D7 G"  — Eagles - Desperado / Frank Sinatra - Fly Me To The Moon / Killing Me Softly With His Song (lower key)
+    e.g. "G B Em7 A7 D7 G"  — The Kinks - Sunny Afternoon / Frank Sinatra - Fly Me To The Moon / Eagles - Desperado
   [4-step, 5 songs, 17×]  borrowed diatonic diatonic dom7 → dom7 (closes)
-    e.g. "F Ab Bb Cm F"  — Ashe - Moral of the Story / Elvis Presley - If I Can Dream / Queen - You're My Best Friend
+    e.g. "F Ab Bb Cm F"  — Queen - You're My Best Friend / Ashe - Moral of the Story / The Beatles - I Am The Walrus

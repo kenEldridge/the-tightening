@@ -33,7 +33,7 @@ export default function App() {
     repeatCount: 1,
     currentPathCompletions: 0,
   });
-  const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('sharps');
+  const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [midiStatus, setMidiStatus] = useState<{ connected: boolean; message: string }>({
     connected: false,
     message: 'Requesting MIDI access...',

@@ -444,6 +444,83 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+.cycle-tooltip {
+  position: fixed;
+  z-index: 1000;
+  width: 280px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cycle-tooltip-pattern {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cycle-tooltip-sep {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.cycle-tooltip-et {
+  font-weight: 600;
+}
+
+.cycle-tooltip-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cycle-tooltip-split {
+  font-size: 0.68rem;
+}
+
+.cycle-tooltip-songs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cycle-tooltip-song {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.72rem;
+}
+
+.cycle-tooltip-title {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.cycle-tooltip-chords {
+  color: var(--accent);
+  font-weight: 500;
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+}
+
 .walk-clear-btn {
   align-self: flex-start;
   padding: 2px 8px;
