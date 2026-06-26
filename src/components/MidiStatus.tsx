@@ -30,6 +30,11 @@ export default function MidiStatus({ connected, message }: Props) {
         }
         .midi-text {
           white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        @media (max-width: 600px) {
+          .midi-text { display: none; }
         }
       `}</style>
     </div>

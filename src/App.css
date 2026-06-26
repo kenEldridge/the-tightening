@@ -182,6 +182,8 @@ body {
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 /* ── App title as home link ── */
@@ -845,6 +847,47 @@ body {
   border: 1px solid #2ecc71;
   border-radius: 4px;
   background: rgba(46, 204, 113, 0.1);
+}
+
+/* ── Mobile ── */
+
+@media (max-width: 600px) {
+  .app-header {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  /* Drop the spelling toggle on narrow screens */
+  .spelling-select {
+    display: none;
+  }
+
+  /* Landing: stack cards vertically */
+  .landing {
+    padding: 24px 16px;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .landing-cards {
+    flex-direction: column;
+    max-width: 100%;
+  }
+
+  .landing-card {
+    padding: 20px 16px;
+    gap: 8px;
+  }
+
+  .landing-card-icon {
+    font-size: 1.8rem;
+  }
+
+  /* App body: narrower sidebar so the circle still has room */
+  .sidebar {
+    width: 200px;
+    padding: 8px;
+  }
 }
 
 /* Glow filter animation */
