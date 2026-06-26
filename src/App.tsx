@@ -420,6 +420,7 @@ export default function App() {
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
+              keyShift={keyShift}
             />
           ) : (
             <CircleOfFifths
@@ -427,6 +428,7 @@ export default function App() {
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
+              keyShift={keyShift}
             />
           )}
         </div>
