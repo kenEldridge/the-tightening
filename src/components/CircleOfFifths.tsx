@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath, transposeChord } from '../core/chordPathfinder';
+import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from '../core/chordPathfinder';
 import type { EdgeType } from '../core/chordPathfinder';
 import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from '../core/edgeTypeStyles';
 import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from '../core/chordDefinitions';
@@ -31,7 +31,6 @@ interface Props {
   jamMatchedChords?: string[];
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
-  keyShift?: number;
 }
 
 // Layout constants
@@ -129,7 +128,7 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', layout = 'fifths', keyShift = 0 }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
   const isJamMode = !!graphState;
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
@@ -560,17 +559,15 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           }
 
           // Determine display name: in Jam mode, show user's chord name if a progression chord occupies this slot
-          const shiftedName = keyShift === 0 ? node.name : transposeChord(node.name, keyShift, 'same');
-          let displayName = respellChordName(shiftedName, noteSpelling);
+          let displayName = respellChordName(node.name, noteSpelling);
           if (isJamMode && jamSlot) {
             // Pick the most specific name (longest, e.g. "G7" over "G")
             const mostSpecific = jamSlot.chordNames.reduce((a, b) => a.length >= b.length ? a : b);
-            const shiftedSpecific = keyShift === 0 ? mostSpecific : transposeChord(mostSpecific, keyShift, 'same');
-            displayName = respellChordName(shiftedSpecific, noteSpelling);
+            displayName = respellChordName(mostSpecific, noteSpelling);
           }
 
           const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 9;
-          const notes = triadNotes(shiftedName, noteSpelling);
+          const notes = triadNotes(node.name, noteSpelling);
 
           const isActive = isJamMode
             ? (isJamActive || isJamMatched || isJamNextCandidate)

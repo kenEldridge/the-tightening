@@ -23,13 +23,11 @@ interface Props {
   walkState: WalkState;
   onWalkStateChange: (state: WalkState) => void;
   noteSpelling?: NoteSpelling;
-  keyShift?: number;
-  onKeyShiftChange?: (shift: number) => void;
 }
 
 const allChords = getAllChordNames();
 
-export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps', keyShift = 0, onKeyShiftChange }: Props) {
+export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps' }: Props) {
   const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted, repeatCount } = walkState;
   const returnOptions = walkState.returnOptions ?? {};
   const cycleEdgeTypes = walkState.cycleEdgeTypes;
@@ -247,30 +245,30 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
   return (
     <div className="walk-mode">
-      {onKeyShiftChange && (
-        <div className="walk-section walk-key-shift">
-          <label className="walk-label">Key</label>
-          <div className="key-shift-control">
-            <button
-              className="key-shift-btn"
-              onClick={() => onKeyShiftChange((keyShift + 11) % 12)}
-              title="Shift display down a semitone"
-            >−</button>
-            <span className="key-shift-label">
-              {['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'][keyShift]}
-            </span>
-            <button
-              className="key-shift-btn"
-              onClick={() => onKeyShiftChange((keyShift + 1) % 12)}
-              title="Shift display up a semitone"
-            >+</button>
-          </div>
+      <div className="walk-section walk-key-shift">
+        <label className="walk-label">Key</label>
+        <div className="key-shift-control">
+          <button
+            className="key-shift-btn"
+            onClick={() => fromChord && updateAndFindPath({ fromChord: transposeChord(fromChord, 11, 'same') })}
+            disabled={!fromChord}
+            title="Transpose down a semitone"
+          >−</button>
+          <span className="key-shift-label">
+            {fromChord ? respellChordName(fromChord.replace(/m$|dim$/, ''), noteSpelling) : '—'}
+          </span>
+          <button
+            className="key-shift-btn"
+            onClick={() => fromChord && updateAndFindPath({ fromChord: transposeChord(fromChord, 1, 'same') })}
+            disabled={!fromChord}
+            title="Transpose up a semitone"
+          >+</button>
         </div>
-      )}
+      </div>
 
       <div className="walk-section">
         <label className="walk-label">From</label>
-        <ChordSelect value={fromChord} onChange={handleFromChange} noteSpelling={noteSpelling} keyShift={keyShift} />
+        <ChordSelect value={fromChord} onChange={handleFromChange} noteSpelling={noteSpelling} />
       </div>
 
       <div className="walk-section">
@@ -280,7 +278,6 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           onChange={handleToChange}
           noteSpelling={noteSpelling}
           reachable={reachableToChords}
-          keyShift={keyShift}
         />
       </div>
 
@@ -398,7 +395,6 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
             currentStep={currentStep}
             completed={completed}
             noteSpelling={noteSpelling}
-            keyShift={keyShift}
           />
           {currentStep > 0 && !completed && (
             <button className="walk-reset-btn" onClick={handleReset}>Reset progress</button>
@@ -461,20 +457,14 @@ function ChordSelect({
   onChange,
   noteSpelling,
   reachable,
-  keyShift = 0,
 }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   noteSpelling: NoteSpelling;
   reachable?: Set<string> | null;
-  keyShift?: number;
 }) {
   const isDisabled = (name: string) => reachable !== null && reachable !== undefined && !reachable.has(name);
-  // option value stays canonical; only the display label is shifted
-  const label = (name: string) => {
-    const shifted = keyShift === 0 ? name : transposeChord(name, keyShift, 'same');
-    return respellChordName(shifted, noteSpelling);
-  };
+  const label = (name: string) => respellChordName(name, noteSpelling);
 
   return (
     <select className="walk-select" value={value} onChange={onChange}>

@@ -34,7 +34,6 @@ export default function App() {
     currentPathCompletions: 0,
   });
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
-  const [keyShift, setKeyShift] = useState(0);
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
   const [graphExpanded, setGraphExpanded] = useState(false);
 
@@ -391,8 +390,6 @@ export default function App() {
                 walkState={walkState}
                 onWalkStateChange={setWalkState}
                 noteSpelling={noteSpelling}
-                keyShift={keyShift}
-                onKeyShiftChange={setKeyShift}
               />
             </>
           )}
@@ -420,7 +417,6 @@ export default function App() {
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
-              keyShift={keyShift}
             />
           ) : (
             <CircleOfFifths
@@ -428,7 +424,6 @@ export default function App() {
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
-              keyShift={keyShift}
             />
           )}
         </div>
