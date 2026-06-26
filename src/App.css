@@ -113,29 +113,22 @@ body {
 }
 
 .layout-toggle-btn {
-  position: absolute;
-  bottom: 48px;
-  right: 14px;
-  z-index: 20;
-  width: 34px;
   height: 28px;
-  padding: 0;
-  background: rgba(30, 34, 42, 0.75);
+  padding: 0 10px;
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 5px;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  white-space: nowrap;
   transition: color 0.15s, background 0.15s;
 }
 
 .layout-toggle-btn:hover {
   color: var(--text-primary);
-  background: rgba(30, 34, 42, 0.95);
+  border-color: var(--text-muted);
 }
 
 /* ── Key shift control ── */

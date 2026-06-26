@@ -398,6 +398,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
             currentStep={currentStep}
             completed={completed}
             noteSpelling={noteSpelling}
+            keyShift={keyShift}
           />
           {currentStep > 0 && !completed && (
             <button className="walk-reset-btn" onClick={handleReset}>Reset progress</button>
