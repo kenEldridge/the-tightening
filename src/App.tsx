@@ -34,6 +34,8 @@ export default function App() {
     currentPathCompletions: 0,
   });
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
+  const [keyShift, setKeyShift] = useState(0);
+  const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
   const [graphExpanded, setGraphExpanded] = useState(false);
 
   useEffect(() => {
@@ -378,7 +380,13 @@ export default function App() {
             </>
           ) : (
             <>
-              <WalkMode walkState={walkState} onWalkStateChange={setWalkState} noteSpelling={noteSpelling} />
+              <WalkMode
+                walkState={walkState}
+                onWalkStateChange={setWalkState}
+                noteSpelling={noteSpelling}
+                keyShift={keyShift}
+                onKeyShiftChange={setKeyShift}
+              />
             </>
           )}
           <EdgeTypeLegend />
@@ -398,18 +406,27 @@ export default function App() {
               <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h4.5v1.5H2.5V5H1V1zm9.5 0H15v4h-1.5V2.5H10.5V1zM1 11h1.5v2.5H5.5V15H1v-4zm13.5 0V15H11v-1.5h2.5V11H14.5z"/></svg>
             )}
           </button>
+          <button
+            className="layout-toggle-btn"
+            onClick={() => setCircleLayout(l => l === 'fifths' ? 'chromatic' : 'fifths')}
+            title={circleLayout === 'fifths' ? 'Switch to chromatic layout' : 'Switch to circle of fifths layout'}
+          >
+            {circleLayout === 'fifths' ? '12' : '5th'}
+          </button>
           {mode === 'jam' ? (
             <CircleOfFifths
               graphState={graphState}
               jamMatchedChords={matchedChords}
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
+              layout={circleLayout}
             />
           ) : (
             <CircleOfFifths
               walkPath={walkPath}
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
+              layout={circleLayout}
             />
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from '../core/chordPathfinder';
 import type { EdgeType } from '../core/chordPathfinder';
 import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from '../core/edgeTypeStyles';
@@ -30,6 +30,7 @@ interface Props {
   graphState?: GraphState;
   jamMatchedChords?: string[];
   noteSpelling?: NoteSpelling;
+  layout?: 'fifths' | 'chromatic';
 }
 
 // Layout constants
@@ -54,17 +55,31 @@ interface RingNode {
   ring: 'major' | 'minor' | 'dim';
 }
 
-function buildRingNodes(): RingNode[] {
+function buildRingNodes(layout: 'fifths' | 'chromatic'): RingNode[] {
   const nodes: RingNode[] = [];
   for (let i = 0; i < 12; i++) {
-    // Angle: start at top (-90°), go clockwise
-    const angle = (i / 12) * 2 * Math.PI - Math.PI / 2;
+    // Fifths layout: angle determined by circle-of-fifths position index.
+    // Chromatic layout: angle determined by each ring's root pitch class so that
+    // all three qualities sharing a root (e.g. C, Cm, Cdim) align on the same spoke.
+    const majorPc = FIFTHS_ORDER[i];
+    const minorRootPc = (majorPc + 9) % 12;  // relative minor root
+    const dimRootPc = (majorPc + 11) % 12;   // diminished root
+
+    const majorAngle = layout === 'chromatic'
+      ? (majorPc / 12) * 2 * Math.PI - Math.PI / 2
+      : (i / 12) * 2 * Math.PI - Math.PI / 2;
+    const minorAngle = layout === 'chromatic'
+      ? (minorRootPc / 12) * 2 * Math.PI - Math.PI / 2
+      : (i / 12) * 2 * Math.PI - Math.PI / 2;
+    const dimAngle = layout === 'chromatic'
+      ? (dimRootPc / 12) * 2 * Math.PI - Math.PI / 2
+      : (i / 12) * 2 * Math.PI - Math.PI / 2;
 
     nodes.push({
       id: `key-${i}`,
       name: nodeIdToChordName(`key-${i}`),
-      x: CX + R_MAJOR * Math.cos(angle),
-      y: CY + R_MAJOR * Math.sin(angle),
+      x: CX + R_MAJOR * Math.cos(majorAngle),
+      y: CY + R_MAJOR * Math.sin(majorAngle),
       r: NODE_R_MAJOR,
       ring: 'major',
     });
@@ -72,8 +87,8 @@ function buildRingNodes(): RingNode[] {
     nodes.push({
       id: `minor-${i}`,
       name: nodeIdToChordName(`minor-${i}`),
-      x: CX + R_MINOR * Math.cos(angle),
-      y: CY + R_MINOR * Math.sin(angle),
+      x: CX + R_MINOR * Math.cos(minorAngle),
+      y: CY + R_MINOR * Math.sin(minorAngle),
       r: NODE_R_MINOR,
       ring: 'minor',
     });
@@ -81,29 +96,13 @@ function buildRingNodes(): RingNode[] {
     nodes.push({
       id: `dim-${i}`,
       name: nodeIdToChordName(`dim-${i}`),
-      x: CX + R_DIM * Math.cos(angle),
-      y: CY + R_DIM * Math.sin(angle),
+      x: CX + R_DIM * Math.cos(dimAngle),
+      y: CY + R_DIM * Math.sin(dimAngle),
       r: NODE_R_DIM,
       ring: 'dim',
     });
   }
   return nodes;
-}
-
-const RING_NODES = buildRingNodes();
-
-// Build a lookup: chord name -> RingNode
-const NODE_BY_NAME = new Map<string, RingNode>();
-for (const n of RING_NODES) {
-  NODE_BY_NAME.set(n.name, n);
-}
-
-/** Map a user-entered chord name to its CoF RingNode (if mappable) */
-function chordToRingNode(chordName: string): RingNode | null {
-  const nodeId = chordNameToNodeId(chordName);
-  if (!nodeId) return null;
-  // Find the RingNode with this id
-  return RING_NODES.find(n => n.id === nodeId) || null;
 }
 
 function classifyJamEdge(source: string, target: string): EdgeType[] {
@@ -129,8 +128,21 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps' }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
   const isJamMode = !!graphState;
+
+  // Layout-aware ring nodes — rebuilds when layout prop changes.
+  const ringNodes = useMemo(() => buildRingNodes(layout), [layout]);
+  const nodeByName = useMemo(() => {
+    const m = new Map<string, RingNode>();
+    for (const n of ringNodes) m.set(n.name, n);
+    return m;
+  }, [ringNodes]);
+  const chordToRingNode = useCallback((chordName: string): RingNode | null => {
+    const nodeId = chordNameToNodeId(chordName);
+    if (!nodeId) return null;
+    return ringNodes.find(n => n.id === nodeId) ?? null;
+  }, [ringNodes]);
 
   // --- Walk mode data ---
   const pathNodeNames = useMemo(() => {
@@ -167,7 +179,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       }
     }
     return slots;
-  }, [graphState]);
+  }, [graphState, chordToRingNode]);
 
   // Jam mode: which CoF node ids are in progressions
   const jamActiveNodeIds = useMemo(() => {
@@ -188,7 +200,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       if (ringNode) ids.add(ringNode.id);
     }
     return ids;
-  }, [jamMatchedSet]);
+  }, [jamMatchedSet, chordToRingNode]);
 
   // Jam mode: edges mapped to CoF positions
   const jamEdges = useMemo(() => {
@@ -241,7 +253,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       }
     }
     return Array.from(result.values());
-  }, [graphState]);
+  }, [graphState, chordToRingNode]);
 
   // Jam MIDI: outgoing edge keys from matched nodes
   // Compare via CoF node ID to handle sharps/flats mismatch (e.g. matched "D#" vs edge source "Eb")
@@ -255,7 +267,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       }
     }
     return keys;
-  }, [graphState, jamMatchedNodeIds]);
+  }, [graphState, jamMatchedNodeIds, chordToRingNode]);
 
   // Jam MIDI: next candidate node ids (targets of highlighted edges)
   const jamNextCandidateIds = useMemo(() => {
@@ -271,7 +283,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
       }
     }
     return ids;
-  }, [graphState, jamHighlightedEdgeKeys, jamMatchedNodeIds]);
+  }, [graphState, jamHighlightedEdgeKeys, jamMatchedNodeIds, chordToRingNode]);
 
   const jamHasHighlight = isJamMode && jamMatchedSet.size > 0;
 
@@ -311,8 +323,8 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           }>();
           walkPath.nodes.slice(0, -1).forEach((fromName, i) => {
             const toName = walkPath.nodes[i + 1];
-            const fromNode = NODE_BY_NAME.get(fromName);
-            const toNode = NODE_BY_NAME.get(toName);
+            const fromNode = nodeByName.get(fromName);
+            const toNode = nodeByName.get(toName);
             if (!fromNode || !toNode || fromNode.id === toNode.id) return;
             const key = `${fromNode.id}→${toNode.id}`;
             if (!groups.has(key)) groups.set(key, { fromNode, toNode, steps: [] });
@@ -442,7 +454,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
         })}
 
         {/* Nodes */}
-        {RING_NODES.map((node) => {
+        {ringNodes.map((node) => {
           // Walk mode state
           const inPath = pathNodeNames.has(node.name);
           const isCurrentStep = walkPath

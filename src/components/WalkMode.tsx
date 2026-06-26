@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WalkState } from '../types/index';
 import type { EdgeType } from '../core/chordPathfinder';
 import {
@@ -7,6 +7,9 @@ import {
   getReachableDestinations,
   getCycleEndpoints,
   findExactCyclePath,
+  transposeChord,
+  intervalCycleChords,
+  intervalCycleDestination,
   EDGE_TYPES,
 } from '../core/chordPathfinder';
 import { respellChordName } from '../core/chordDefinitions';
@@ -20,27 +23,36 @@ interface Props {
   walkState: WalkState;
   onWalkStateChange: (state: WalkState) => void;
   noteSpelling?: NoteSpelling;
+  keyShift?: number;
+  onKeyShiftChange?: (shift: number) => void;
 }
 
 const allChords = getAllChordNames();
 
-export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps' }: Props) {
+export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 'sharps', keyShift = 0, onKeyShiftChange }: Props) {
   const { fromChord, toChord, options, path, currentStep, completed, pathsCompleted, repeatCount } = walkState;
   const returnOptions = walkState.returnOptions ?? {};
   const cycleEdgeTypes = walkState.cycleEdgeTypes;
+  const cycleSteps = walkState.cycleSteps;
 
   const [activeTab, setActiveTab] = useState<'out' | 'back'>('out');
   const [hoveredPreset, setHoveredPreset] = useState<{ preset: CyclePreset; rect: DOMRect } | null>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Which destinations are reachable from fromChord.
-  // In cycle mode: only chords reachable by following the outbound edge sequence with direct hops.
+  // In cycle mode (interval): always exactly one destination, determined by arithmetic.
+  // In cycle mode (legacy): BFS over the graph (fallback when steps not available).
   // In manual mode: chords reachable via Dijkstra with the current must-include constraints.
   // null means no filtering (no constraints active).
   const outConstraintKey = EDGE_TYPES.filter(t => options[t] === true).sort().join(',');
   const reachableToChords = useMemo<Set<string> | null>(() => {
     if (!fromChord) return null;
+    if (cycleSteps && cycleSteps.length >= 2) {
+      // Interval arithmetic: always produces exactly one destination from any starting chord.
+      return new Set([intervalCycleDestination(fromChord, cycleSteps)]);
+    }
     if (cycleEdgeTypes && cycleEdgeTypes.length >= 2) {
+      // Legacy BFS fallback (no steps available).
       const outEdges = cycleEdgeTypes.slice(0, -1);
       const closingEdge = cycleEdgeTypes[cycleEdgeTypes.length - 1];
       return getCycleEndpoints(fromChord, outEdges, closingEdge);
@@ -48,7 +60,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     if (!outConstraintKey) return null;
     return getReachableDestinations(fromChord, options);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fromChord, cycleEdgeTypes, outConstraintKey]);
+  }, [fromChord, cycleSteps, cycleEdgeTypes, outConstraintKey]);
 
   const updateAndFindPath = useCallback(
     (updates: Partial<WalkState>) => {
@@ -60,10 +72,40 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
       const cycleEdges = next.cycleEdgeTypes;
 
       if (from && to && from !== to) {
-        if (cycleEdges && cycleEdges.length >= 2) {
-          // Cycle mode: each step is exactly one direct hop of the specified edge type.
-          const outEdges = cycleEdges.slice(0, -1);
-          const closingEdge = cycleEdges[cycleEdges.length - 1];
+        const cycleStepsNow = next.cycleSteps;
+        const cycleEdgesNow = next.cycleEdgeTypes;
+        if (cycleStepsNow && cycleStepsNow.length >= 2 && cycleEdgesNow) {
+          // Interval arithmetic cycle mode: chord sequence computed by arithmetic,
+          // edge labels come from the preset's loop string (always valid EdgeType values).
+          const allChords = intervalCycleChords(from, cycleStepsNow);
+          // allChords = [from, ...intermediates, from]; slice off closing repetition for outbound
+          const outChords = allChords.slice(0, -1); // [from, ..., to]
+          const outEdgeTypes = cycleEdgesNow.slice(0, -1) as EdgeType[];
+          const closingEdge = cycleEdgesNow[cycleEdgesNow.length - 1] as EdgeType;
+
+          // The closing step returns to 'from' for same-quality presets; for
+          // cross-quality presets it may land on a different chord (by arithmetic).
+          // Use the arithmetic result — it's always a valid chord.
+          const to = outChords[outChords.length - 1];
+          const closingStep = cycleStepsNow[cycleStepsNow.length - 1];
+          const closingDest = transposeChord(to, closingStep.semitones, closingStep.quality);
+
+          let chordNames = outChords;
+          let edgeTypes: string[] = [...outEdgeTypes];
+          if (opts.returnTrip) {
+            chordNames = [...outChords, closingDest];
+            edgeTypes = [...outEdgeTypes, closingEdge];
+          }
+          next.path = {
+            chordNames,
+            edgeTypes,
+            explanations: edgeTypes.map(et => EDGE_TYPE_INFO[et as EdgeType]?.label ?? et),
+            totalWeight: edgeTypes.length,
+          };
+        } else if (cycleEdgesNow && cycleEdgesNow.length >= 2) {
+          // Legacy graph BFS cycle mode (no steps — shouldn't happen with migrated presets).
+          const outEdges = cycleEdgesNow.slice(0, -1);
+          const closingEdge = cycleEdgesNow[cycleEdgesNow.length - 1];
           const outPath = findExactCyclePath(from, to, outEdges);
           if (outPath) {
             let chordNames = outPath;
@@ -74,7 +116,6 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
                 chordNames = [...outPath, ...closingPath.slice(1)];
                 edgeTypes = [...outEdges, closingEdge];
               } else {
-                // Return hop doesn't exist — no path
                 next.path = null;
                 next.fromChord = from;
                 next.toChord = to;
@@ -128,6 +169,17 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     [walkState, onWalkStateChange],
   );
 
+  // Auto-select when a preset + from chord leaves exactly one valid destination.
+  useEffect(() => {
+    if (reachableToChords && reachableToChords.size === 1) {
+      const only = [...reachableToChords][0];
+      if (only !== toChord) {
+        updateAndFindPath({ toChord: only });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reachableToChords]);
+
   const handleFromChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => updateAndFindPath({ fromChord: e.target.value }),
     [updateAndFindPath],
@@ -142,9 +194,9 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     (key: EdgeType) => {
       // Manual toggle clears any active cycle preset.
       if (activeTab === 'back') {
-        updateAndFindPath({ cycleEdgeTypes: undefined, returnOptions: { ...returnOptions, [key]: !returnOptions[key] } });
+        updateAndFindPath({ cycleEdgeTypes: undefined, cycleSteps: undefined, returnOptions: { ...returnOptions, [key]: !returnOptions[key] } });
       } else {
-        updateAndFindPath({ cycleEdgeTypes: undefined, options: { ...options, [key]: !options[key] } });
+        updateAndFindPath({ cycleEdgeTypes: undefined, cycleSteps: undefined, options: { ...options, [key]: !options[key] } });
       }
     },
     [updateAndFindPath, options, returnOptions, activeTab],
@@ -167,12 +219,13 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     onWalkStateChange({ ...walkState, currentStep: 0, completed: false });
   }, [walkState, onWalkStateChange]);
 
-  // Apply a cycle preset: store the full edge sequence, enable return trip.
-  // Path construction will use findExactCyclePath — one direct hop per step.
+  // Apply a cycle preset: store the edge labels and interval steps, enable return trip.
+  // Path construction uses interval arithmetic (intervalCycleChords) when steps are present.
   const handlePresetClick = useCallback((preset: CyclePreset) => {
     const edges = preset.loop.split(' ') as EdgeType[];
     updateAndFindPath({
       cycleEdgeTypes: edges,
+      cycleSteps: preset.steps,
       options: { returnTrip: true, endless: options.endless },
       returnOptions: {},
     });
@@ -180,10 +233,11 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
   const handleClearConstraints = useCallback(() => {
     if (activeTab === 'back') {
-      updateAndFindPath({ cycleEdgeTypes: undefined, returnOptions: {} });
+      updateAndFindPath({ cycleEdgeTypes: undefined, cycleSteps: undefined, returnOptions: {} });
     } else {
       updateAndFindPath({
         cycleEdgeTypes: undefined,
+        cycleSteps: undefined,
         options: { returnTrip: options.returnTrip, endless: options.endless },
       });
     }
@@ -200,9 +254,30 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
   return (
     <div className="walk-mode">
+      {onKeyShiftChange && (
+        <div className="walk-section walk-key-shift">
+          <label className="walk-label">Key</label>
+          <div className="key-shift-control">
+            <button
+              className="key-shift-btn"
+              onClick={() => onKeyShiftChange((keyShift + 11) % 12)}
+              title="Shift display down a semitone"
+            >−</button>
+            <span className="key-shift-label">
+              {['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'][keyShift]}
+            </span>
+            <button
+              className="key-shift-btn"
+              onClick={() => onKeyShiftChange((keyShift + 1) % 12)}
+              title="Shift display up a semitone"
+            >+</button>
+          </div>
+        </div>
+      )}
+
       <div className="walk-section">
         <label className="walk-label">From</label>
-        <ChordSelect value={fromChord} onChange={handleFromChange} noteSpelling={noteSpelling} />
+        <ChordSelect value={fromChord} onChange={handleFromChange} noteSpelling={noteSpelling} keyShift={keyShift} />
       </div>
 
       <div className="walk-section">
@@ -212,6 +287,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           onChange={handleToChange}
           noteSpelling={noteSpelling}
           reachable={reachableToChords}
+          keyShift={keyShift}
         />
       </div>
 
@@ -391,13 +467,20 @@ function ChordSelect({
   onChange,
   noteSpelling,
   reachable,
+  keyShift = 0,
 }: {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   noteSpelling: NoteSpelling;
   reachable?: Set<string> | null;
+  keyShift?: number;
 }) {
   const isDisabled = (name: string) => reachable !== null && reachable !== undefined && !reachable.has(name);
+  // option value stays canonical; only the display label is shifted
+  const label = (name: string) => {
+    const shifted = keyShift === 0 ? name : transposeChord(name, keyShift, 'same');
+    return respellChordName(shifted, noteSpelling);
+  };
 
   return (
     <select className="walk-select" value={value} onChange={onChange}>
@@ -405,21 +488,21 @@ function ChordSelect({
       <optgroup label="Major">
         {allChords.major.map(name => (
           <option key={name} value={name} disabled={isDisabled(name)}>
-            {respellChordName(name, noteSpelling)}{isDisabled(name) ? ' ·' : ''}
+            {label(name)}{isDisabled(name) ? ' ·' : ''}
           </option>
         ))}
       </optgroup>
       <optgroup label="Minor">
         {allChords.minor.map(name => (
           <option key={name} value={name} disabled={isDisabled(name)}>
-            {respellChordName(name, noteSpelling)}{isDisabled(name) ? ' ·' : ''}
+            {label(name)}{isDisabled(name) ? ' ·' : ''}
           </option>
         ))}
       </optgroup>
       <optgroup label="Diminished">
         {allChords.dim.map(name => (
           <option key={name} value={name} disabled={isDisabled(name)}>
-            {respellChordName(name, noteSpelling)}{isDisabled(name) ? ' ·' : ''}
+            {label(name)}{isDisabled(name) ? ' ·' : ''}
           </option>
         ))}
       </optgroup>

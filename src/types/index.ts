@@ -1,4 +1,4 @@
-import type { EdgeType } from '../core/chordPathfinder';
+import type { EdgeType, IntervalStep } from '../core/chordPathfinder';
 
 // Chord qualities supported in v1
 export type ChordQuality =
@@ -83,9 +83,15 @@ export interface WalkState {
   /**
    * Active cycle preset edge sequence. Each element is one direct hop of that
    * edge type in order: outbound = edges[0..n-2], closing = edges[n-1].
-   * When set, path construction uses findExactCyclePath instead of Dijkstra.
+   * Kept for label display; path construction now uses cycleSteps when present.
    */
   cycleEdgeTypes?: EdgeType[];
+  /**
+   * Interval shape for the active cycle preset. When present, path construction
+   * uses interval arithmetic (transposeChord) instead of graph BFS/DFS.
+   * steps[0..n-2] are the outbound hops; steps[n-1] is the closing hop.
+   */
+  cycleSteps?: IntervalStep[];
   /** Current path result (null if not yet computed or no path exists) */
   path: WalkPathResult | null;
   /** Index of the step the player is currently on (0 = first chord) */

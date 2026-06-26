@@ -1,4 +1,5 @@
 import { getChordDefinition, noteToPitchClass, NOTE_NAMES } from './chordDefinitions';
+import type { ChordQuality } from '../types/index';
 
 // ---------- Constants ----------
 
@@ -589,6 +590,86 @@ export function findExactCyclePath(from: string, to: string, edgeTypes: EdgeType
   }
 
   return dfs(fromId, 0, [from]);
+}
+
+// ---------- Interval arithmetic ----------
+
+export interface IntervalStep {
+  /** Root movement in semitones (0-11). */
+  semitones: number;
+  /** Target chord quality. 'same' preserves the source chord's quality. */
+  quality: 'same' | 'major' | 'minor' | 'dim';
+}
+
+/** Normalize any ChordQuality to the three triad types used by interval steps. */
+function normalizeTriadQuality(q: ChordQuality): 'major' | 'minor' | 'dim' {
+  if (q === 'minor' || q === 'min7') return 'minor';
+  if (q === 'dim') return 'dim';
+  return 'major';
+}
+
+/**
+ * Transpose a chord by semitones and set its quality.
+ * 'same' preserves the quality of the source chord.
+ * Always returns a canonical sharp-spelling chord name.
+ */
+export function transposeChord(chord: string, semitones: number, quality: IntervalStep['quality']): string {
+  const def = getChordDefinition(chord);
+  const rootPc = noteToPitchClass(def.root);
+  const newPc = (rootPc + semitones) % 12;
+  const newRoot = NOTE_NAMES[newPc];
+  const baseQ = normalizeTriadQuality(def.quality);
+  const targetQ = quality === 'same' ? baseQ : quality;
+  const suffix = targetQ === 'major' ? '' : targetQ === 'minor' ? 'm' : 'dim';
+  return newRoot + suffix;
+}
+
+/**
+ * Compute the IntervalStep sequence from a space-separated chord list.
+ * Used to migrate cycle presets from edge-type sequences to interval shapes.
+ * e.g. "E A E" → [{semitones:5, quality:'same'}, {semitones:7, quality:'same'}]
+ */
+export function computeIntervalSteps(exampleChords: string): IntervalStep[] {
+  const chords = exampleChords.split(' ');
+  const steps: IntervalStep[] = [];
+  for (let i = 0; i < chords.length - 1; i++) {
+    const fromDef = getChordDefinition(chords[i]);
+    const toDef = getChordDefinition(chords[i + 1]);
+    const fromPc = noteToPitchClass(fromDef.root);
+    const toPc = noteToPitchClass(toDef.root);
+    const semitones = (toPc - fromPc + 12) % 12;
+    const fromQ = normalizeTriadQuality(fromDef.quality);
+    const toQ = normalizeTriadQuality(toDef.quality);
+    steps.push({ semitones, quality: fromQ === toQ ? 'same' : toQ });
+  }
+  return steps;
+}
+
+/**
+ * Apply all interval steps starting from `from` and return the full chord
+ * sequence including the closing return: [from, c1, c2, ..., from].
+ * For a valid cycle preset, the first and last elements will be equal.
+ */
+export function intervalCycleChords(from: string, steps: IntervalStep[]): string[] {
+  const chords: string[] = [from];
+  let current = from;
+  for (const step of steps) {
+    current = transposeChord(current, step.semitones, step.quality);
+    chords.push(current);
+  }
+  return chords;
+}
+
+/**
+ * Return the destination chord for a cycle preset starting from `from`.
+ * Applies steps[0..n-2] (the closing step is not included).
+ */
+export function intervalCycleDestination(from: string, steps: IntervalStep[]): string {
+  let current = from;
+  for (const step of steps.slice(0, -1)) {
+    current = transposeChord(current, step.semitones, step.quality);
+  }
+  return current;
 }
 
 /**
