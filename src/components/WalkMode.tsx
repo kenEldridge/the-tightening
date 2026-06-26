@@ -83,17 +83,10 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           const outEdgeTypes = cycleEdgesNow.slice(0, -1) as EdgeType[];
           const closingEdge = cycleEdgesNow[cycleEdgesNow.length - 1] as EdgeType;
 
-          // The closing step returns to 'from' for same-quality presets; for
-          // cross-quality presets it may land on a different chord (by arithmetic).
-          // Use the arithmetic result — it's always a valid chord.
-          const to = outChords[outChords.length - 1];
-          const closingStep = cycleStepsNow[cycleStepsNow.length - 1];
-          const closingDest = transposeChord(to, closingStep.semitones, closingStep.quality);
-
           let chordNames = outChords;
           let edgeTypes: string[] = [...outEdgeTypes];
           if (opts.returnTrip) {
-            chordNames = [...outChords, closingDest];
+            chordNames = [...outChords, from];
             edgeTypes = [...outEdgeTypes, closingEdge];
           }
           next.path = {
