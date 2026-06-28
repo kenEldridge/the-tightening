@@ -184,6 +184,92 @@ ipcMain.on('file-write', (_event, filePath: string, data: string) => {
   }
 });
 
+// ── Recording pipeline ──────────────────────────────────────────────────────
+
+const activeWriteStreams = new Map<string, ReturnType<typeof fs.createWriteStream>>();
+
+ipcMain.handle('request-recording-paths', async (_event, ts: string, saveDataJson: string) => {
+  if (!mainWindow) return null;
+  // Ask user to pick a parent folder; we create the recording sub-directory inside it.
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose folder to save recording',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+
+  const recordingDir = path.join(result.filePaths[0], `recording_${ts}`);
+  fs.mkdirSync(recordingDir, { recursive: true });
+
+  // Write the cwalk snapshot immediately — no IPC round-trip needed for JSON.
+  fs.writeFileSync(path.join(recordingDir, 'recording.cwalk.json'), saveDataJson, 'utf-8');
+
+  return {
+    polishedPath: path.join(recordingDir, 'recording.wav'),
+    midiPath:     path.join(recordingDir, 'recording.mid'),
+  };
+});
+
+ipcMain.handle('open-write-stream', (_event, filePath: string) => {
+  const ws = fs.createWriteStream(filePath + '.part');
+  ws.on('error', err => console.error('[recording] write stream error:', filePath, err));
+  activeWriteStreams.set(filePath, ws);
+});
+
+ipcMain.on('write-stream-chunk', (_event, filePath: string, chunk: Buffer) => {
+  activeWriteStreams.get(filePath)?.write(chunk);
+});
+
+ipcMain.handle('close-write-stream', (_event, filePath: string) => {
+  const ws = activeWriteStreams.get(filePath);
+  if (!ws) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    ws.end(() => {
+      activeWriteStreams.delete(filePath);
+      try {
+        fs.renameSync(filePath + '.part', filePath);
+        resolve();
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+});
+
+ipcMain.handle('save-midi', (_event, filePath: string, data: Buffer) => {
+  fs.writeFileSync(filePath, data);
+});
+
+ipcMain.handle('read-file-binary', (_event, filePath: string) => {
+  return fs.readFileSync(filePath);
+});
+
+ipcMain.handle('open-recording', async () => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Open Recording',
+    properties: ['openDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+
+  const dir = result.filePaths[0];
+  let files: string[];
+  try { files = fs.readdirSync(dir); } catch { return null; }
+
+  const find = (ext: string) => {
+    const f = files.find(n => n.toLowerCase().endsWith(ext.toLowerCase()));
+    return f ? path.join(dir, f) : null;
+  };
+
+  const audioPath = find('.wav') ?? find('.mp3') ?? find('.flac') ?? find('.ogg');
+  if (!audioPath) return null;
+
+  const midiPath   = find('.mid') ?? find('.midi');
+  const cwalkPath  = find('.cwalk.json');
+  const cwalkData  = cwalkPath ? fs.readFileSync(cwalkPath, 'utf-8') : null;
+
+  return { audioPath, midiPath, cwalkData };
+});
+
 const createWindow = () => {
   console.log('[Main] Creating main window');
 
@@ -210,6 +296,8 @@ const createWindow = () => {
   }
 
   mainWindow.on('closed', () => {
+    for (const ws of activeWriteStreams.values()) ws.destroy();
+    activeWriteStreams.clear();
     console.log('[Main] Main window closed');
     mainWindow = null;
   });

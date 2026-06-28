@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
@@ -38,4 +38,32 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeAllListeners('menu-open');
     ipcRenderer.removeAllListeners('menu-save');
   },
+
+  // ── Recording pipeline ──────────────────────────────────────────────────
+
+  requestRecordingPaths: (ts: string, saveDataJson: string) =>
+    ipcRenderer.invoke('request-recording-paths', ts, saveDataJson),
+
+  openWriteStream: (filePath: string) =>
+    ipcRenderer.invoke('open-write-stream', filePath),
+
+  writeStreamChunk: (filePath: string, chunk: Uint8Array) =>
+    ipcRenderer.send('write-stream-chunk', filePath, chunk),
+
+  closeWriteStream: (filePath: string) =>
+    ipcRenderer.invoke('close-write-stream', filePath),
+
+  saveMidi: (filePath: string, data: Uint8Array) =>
+    ipcRenderer.invoke('save-midi', filePath, data),
+
+  // ── Replay ─────────────────────────────────────────────────────────────
+
+  getFilePath: (file: File) =>
+    webUtils.getPathForFile(file),
+
+  readFileBinary: (filePath: string) =>
+    ipcRenderer.invoke('read-file-binary', filePath),
+
+  openRecording: () =>
+    ipcRenderer.invoke('open-recording'),
 });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { GraphState, SaveData, AppMode, WalkState } from './types/index';
+import type { GraphState, SaveData, AppMode, WalkState, MidiEvent } from './types/index';
 import { parseChordInput } from './core/chordParser';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
 import { detectChords } from './core/chordDetection';
@@ -13,6 +13,7 @@ import type { EdgeType } from './core/chordPathfinder';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
+import ReplayMode from './components/ReplayMode';
 import DidYouKnow from './components/DidYouKnow';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
@@ -20,7 +21,7 @@ export default function App() {
   const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
   const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
   const [matchedChords, setMatchedChords] = useState<string[]>([]);
-  const [mode, setMode] = useState<AppMode>('home');
+  const [mode, setMode] = useState<AppMode>('jam');
   const [walkState, setWalkState] = useState<WalkState>({
     fromChord: '',
     toChord: '',
@@ -33,9 +34,13 @@ export default function App() {
     repeatCount: 1,
     currentPathCompletions: 0,
   });
+  const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
   const [graphExpanded, setGraphExpanded] = useState(false);
+  const [replayGraphState, setReplayGraphState] = useState<GraphState | null>(null);
+  const [replayWalkPath, setReplayWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
+  const [pendingReplay, setPendingReplay] = useState<{ audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string; autoPlay: boolean } | null>(null);
 
   useEffect(() => {
     window.electronAPI?.setMenuBarVisible(!graphExpanded);
@@ -60,6 +65,76 @@ export default function App() {
   const walkStateRef = useRef(walkState);
   walkStateRef.current = walkState;
 
+  // MIDI note handlers — lifted out of useEffect so Replay can share them
+  const handleNoteOn = useCallback((note: number) => {
+    setHeldNotes(prev => { const n = new Set(prev); n.add(note); return n; });
+  }, []);
+
+  const handleNoteOff = useCallback((note: number) => {
+    setHeldNotes(prev => { const n = new Set(prev); n.delete(note); return n; });
+  }, []);
+
+  // MIDI capture refs (written by onMidiMessage, frozen by onRecordingStop)
+  const midiEventsRef = useRef<MidiEvent[]>([]);
+  const isRecordingRef = useRef(false);
+  const recordingStartRef = useRef(0);
+
+  const onRecordingStart = useCallback((startMs: number) => {
+    midiEventsRef.current = [];
+    recordingStartRef.current = startMs;
+    isRecordingRef.current = true;
+  }, []);
+
+  const onRecordingStop = useCallback((): MidiEvent[] => {
+    isRecordingRef.current = false;
+    const frozen = [...midiEventsRef.current];
+    midiEventsRef.current = [];
+    return frozen;
+  }, []);
+
+  const getSaveData = useCallback((): string => {
+    return JSON.stringify(createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current));
+  }, []);
+
+  // Clear pendingReplay when the user navigates away from Replay manually
+  useEffect(() => {
+    if (mode !== 'replay') setPendingReplay(null);
+  }, [mode]);
+
+  const onPlayRecording = useCallback((data: { audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string }) => {
+    // Parse cwalk so the circle reflects the recording's state immediately on mount
+    try {
+      const saveData = JSON.parse(data.cwalkData) as SaveData;
+      if (saveData.walkPath) {
+        setReplayWalkPath({ nodes: saveData.walkPath.nodes, edgeTypes: saveData.walkPath.edgeTypes as EdgeType[] });
+        setReplayGraphState(null);
+      } else {
+        setReplayGraphState(loadFromSaveData(saveData.progressions, undefined));
+        setReplayWalkPath(null);
+      }
+    } catch {
+      setReplayGraphState(null);
+      setReplayWalkPath(null);
+    }
+    setPendingReplay({ ...data, autoPlay: true });
+    setMode('replay');
+  }, []);
+
+  const onReplayLoaded = useCallback((data: SaveData | null) => {
+    if (!data) {
+      setReplayGraphState(null);
+      setReplayWalkPath(null);
+      return;
+    }
+    if (data.walkPath) {
+      setReplayWalkPath({ nodes: data.walkPath.nodes, edgeTypes: data.walkPath.edgeTypes as EdgeType[] });
+      setReplayGraphState(null);
+    } else {
+      setReplayGraphState(loadFromSaveData(data.progressions, undefined));
+      setReplayWalkPath(null);
+    }
+  }, []);
+
   // WebMIDI setup
   useEffect(() => {
     if (!navigator.requestMIDIAccess) {
@@ -69,29 +144,35 @@ export default function App() {
 
     let midiAccess: MIDIAccess | null = null;
 
-    const handleNoteOn = (note: number) => {
-      setHeldNotes(prev => {
-        const next = new Set(prev);
-        next.add(note);
-        return next;
-      });
-    };
-
-    const handleNoteOff = (note: number) => {
-      setHeldNotes(prev => {
-        const next = new Set(prev);
-        next.delete(note);
-        return next;
-      });
-    };
-
     const onMidiMessage = (e: MIDIMessageEvent) => {
       window.electronAPI?.midiActivity();
       const [status, data1, data2] = e.data!;
-      if (status >= 0x90 && status <= 0x9F && data2 > 0) {
+      const msgType = status & 0xF0;
+      const isNoteOn = msgType === 0x90 && data2 > 0;
+      const isNoteOff = msgType === 0x80 || (msgType === 0x90 && data2 === 0);
+      const isSustain = msgType === 0xB0 && data1 === 64;
+
+      if (isNoteOn) {
         handleNoteOn(data1);
-      } else if ((status >= 0x80 && status <= 0x8F) || (status >= 0x90 && status <= 0x9F && data2 === 0)) {
+        if (isRecordingRef.current) {
+          midiEventsRef.current.push({
+            type: 'noteOn', note: data1, velocity: data2,
+            channel: status & 0x0F, offsetMs: e.timeStamp - recordingStartRef.current,
+          });
+        }
+      } else if (isNoteOff) {
         handleNoteOff(data1);
+        if (isRecordingRef.current) {
+          midiEventsRef.current.push({
+            type: 'noteOff', note: data1, velocity: 0,
+            channel: status & 0x0F, offsetMs: e.timeStamp - recordingStartRef.current,
+          });
+        }
+      } else if (isSustain && isRecordingRef.current) {
+        midiEventsRef.current.push({
+          type: 'cc', note: 64, velocity: data2,
+          channel: status & 0x0F, offsetMs: e.timeStamp - recordingStartRef.current,
+        });
       }
     };
 
@@ -127,7 +208,7 @@ export default function App() {
         midiAccess.onstatechange = null;
       }
     };
-  }, []);
+  }, [handleNoteOn, handleNoteOff]);
 
   // File menu events (New / Open / Save)
   useEffect(() => {
@@ -136,6 +217,7 @@ export default function App() {
 
     api.onMenuNew(() => {
       setGraphState(emptyGraphState());
+      setFrozenWalkPath(null);
       setMode('jam');
     });
 
@@ -146,6 +228,10 @@ export default function App() {
           nodePositions = new Map(Object.entries(data.nodePositions));
         }
         setGraphState(loadFromSaveData(data.progressions, nodePositions));
+        setFrozenWalkPath(data.walkPath
+          ? { nodes: data.walkPath.nodes, edgeTypes: data.walkPath.edgeTypes as EdgeType[] }
+          : null
+        );
         setMode('jam');
       }
     });
@@ -310,52 +396,10 @@ export default function App() {
     ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
     : undefined;
 
-  if (mode === 'home') {
-    return (
-      <div className="app">
-        <div className="app-header">
-          <h1>Chord Walk</h1>
-          <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
-        </div>
-        <div className="landing">
-          <div className="landing-hero">
-            <p className="landing-subtitle">MIDI chord exploration</p>
-          </div>
-          <div className="landing-cards">
-            <button className="landing-card" onClick={() => setMode('jam')}>
-              <div className="landing-card-icon">&#9835;</div>
-              <h2>Jam</h2>
-              <p>Build chord progressions and see them on the Circle of Fifths. Play chords on MIDI and watch them light up in real time.</p>
-            </button>
-            <button className="landing-card" onClick={() => setMode('walk')}>
-              <div className="landing-card-icon">&#10132;</div>
-              <h2>Walk</h2>
-              <p>Pick two chords and find the shortest harmonic path between them. Then play the path on MIDI to practice the voice leading.</p>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={`app${graphExpanded ? ' graph-expanded' : ''}`}>
       <div className="app-header">
-        <h1 className="app-title-link" onClick={() => setMode('home')}>Chord Walk</h1>
-        <div className="mode-toggle">
-          <button
-            className={`mode-btn ${mode === 'jam' ? 'mode-btn-active' : ''}`}
-            onClick={() => setMode('jam')}
-          >
-            Jam
-          </button>
-          <button
-            className={`mode-btn ${mode === 'walk' ? 'mode-btn-active' : ''}`}
-            onClick={() => setMode('walk')}
-          >
-            Walk
-          </button>
-        </div>
+        <h1>Chord Walk</h1>
         <select
           className="spelling-select"
           value={noteSpelling}
@@ -375,27 +419,44 @@ export default function App() {
       </div>
       <div className="app-body">
         <div className="sidebar">
-          {mode === 'jam' ? (
-            <>
-              <ProgressionInput
-                onAdd={handleAddProgression}
-                onRemove={handleRemoveProgression}
-                onEdit={handleEditProgression}
-                progressions={graphState.progressions}
-              />
-            </>
-          ) : (
-            <>
-              <WalkMode
-                walkState={walkState}
-                onWalkStateChange={setWalkState}
-                noteSpelling={noteSpelling}
-              />
-            </>
+          <div className="mode-toggle sidebar-tabs">
+            <button className={`mode-btn ${mode === 'jam'    ? 'mode-btn-active' : ''}`} onClick={() => setMode('jam')}>Jam</button>
+            <button className={`mode-btn ${mode === 'walk'   ? 'mode-btn-active' : ''}`} onClick={() => setMode('walk')}>Walk</button>
+            <button className={`mode-btn ${mode === 'replay' ? 'mode-btn-active' : ''}`} onClick={() => setMode('replay')}>Replay</button>
+          </div>
+          {mode === 'jam' && (
+            <ProgressionInput
+              onAdd={handleAddProgression}
+              onRemove={handleRemoveProgression}
+              onEdit={handleEditProgression}
+              progressions={graphState.progressions}
+            />
+          )}
+          {mode === 'walk' && (
+            <WalkMode
+              walkState={walkState}
+              onWalkStateChange={setWalkState}
+              noteSpelling={noteSpelling}
+            />
+          )}
+          {mode === 'replay' && (
+            <ReplayMode
+              handleNoteOn={handleNoteOn}
+              handleNoteOff={handleNoteOff}
+              onLoaded={onReplayLoaded}
+              autoLoad={pendingReplay}
+            />
           )}
           <EdgeTypeLegend />
           <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
-          <AudioRecorder />
+          {mode !== 'replay' && (
+            <AudioRecorder
+              onRecordingStart={onRecordingStart}
+              onRecordingStop={onRecordingStop}
+              getSaveData={getSaveData}
+              onPlayRecording={onPlayRecording}
+            />
+          )}
           <DidYouKnow />
         </div>
         <div className="graph-area">
@@ -410,17 +471,43 @@ export default function App() {
               <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 1h4.5v1.5H2.5V5H1V1zm9.5 0H15v4h-1.5V2.5H10.5V1zM1 11h1.5v2.5H5.5V15H1v-4zm13.5 0V15H11v-1.5h2.5V11H14.5z"/></svg>
             )}
           </button>
-          {mode === 'jam' ? (
+          {mode === 'replay' ? (
+            // Replay: drive the circle from the cwalk saved with the recording,
+            // not the current session state.
+            replayWalkPath ? (
+              <CircleOfFifths
+                walkPath={{ nodes: replayWalkPath.nodes, edgeTypes: replayWalkPath.edgeTypes, currentStep: -1 }}
+                matchedChords={matchedChords}
+                noteSpelling={noteSpelling}
+                layout={circleLayout}
+              />
+            ) : (
+              <CircleOfFifths
+                graphState={replayGraphState ?? undefined}
+                jamMatchedChords={replayGraphState ? matchedChords : undefined}
+                matchedChords={matchedChords}
+                noteSpelling={noteSpelling}
+                layout={circleLayout}
+              />
+            )
+          ) : frozenWalkPath ? (
             <CircleOfFifths
-              graphState={graphState}
-              jamMatchedChords={matchedChords}
+              walkPath={{ nodes: frozenWalkPath.nodes, edgeTypes: frozenWalkPath.edgeTypes, currentStep: 0 }}
+              matchedChords={matchedChords}
+              noteSpelling={noteSpelling}
+              layout={circleLayout}
+            />
+          ) : walkPath ? (
+            <CircleOfFifths
+              walkPath={walkPath}
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
           ) : (
             <CircleOfFifths
-              walkPath={walkPath}
+              graphState={graphState}
+              jamMatchedChords={matchedChords}
               matchedChords={matchedChords}
               noteSpelling={noteSpelling}
               layout={circleLayout}
@@ -448,6 +535,10 @@ function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkSt
         chords: walkState.path.chordNames,
         color: '#58a6ff',
       }],
+      walkPath: {
+        nodes: walkState.path.chordNames,
+        edgeTypes: walkState.path.edgeTypes,
+      },
     };
   }
 

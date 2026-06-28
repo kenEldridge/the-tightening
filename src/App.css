@@ -173,92 +173,7 @@ body {
   color: var(--text-primary);
 }
 
-/* ── Landing page ── */
-
-.landing {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
-  padding: 40px;
-}
-
-.landing-hero {
-  text-align: center;
-}
-
-.landing-subtitle {
-  font-size: 1rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.landing-cards {
-  display: flex;
-  gap: 24px;
-  max-width: 700px;
-  width: 100%;
-}
-
-.landing-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 32px 24px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  text-align: center;
-  color: var(--text-primary);
-  font-family: inherit;
-}
-
-.landing-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 20px rgba(88, 166, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.landing-card-icon {
-  font-size: 2.5rem;
-  line-height: 1;
-  opacity: 0.8;
-}
-
-.landing-card h2 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.landing-card p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
-  overflow-wrap: break-word;
-  max-width: 100%;
-}
-
-/* ── App title as home link ── */
-
-.app-title-link {
-  cursor: pointer;
-  transition: color 0.15s;
-}
-
-.app-title-link:hover {
-  color: var(--accent);
-}
-
-/* ── Mode toggle ── */
+/* ── Mode toggle ──*/
 
 .mode-toggle {
   display: flex;
@@ -287,6 +202,16 @@ body {
 .mode-btn-active {
   color: #fff;
   background: var(--accent);
+}
+
+.sidebar-tabs {
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.sidebar-tabs .mode-btn {
+  flex: 1;
+  text-align: center;
 }
 
 .spelling-select {
@@ -918,33 +843,10 @@ body {
     gap: 6px;
   }
 
-  /* Drop the spelling toggle on narrow screens */
   .spelling-select {
     display: none;
   }
 
-  /* Landing: stack cards vertically */
-  .landing {
-    padding: 24px 16px;
-    gap: 20px;
-    align-items: stretch;
-  }
-
-  .landing-cards {
-    flex-direction: column;
-    max-width: 100%;
-  }
-
-  .landing-card {
-    padding: 20px 16px;
-    gap: 8px;
-  }
-
-  .landing-card-icon {
-    font-size: 1.8rem;
-  }
-
-  /* App body: narrower sidebar so the circle still has room */
   .sidebar {
     width: 200px;
     padding: 8px;
@@ -969,4 +871,170 @@ body {
 
 .walk-current-pulse {
   animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* ── Recorder extended states ── */
+
+.recorder-status {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+.recorder-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.recorder-metrics-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.recorder-metrics-label {
+  color: var(--text-secondary);
+}
+
+.recorder-metrics-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.recorder-players {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recorder-player-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.recorder-new-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.recorder-new-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* ── Replay mode sidebar ── */
+
+.replay-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.replay-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.replay-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.replay-file-btn {
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.replay-file-btn:hover {
+  border-color: var(--accent);
+}
+
+.replay-file-hint {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.replay-transport {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.replay-btn {
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.replay-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.replay-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.replay-btn-play {
+  color: #2ecc71;
+  border-color: #2ecc71;
+}
+
+.replay-btn-play:hover:not(:disabled) {
+  color: #2ecc71;
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.1);
+}
+
+.replay-time {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.replay-scrub {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.replay-info {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
 }

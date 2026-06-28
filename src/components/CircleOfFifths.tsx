@@ -29,6 +29,7 @@ interface Props {
   matchedChords: string[];
   graphState?: GraphState;
   jamMatchedChords?: string[];
+  replayMatchedChords?: string[];  // replay: draw live edges between detected chords
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
 }
@@ -128,7 +129,7 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
   const isJamMode = !!graphState;
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
@@ -287,6 +288,39 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
 
   const jamHasHighlight = isJamMode && jamMatchedSet.size > 0;
 
+  // Replay mode: live edges between every pair of currently detected chords.
+  const replayEdges = useMemo(() => {
+    if (!replayMatchedChords || replayMatchedChords.length < 2) return [];
+    const result: {
+      from: RingNode; to: RingNode;
+      color: string; edgeTypes: EdgeType[];
+      isBidirectional: boolean;
+    }[] = [];
+    const seen = new Set<string>();
+    for (let i = 0; i < replayMatchedChords.length; i++) {
+      for (let j = i + 1; j < replayMatchedChords.length; j++) {
+        const a = replayMatchedChords[i];
+        const b = replayMatchedChords[j];
+        const fromNode = chordToRingNode(a);
+        const toNode = chordToRingNode(b);
+        if (!fromNode || !toNode || fromNode.id === toNode.id) continue;
+        const pairKey = [fromNode.id, toNode.id].sort().join('<->');
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+        const typesAB = classifyJamEdge(a, b);
+        const typesBA = classifyJamEdge(b, a);
+        const allTypes = Array.from(new Set([...typesAB, ...typesBA]));
+        const color = edgeTypeColor(mostDissonantEdgeType(allTypes) ?? undefined);
+        result.push({
+          from: fromNode, to: toNode,
+          color, edgeTypes: allTypes,
+          isBidirectional: typesAB.length > 0 && typesBA.length > 0,
+        });
+      }
+    }
+    return result;
+  }, [replayMatchedChords, chordToRingNode]);
+
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <svg viewBox="0 0 600 600" style={{ width: '100%', height: '100%' }}>
@@ -406,6 +440,36 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             );
           });
         })()}
+
+        {/* Replay mode: live edges between currently detected chord pairs */}
+        {replayEdges.map((edge, idx) => {
+          const dx = edge.to.x - edge.from.x;
+          const dy = edge.to.y - edge.from.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len === 0) return null;
+          const ux = dx / len;
+          const uy = dy / len;
+          const pad = 4;
+          const x1 = edge.from.x + ux * (edge.from.r + pad);
+          const y1 = edge.from.y + uy * (edge.from.r + pad);
+          const x2 = edge.to.x - ux * (edge.to.r + pad);
+          const y2 = edge.to.y - uy * (edge.to.r + pad);
+          if (edge.from.r + edge.to.r + pad * 2 >= len) return null;
+          return (
+            <line
+              key={`replay-edge-${idx}`}
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={edge.color}
+              strokeWidth={3}
+              opacity={0.9}
+              strokeLinecap="round"
+              markerStart={edge.isBidirectional ? 'url(#cof-arrow)' : undefined}
+              markerEnd="url(#cof-arrow)"
+            >
+              <title>{`${edge.from.name} ${edge.isBidirectional ? '<->' : '->'} ${edge.to.name}\n${edgeTypesTitle(edge.edgeTypes)}`}</title>
+            </line>
+          );
+        })}
 
         {/* Jam mode: Progression edges (clipped to node borders) */}
         {isJamMode && jamEdges.map((edge) => {

@@ -65,10 +65,19 @@ export interface SaveData {
   version: 1;
   progressions: { name: string; chords: string[]; color: string }[];
   nodePositions?: Record<string, { x: number; y: number }>;
+  walkPath?: { nodes: string[]; edgeTypes: string[] };
 }
 
 // Walk mode types
-export type AppMode = 'home' | 'jam' | 'walk';
+export type AppMode = 'jam' | 'walk' | 'replay';
+
+export interface MidiEvent {
+  type: 'noteOn' | 'noteOff' | 'cc';
+  note: number;     // MIDI note number, or CC number (64 = sustain)
+  velocity: number; // velocity (noteOn/noteOff) or CC value
+  channel: number;  // 0–15
+  offsetMs: number; // ms since recording start
+}
 
 export interface WalkState {
   fromChord: string;
@@ -124,6 +133,18 @@ export interface ElectronAPI {
   midiActivity: () => void;
   setMenuBarVisible: (visible: boolean) => void;
   removeMenuListeners: () => void;
+
+  // Recording pipeline
+  requestRecordingPaths: (ts: string, saveDataJson: string) => Promise<{ polishedPath: string; midiPath: string } | null>;
+  openWriteStream: (filePath: string) => Promise<void>;
+  writeStreamChunk: (filePath: string, chunk: Uint8Array) => void;
+  closeWriteStream: (filePath: string) => Promise<void>;
+  saveMidi: (filePath: string, data: Uint8Array) => Promise<void>;
+
+  // Replay
+  getFilePath: (file: File) => string;
+  readFileBinary: (filePath: string) => Promise<Uint8Array>;
+  openRecording: () => Promise<{ audioPath: string; midiPath: string | null; cwalkData: string | null } | null>;
 }
 
 declare global {
