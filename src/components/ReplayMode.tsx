@@ -8,6 +8,7 @@ interface ReplayModeProps {
   handleNoteOff: (note: number) => void;
   onLoaded?: (data: SaveData | null) => void;
   autoLoad?: (SavedRecordingData & { autoPlay: boolean }) | null;
+  onTimeUpdate?: (timeMs: number) => void;
 }
 
 interface LoadedRecording {
@@ -17,7 +18,7 @@ interface LoadedRecording {
   midiEventCount: number;
 }
 
-export default function ReplayMode({ handleNoteOn, handleNoteOff, onLoaded, autoLoad }: ReplayModeProps) {
+export default function ReplayMode({ handleNoteOn, handleNoteOff, onLoaded, autoLoad, onTimeUpdate }: ReplayModeProps) {
   const [recording, setRecording] = useState<LoadedRecording | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -35,6 +36,8 @@ export default function ReplayMode({ handleNoteOn, handleNoteOff, onLoaded, auto
   handleNoteOffRef.current = handleNoteOff;
   const onLoadedRef = useRef(onLoaded);
   onLoadedRef.current = onLoaded;
+  const onTimeUpdateRef = useRef(onTimeUpdate);
+  onTimeUpdateRef.current = onTimeUpdate;
 
   const allNotesOff = useCallback(() => {
     for (let n = 0; n < 128; n++) handleNoteOffRef.current(n);
@@ -53,6 +56,7 @@ export default function ReplayMode({ handleNoteOn, handleNoteOff, onLoaded, auto
       eventIndexRef.current++;
     }
     setCurrentTime(audio.currentTime);
+    onTimeUpdateRef.current?.(nowMs);
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 

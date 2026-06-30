@@ -43,6 +43,9 @@ export default function App() {
   const [graphExpanded, setGraphExpanded] = useState(false);
   const [replayGraphState, setReplayGraphState] = useState<GraphState | null>(null);
   const [replayWalkPath, setReplayWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
+  const [replayStep, setReplayStep] = useState(0);
+  const replayWalkHistoryRef = useRef<{ startMs: number; nodes: string[]; edgeTypes: EdgeType[] }[] | null>(null);
+  const activeReplayEntryRef = useRef<{ startMs: number; nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [pendingReplay, setPendingReplay] = useState<{ audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string; autoPlay: boolean } | null>(null);
 
   useEffect(() => {
@@ -86,11 +89,21 @@ export default function App() {
   const midiEventsRef = useRef<MidiEvent[]>([]);
   const isRecordingRef = useRef(false);
   const recordingStartRef = useRef(0);
+  const walkHistoryRef = useRef<{ startMs: number; nodes: string[]; edgeTypes: EdgeType[] }[]>([]);
 
   const onRecordingStart = useCallback((startMs: number) => {
     midiEventsRef.current = [];
     recordingStartRef.current = startMs;
     isRecordingRef.current = true;
+    walkHistoryRef.current = [];
+    // Capture the walk path that's already active when recording starts
+    if (walkStateRef.current.path) {
+      walkHistoryRef.current.push({
+        startMs: 0,
+        nodes: [...walkStateRef.current.path.chordNames],
+        edgeTypes: [...walkStateRef.current.path.edgeTypes as EdgeType[]],
+      });
+    }
   }, []);
 
   const onRecordingStop = useCallback((): MidiEvent[] => {
@@ -100,8 +113,22 @@ export default function App() {
     return frozen;
   }, []);
 
+  // Capture each new walk path that appears during recording
+  useEffect(() => {
+    if (!isRecordingRef.current || !walkState.path) return;
+    const last = walkHistoryRef.current[walkHistoryRef.current.length - 1];
+    const nodes = walkState.path.chordNames;
+    if (last && last.nodes.join(',') === nodes.join(',')) return;
+    const offsetMs = performance.now() - recordingStartRef.current;
+    walkHistoryRef.current.push({
+      startMs: offsetMs,
+      nodes: [...nodes],
+      edgeTypes: [...walkState.path.edgeTypes as EdgeType[]],
+    });
+  }, [walkState.path]);
+
   const getSaveData = useCallback((): string => {
-    return JSON.stringify(createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current));
+    return JSON.stringify(createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current, walkHistoryRef.current));
   }, []);
 
   const handleNew = useCallback(() => {
@@ -121,6 +148,7 @@ export default function App() {
     setFrozenWalkPath(null);
     setReplayGraphState(null);
     setReplayWalkPath(null);
+    setReplayStep(0);
     setPendingReplay(null);
   }, []);
 
@@ -134,39 +162,74 @@ export default function App() {
     if (walkState.path) setFrozenWalkPath(null);
   }, [walkState.path]);
 
+  const applyReplaySaveData = useCallback((saveData: SaveData) => {
+    const history = saveData.walkHistory?.length
+      ? saveData.walkHistory.map(e => ({ ...e, edgeTypes: e.edgeTypes as EdgeType[] }))
+      : null;
+    replayWalkHistoryRef.current = history;
+    activeReplayEntryRef.current = null;
+
+    const firstEntry = history?.[0] ?? null;
+    const initialPath = firstEntry
+      ? { nodes: firstEntry.nodes, edgeTypes: firstEntry.edgeTypes }
+      : saveData.walkPath
+        ? { nodes: saveData.walkPath.nodes, edgeTypes: saveData.walkPath.edgeTypes as EdgeType[] }
+        : null;
+
+    if (initialPath) {
+      setReplayWalkPath(initialPath);
+      setReplayGraphState(null);
+    } else {
+      setReplayGraphState(loadFromSaveData(saveData.progressions, undefined));
+      setReplayWalkPath(null);
+    }
+    setReplayStep(0);
+  }, []);
+
+  const onReplayTimeUpdate = useCallback((timeMs: number) => {
+    const history = replayWalkHistoryRef.current;
+    if (!history || history.length <= 1) return;
+    let target = history[0];
+    for (const entry of history) {
+      if (entry.startMs <= timeMs) target = entry;
+      else break;
+    }
+    if (target === activeReplayEntryRef.current) return;
+    activeReplayEntryRef.current = target;
+    setReplayWalkPath({ nodes: target.nodes, edgeTypes: target.edgeTypes });
+    setReplayStep(0);
+  }, []);
+
   const onPlayRecording = useCallback((data: { audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string }) => {
-    // Parse cwalk so the circle reflects the recording's state immediately on mount
     try {
-      const saveData = JSON.parse(data.cwalkData) as SaveData;
-      if (saveData.walkPath) {
-        setReplayWalkPath({ nodes: saveData.walkPath.nodes, edgeTypes: saveData.walkPath.edgeTypes as EdgeType[] });
-        setReplayGraphState(null);
-      } else {
-        setReplayGraphState(loadFromSaveData(saveData.progressions, undefined));
-        setReplayWalkPath(null);
-      }
+      applyReplaySaveData(JSON.parse(data.cwalkData) as SaveData);
     } catch {
       setReplayGraphState(null);
       setReplayWalkPath(null);
+      replayWalkHistoryRef.current = null;
     }
     setPendingReplay({ ...data, autoPlay: true });
     setMode('replay');
-  }, []);
+  }, [applyReplaySaveData]);
+
+  // Advance replay step as MIDI playback drives chord detection
+  useEffect(() => {
+    if (mode !== 'replay' || !replayWalkPath) return;
+    const expected = replayWalkPath.nodes[replayStep];
+    if (expected && matchedChords.includes(expected)) {
+      setReplayStep(prev => Math.min(prev + 1, replayWalkPath.nodes.length - 1));
+    }
+  }, [matchedChords, mode, replayWalkPath, replayStep]);
 
   const onReplayLoaded = useCallback((data: SaveData | null) => {
     if (!data) {
       setReplayGraphState(null);
       setReplayWalkPath(null);
+      replayWalkHistoryRef.current = null;
       return;
     }
-    if (data.walkPath) {
-      setReplayWalkPath({ nodes: data.walkPath.nodes, edgeTypes: data.walkPath.edgeTypes as EdgeType[] });
-      setReplayGraphState(null);
-    } else {
-      setReplayGraphState(loadFromSaveData(data.progressions, undefined));
-      setReplayWalkPath(null);
-    }
-  }, []);
+    applyReplaySaveData(data);
+  }, [applyReplaySaveData]);
 
   // WebMIDI setup
   useEffect(() => {
@@ -482,6 +545,7 @@ export default function App() {
               handleNoteOff={handleNoteOff}
               onLoaded={onReplayLoaded}
               autoLoad={pendingReplay}
+              onTimeUpdate={onReplayTimeUpdate}
             />
           )}
           <EdgeTypeLegend />
@@ -513,7 +577,7 @@ export default function App() {
             // not the current session state.
             replayWalkPath ? (
               <CircleOfFifths
-                walkPath={{ nodes: replayWalkPath.nodes, edgeTypes: replayWalkPath.edgeTypes, currentStep: -1 }}
+                walkPath={{ nodes: replayWalkPath.nodes, edgeTypes: replayWalkPath.edgeTypes, currentStep: replayStep }}
                 matchedChords={matchedChords}
                 hintEdges={hintEdges}
                 noteSpelling={noteSpelling}
@@ -561,7 +625,12 @@ export default function App() {
   );
 }
 
-function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkState): SaveData {
+function createSaveData(
+  mode: AppMode,
+  graphState: GraphState,
+  walkState: WalkState,
+  walkHistory?: { startMs: number; nodes: string[]; edgeTypes: EdgeType[] }[],
+): SaveData {
   if (mode === 'walk' && walkState.path) {
     const constraintTags = [
       ...EDGE_TYPE_ORDER
@@ -570,7 +639,7 @@ function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkSt
       walkState.options.returnTrip ? 'return' : null,
     ].filter(Boolean);
     const suffix = constraintTags.length > 0 ? ` (${constraintTags.join(', ')})` : '';
-    return {
+    const data: SaveData = {
       version: 1,
       progressions: [{
         name: `${walkState.fromChord || 'Walk'} to ${walkState.toChord || 'path'}${suffix}`,
@@ -582,6 +651,8 @@ function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkSt
         edgeTypes: walkState.path.edgeTypes,
       },
     };
+    if (walkHistory && walkHistory.length > 0) data.walkHistory = walkHistory;
+    return data;
   }
 
   return {

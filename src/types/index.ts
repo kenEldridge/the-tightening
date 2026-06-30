@@ -66,6 +66,7 @@ export interface SaveData {
   progressions: { name: string; chords: string[]; color: string }[];
   nodePositions?: Record<string, { x: number; y: number }>;
   walkPath?: { nodes: string[]; edgeTypes: string[] };
+  walkHistory?: { startMs: number; nodes: string[]; edgeTypes: string[] }[];
 }
 
 // Walk mode types

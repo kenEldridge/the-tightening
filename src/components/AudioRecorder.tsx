@@ -8,6 +8,8 @@ export interface SavedRecordingData {
   audioUrl: string;
   midiBuffer: ArrayBuffer | null;
   cwalkData: string;
+  audioPath?: string;
+  midiPath?: string | null;
 }
 
 interface AudioRecorderProps {
@@ -21,7 +23,7 @@ type RecorderPhase =
   | { kind: 'idle' }
   | { kind: 'recording' }
   | { kind: 'saving'; label: string }
-  | { kind: 'saved'; audioUrl: string; metrics: AudioMetrics; midiBuffer: ArrayBuffer | null; cwalkData: string }
+  | { kind: 'saved'; audioUrl: string; metrics: AudioMetrics; audioPath: string; midiPath: string | null; cwalkData: string }
   | { kind: 'fallback'; audioUrl: string; reason: string };
 
 export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSaveData, onPlayRecording }: AudioRecorderProps) {
@@ -154,14 +156,15 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
       setPhase({ kind: 'saving', label: 'Saving audio...' });
       await streamToFile(paths.polishedPath, polishedBuffer);
 
-      let midiBuffer: ArrayBuffer | null = null;
+      let midiPath: string | null = null;
       if (midiEvents.length > 0) {
         setPhase({ kind: 'saving', label: 'Saving MIDI...' });
-        midiBuffer = encodeMidi(midiEvents, totalMs);
+        const midiBuffer = encodeMidi(midiEvents, totalMs);
         await window.electronAPI!.saveMidi(paths.midiPath, new Uint8Array(midiBuffer));
+        midiPath = paths.midiPath;
       }
 
-      setPhase({ kind: 'saved', audioUrl, metrics, midiBuffer, cwalkData: saveDataJson });
+      setPhase({ kind: 'saved', audioUrl, metrics, audioPath: paths.polishedPath, midiPath, cwalkData: saveDataJson });
     } catch (e) {
       const msg = (e as Error).message;
       console.error('[AudioRecorder] save failed:', msg);
@@ -260,6 +263,33 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     setElapsed(0);
   }, []);
 
+  const playInReplay = useCallback(async () => {
+    if (phase.kind !== 'saved') return;
+    const { audioPath, midiPath, cwalkData } = phase;
+
+    // Read audio from disk to get a fresh blob URL (avoids IPC transfer issues)
+    let audioUrl: string;
+    try {
+      const data = await window.electronAPI!.readFileBinary(audioPath);
+      const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+      audioUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+    } catch (e) {
+      setError(`Could not read audio for replay: ${(e as Error).message}`);
+      return;
+    }
+
+    // Read MIDI from disk
+    let midiBuffer: ArrayBuffer | null = null;
+    if (midiPath) {
+      try {
+        const data = await window.electronAPI!.readFileBinary(midiPath);
+        midiBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
+      } catch { /* non-fatal — replay works without MIDI */ }
+    }
+
+    onPlayRecordingRef.current?.({ audioUrl, midiBuffer, cwalkData });
+  }, [phase]);
+
   const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
   const ss = String(elapsed % 60).padStart(2, '0');
 
@@ -303,7 +333,7 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
             <button
               className="recorder-btn recorder-btn-start"
               style={{ flex: 1 }}
-              onClick={() => onPlayRecordingRef.current?.({ audioUrl: phase.audioUrl, midiBuffer: phase.midiBuffer, cwalkData: phase.cwalkData })}
+              onClick={playInReplay}
             >
               ▶ Play in Replay
             </button>
