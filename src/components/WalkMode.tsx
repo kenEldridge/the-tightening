@@ -198,8 +198,10 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
   }, [updateAndFindPath, options]);
 
   const handleEndless = useCallback(() => {
-    updateAndFindPath({ options: { ...options, endless: !options.endless } });
-  }, [updateAndFindPath, options]);
+    // Don't re-run pathfinding or reset position — just flip the flag so the
+    // current path and step are preserved when the user unchecks endless.
+    onWalkStateChange({ ...walkState, options: { ...options, endless: !options.endless } });
+  }, [onWalkStateChange, walkState, options]);
 
   const handleRepeatCount = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Math.max(1, Math.min(99, parseInt(e.target.value, 10) || 1));

@@ -6,6 +6,7 @@ import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pit
 import type { NoteSpelling } from '../core/chordDefinitions';
 import type { GraphState, GraphEdge } from '../types/index';
 import { qualityToRing, getReciprocalSet } from '../core/graphModel';
+import type { HintEdge } from '../core/extendedChordDetection';
 
 /** Get the individual note names of a chord's triad, e.g. "C" → "C E G" */
 function triadNotes(chordName: string, spelling: NoteSpelling): string {
@@ -30,6 +31,7 @@ interface Props {
   graphState?: GraphState;
   jamMatchedChords?: string[];
   replayMatchedChords?: string[];  // replay: draw live edges between detected chords
+  hintEdges?: HintEdge[];          // extended chord hints: dashed amber edges
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
 }
@@ -129,7 +131,7 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
   const isJamMode = !!graphState;
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
@@ -342,6 +344,38 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
         <circle cx={CX} cy={CY} r={R_MAJOR} fill="none" stroke="#21262d" strokeWidth={1} />
         <circle cx={CX} cy={CY} r={R_MINOR} fill="none" stroke="#21262d" strokeWidth={1} />
         <circle cx={CX} cy={CY} r={R_DIM} fill="none" stroke="#21262d" strokeWidth={1} />
+
+        {/* Extended chord hints: dashed amber edges showing typical resolutions */}
+        {hintEdges && hintEdges.map((edge, idx) => {
+          const fromNode = nodeByName.get(edge.from);
+          const toNode   = nodeByName.get(edge.to);
+          if (!fromNode || !toNode || fromNode.id === toNode.id) return null;
+          const dx = toNode.x - fromNode.x;
+          const dy = toNode.y - fromNode.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len === 0) return null;
+          const ux = dx / len, uy = dy / len;
+          const pad = 6;
+          const x1 = fromNode.x + ux * (fromNode.r + pad);
+          const y1 = fromNode.y + uy * (fromNode.r + pad);
+          const x2 = toNode.x   - ux * (toNode.r + pad + 8);
+          const y2 = toNode.y   - uy * (toNode.r + pad + 8);
+          if (fromNode.r + toNode.r + pad * 2 >= len) return null;
+          return (
+            <line
+              key={`hint-${idx}`}
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke="#f0a020"
+              strokeWidth={2.5}
+              strokeDasharray="8 5"
+              strokeLinecap="round"
+              opacity={0.8}
+              markerEnd="url(#cof-arrow)"
+            >
+              <title>{edge.label}</title>
+            </line>
+          );
+        })}
 
         {/* Walk mode: Path edges (arced) + step labels.
             Edges are grouped by directed node pair so that same-direction

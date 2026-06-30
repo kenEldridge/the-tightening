@@ -112,6 +112,24 @@ body {
   background: rgba(30, 34, 42, 0.95);
 }
 
+.new-session-btn {
+  height: 28px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.new-session-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
 .layout-toggle-btn {
   height: 28px;
   padding: 0 10px;

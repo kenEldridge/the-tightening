@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { GraphState, SaveData, AppMode, WalkState, MidiEvent } from './types/index';
+import { detectExtendedChords } from './core/extendedChordDetection';
+import type { ExtendedMatch } from './core/extendedChordDetection';
 import { parseChordInput } from './core/chordParser';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
 import { detectChords } from './core/chordDetection';
@@ -21,6 +23,7 @@ export default function App() {
   const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
   const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
   const [matchedChords, setMatchedChords] = useState<string[]>([]);
+  const [extendedMatches, setExtendedMatches] = useState<ExtendedMatch[]>([]);
   const [mode, setMode] = useState<AppMode>('jam');
   const [walkState, setWalkState] = useState<WalkState>({
     fromChord: '',
@@ -62,6 +65,11 @@ export default function App() {
   graphStateRef.current = graphState;
   const modeRef = useRef(mode);
   modeRef.current = mode;
+  const noteSpellingRef = useRef(noteSpelling);
+  noteSpellingRef.current = noteSpelling;
+
+  // Flatten all hint edges from extended matches for the circle
+  const hintEdges = useMemo(() => extendedMatches.flatMap(m => m.hintEdges), [extendedMatches]);
   const walkStateRef = useRef(walkState);
   walkStateRef.current = walkState;
 
@@ -96,10 +104,35 @@ export default function App() {
     return JSON.stringify(createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current));
   }, []);
 
+  const handleNew = useCallback(() => {
+    setGraphState(emptyGraphState());
+    setWalkState({
+      fromChord: '',
+      toChord: '',
+      options: { fifth: true, relative: true, returnTrip: false, endless: false },
+      returnOptions: {},
+      path: null,
+      currentStep: 0,
+      completed: false,
+      pathsCompleted: 0,
+      repeatCount: 1,
+      currentPathCompletions: 0,
+    });
+    setFrozenWalkPath(null);
+    setReplayGraphState(null);
+    setReplayWalkPath(null);
+    setPendingReplay(null);
+  }, []);
+
   // Clear pendingReplay when the user navigates away from Replay manually
   useEffect(() => {
     if (mode !== 'replay') setPendingReplay(null);
   }, [mode]);
+
+  // Once the user finds a live walk, retire the frozen one so it can't shadow exploration
+  useEffect(() => {
+    if (walkState.path) setFrozenWalkPath(null);
+  }, [walkState.path]);
 
   const onPlayRecording = useCallback((data: { audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string }) => {
     // Parse cwalk so the circle reflects the recording's state immediately on mount
@@ -216,8 +249,7 @@ export default function App() {
     if (!api) return;
 
     api.onMenuNew(() => {
-      setGraphState(emptyGraphState());
-      setFrozenWalkPath(null);
+      handleNew();
       setMode('jam');
     });
 
@@ -239,11 +271,13 @@ export default function App() {
     api.onMenuSave((filePath: string, saveAs: boolean) => {
       const saveData = createSaveData(modeRef.current, graphStateRef.current, walkStateRef.current);
       const json = JSON.stringify(saveData, null, 2);
-      if (modeRef.current === 'walk' && !saveAs) {
-        api.fileSaveAs(defaultWalkSaveName(walkStateRef.current), json);
-        return;
+      if (filePath && !saveAs) {
+        // Overwrite the existing file directly
+        api.fileWrite(filePath, json);
+      } else {
+        // New file or explicit Save As — show dialog with a smart default name
+        api.fileSaveAs(defaultSaveName(modeRef.current, graphStateRef.current, walkStateRef.current), json);
       }
-      api.fileWrite(filePath, json);
     });
 
     return () => {
@@ -262,6 +296,7 @@ export default function App() {
       const detectionNodes = getTheoryChordNodes() as unknown as Map<string, import('./types/index').GraphNode>;
       const matches = detectChords(heldNotes, detectionNodes);
       setMatchedChords(matches);
+      setExtendedMatches(detectExtendedChords(heldNotes, noteSpellingRef.current));
     }, 50);
 
     return () => {
@@ -358,12 +393,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [walkState.completed, walkState.options.endless]);
 
-  // Add default G→D→A→G on mount
-  useEffect(() => {
-    const initial = emptyGraphState();
-    const { state } = addProgression(initial, 'Default', ['G', 'D', 'A', 'G']);
-    setGraphState(state);
-  }, []);
 
   const handleAddProgression = useCallback((name: string, chordsInput: string): string | null => {
     const { chords, error: parseError } = parseChordInput(chordsInput);
@@ -391,8 +420,9 @@ export default function App() {
     return null;
   }, [graphState]);
 
-  // Walk path data for circle of fifths overlay
-  const walkPath = mode === 'walk' && walkState.path
+  // Walk path overlay: shown whenever a path exists, regardless of which sidebar tab is active.
+  // The sidebar tab controls the tools panel; the circle always shows the most specific view available.
+  const walkPath = walkState.path
     ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
     : undefined;
 
@@ -400,6 +430,13 @@ export default function App() {
     <div className={`app${graphExpanded ? ' graph-expanded' : ''}`}>
       <div className="app-header">
         <h1>Chord Walk</h1>
+        <button
+          className="new-session-btn"
+          onClick={() => { handleNew(); setMode('jam'); }}
+          title="Clear everything and start fresh"
+        >
+          New
+        </button>
         <select
           className="spelling-select"
           value={noteSpelling}
@@ -448,7 +485,7 @@ export default function App() {
             />
           )}
           <EdgeTypeLegend />
-          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} />
+          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} extendedMatches={extendedMatches} />
           {mode !== 'replay' && (
             <AudioRecorder
               onRecordingStart={onRecordingStart}
@@ -478,6 +515,7 @@ export default function App() {
               <CircleOfFifths
                 walkPath={{ nodes: replayWalkPath.nodes, edgeTypes: replayWalkPath.edgeTypes, currentStep: -1 }}
                 matchedChords={matchedChords}
+                hintEdges={hintEdges}
                 noteSpelling={noteSpelling}
                 layout={circleLayout}
               />
@@ -486,21 +524,24 @@ export default function App() {
                 graphState={replayGraphState ?? undefined}
                 jamMatchedChords={replayGraphState ? matchedChords : undefined}
                 matchedChords={matchedChords}
+                hintEdges={hintEdges}
                 noteSpelling={noteSpelling}
                 layout={circleLayout}
               />
             )
-          ) : frozenWalkPath ? (
-            <CircleOfFifths
-              walkPath={{ nodes: frozenWalkPath.nodes, edgeTypes: frozenWalkPath.edgeTypes, currentStep: 0 }}
-              matchedChords={matchedChords}
-              noteSpelling={noteSpelling}
-              layout={circleLayout}
-            />
           ) : walkPath ? (
             <CircleOfFifths
               walkPath={walkPath}
               matchedChords={matchedChords}
+              hintEdges={hintEdges}
+              noteSpelling={noteSpelling}
+              layout={circleLayout}
+            />
+          ) : frozenWalkPath ? (
+            <CircleOfFifths
+              walkPath={{ nodes: frozenWalkPath.nodes, edgeTypes: frozenWalkPath.edgeTypes, currentStep: 0 }}
+              matchedChords={matchedChords}
+              hintEdges={hintEdges}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
@@ -509,6 +550,7 @@ export default function App() {
               graphState={graphState}
               jamMatchedChords={matchedChords}
               matchedChords={matchedChords}
+              hintEdges={hintEdges}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
@@ -552,8 +594,56 @@ function createSaveData(mode: AppMode, graphState: GraphState, walkState: WalkSt
   };
 }
 
-function defaultWalkSaveName(walkState: WalkState): string {
-  const from = walkState.fromChord || 'walk';
-  const to = walkState.toChord || 'path';
-  return `${from}_to_${to}.cwalk.json`.replace(/[^a-zA-Z0-9._-]+/g, '_');
+function defaultSaveName(mode: AppMode, graphState: GraphState, walkState: WalkState): string {
+  const date = todayStr();
+
+  if (mode === 'walk' && walkState.path) {
+    const from = walkState.fromChord || 'walk';
+    const to   = walkState.toChord   || 'path';
+
+    // Edge pattern: cycle preset edges take priority over individual toggles
+    let edgePart = '';
+    if (walkState.cycleEdgeTypes && walkState.cycleEdgeTypes.length > 0) {
+      edgePart = walkState.cycleEdgeTypes
+        .map(t => EDGE_TYPE_INFO[t]?.shortLabel ?? t)
+        .join('-');
+    } else {
+      const active = EDGE_TYPE_ORDER
+        .filter(t => walkState.options[t])
+        .map(t => EDGE_TYPE_INFO[t].shortLabel);
+      if (active.length > 0) edgePart = active.join('+');
+    }
+
+    const parts = [
+      `${from}_to_${to}`,
+      edgePart,
+      walkState.options.returnTrip ? 'rtrip' : '',
+      date,
+    ].filter(Boolean);
+
+    return filenameSafe(parts.join('_')) + '.cwalk.json';
+  }
+
+  // Jam mode: first few unique chords across all progressions + date
+  const allChords = [...new Set(graphState.progressions.flatMap(p => p.chords))].slice(0, 6);
+  if (allChords.length > 0) {
+    return filenameSafe(`jam_${allChords.join('-')}_${date}`) + '.cwalk.json';
+  }
+
+  return `jam_${date}.cwalk.json`;
+}
+
+function todayStr(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function filenameSafe(s: string): string {
+  return s
+    .replace(/°/g, 'dim')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9._#+\-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 }

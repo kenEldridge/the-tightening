@@ -5,6 +5,8 @@ release/
 music/
 debug/
 .env
+recordings/
+walks/
 analysis/songs.csv
 analysis/midi-songs.csv
 analysis/parse-midi.log

@@ -61,19 +61,16 @@ function buildMenu() {
           label: 'Save',
           accelerator: 'CmdOrCtrl+S',
           click: () => {
-            if (currentFilePath) {
-              mainWindow?.webContents.send('menu-save', currentFilePath, false);
-            } else {
-              // No file yet — do Save As
-              doSaveAs();
-            }
+            // Send the current file path (or '' if none yet) to the renderer.
+            // The renderer owns the state and generates the smart default filename.
+            mainWindow?.webContents.send('menu-save', currentFilePath ?? '', false);
           },
         },
         {
           label: 'Save As...',
           accelerator: 'CmdOrCtrl+Shift+S',
           click: () => {
-            doSaveAs();
+            mainWindow?.webContents.send('menu-save', '', true);
           },
         },
         { type: 'separator' },
@@ -111,20 +108,6 @@ function buildMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-async function doSaveAs() {
-  if (!mainWindow) return;
-  const result = await dialog.showSaveDialog(mainWindow, {
-    title: 'Save Chord Walk File',
-    defaultPath: currentFilePath || 'untitled.cwalk.json',
-    filters: [
-      { name: 'Chord Walk', extensions: ['json'] },
-    ],
-  });
-  if (result.canceled || !result.filePath) return;
-  currentFilePath = result.filePath;
-  updateTitle();
-  mainWindow.webContents.send('menu-save', currentFilePath, true);
-}
 
 ipcMain.handle('file-save-as', async (_event, defaultPath: string, data: string) => {
   if (!mainWindow) return null;
