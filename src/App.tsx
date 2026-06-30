@@ -631,7 +631,13 @@ function createSaveData(
   walkState: WalkState,
   walkHistory?: { startMs: number; nodes: string[]; edgeTypes: EdgeType[] }[],
 ): SaveData {
-  if (mode === 'walk' && walkState.path) {
+  const hasHistory = walkHistory && walkHistory.length > 0;
+
+  if (mode === 'walk' && (walkState.path || hasHistory)) {
+    // Use current path if available, otherwise fall back to last history entry
+    const pathNodes = walkState.path?.chordNames ?? walkHistory![walkHistory!.length - 1].nodes;
+    const pathEdges = walkState.path?.edgeTypes ?? walkHistory![walkHistory!.length - 1].edgeTypes;
+
     const constraintTags = [
       ...EDGE_TYPE_ORDER
         .filter(edgeType => walkState.options[edgeType])
@@ -643,15 +649,12 @@ function createSaveData(
       version: 1,
       progressions: [{
         name: `${walkState.fromChord || 'Walk'} to ${walkState.toChord || 'path'}${suffix}`,
-        chords: walkState.path.chordNames,
+        chords: pathNodes,
         color: '#58a6ff',
       }],
-      walkPath: {
-        nodes: walkState.path.chordNames,
-        edgeTypes: walkState.path.edgeTypes,
-      },
+      walkPath: { nodes: pathNodes, edgeTypes: pathEdges },
     };
-    if (walkHistory && walkHistory.length > 0) data.walkHistory = walkHistory;
+    if (hasHistory) data.walkHistory = walkHistory;
     return data;
   }
 

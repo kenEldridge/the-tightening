@@ -47,7 +47,7 @@ export const INSIGHTS: Insight[] = [
   // --- The circle itself ---
   {
     category: 'Circle',
-    text: 'One step clockwise around the circle adds a sharp; one step counterclockwise adds a flat.',
+    text: 'Each clockwise step is a perfect fifth up — seven semitones. Go all twelve steps and you arrive back at the same note.',
   },
   {
     category: 'Circle',
