@@ -20,7 +20,7 @@ export const INSIGHTS: Insight[] = [
   // --- Intervals & the physics ---
   {
     category: 'Intervals',
-    text: 'A perfect fifth is a 3:2 frequency ratio; invert it within the octave and you get 4:3, a perfect fourth — the same two notes, the other direction.',
+    text: 'Clockwise on the circle multiplies frequency by 3/2 (a fifth up). Counter-clockwise is ×2/3 — the same pitch class as a perfect fourth (×4/3), one octave lower.',
     relatedEdges: ['fifth', 'dom7'],
   },
   {
