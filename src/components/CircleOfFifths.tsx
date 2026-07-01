@@ -456,11 +456,22 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
                   const t = tValues[j];
                   const lx = (1-t)*(1-t)*x1 + 2*(1-t)*t*qx + t*t*x2;
                   const ly = (1-t)*(1-t)*y1 + 2*(1-t)*t*qy + t*t*y2;
+
+                  // Offset badge perp to edge direction, away from circle center,
+                  // so same-spoke edges (e.g. F→Edim) don't land on an unrelated node.
+                  const dtx = 2*(1-t)*(qx-x1) + 2*t*(x2-qx);
+                  const dty = 2*(1-t)*(qy-y1) + 2*t*(y2-qy);
+                  const dtLen = Math.sqrt(dtx*dtx + dty*dty) || 1;
+                  const px = -dty/dtLen, py = dtx/dtLen;
+                  const towardCenter = (CX - lx)*px + (CY - ly)*py > 0;
+                  const bx = lx + (towardCenter ? -px : px) * 16;
+                  const by = ly + (towardCenter ? -py : py) * 16;
+
                   return (
                     <g key={step.i} opacity={step.isDone ? 0.5 : 1}>
-                      <circle cx={lx} cy={ly} r={9} fill="#0d1117" stroke="#30363d" strokeWidth={1} />
+                      <circle cx={bx} cy={by} r={9} fill="#0d1117" stroke="#30363d" strokeWidth={1} />
                       <text
-                        x={lx} y={ly + 1}
+                        x={bx} y={by + 1}
                         textAnchor="middle" dominantBaseline="middle"
                         fontSize={9} fontWeight={700} fill="#c9d1d9"
                         style={{ pointerEvents: 'none' }}

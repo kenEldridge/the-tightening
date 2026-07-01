@@ -41,6 +41,7 @@ export default function App() {
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
   const [graphExpanded, setGraphExpanded] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [replayGraphState, setReplayGraphState] = useState<GraphState | null>(null);
   const [replayWalkPath, setReplayWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [replayStep, setReplayStep] = useState(0);
@@ -50,8 +51,11 @@ export default function App() {
 
   useEffect(() => {
     window.electronAPI?.setMenuBarVisible(!graphExpanded);
-    if (!graphExpanded) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setGraphExpanded(false); };
+    if (!graphExpanded) { setSidebarOpen(false); return; }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setGraphExpanded(false);
+      if (e.key === 'p' || e.key === 'P') setSidebarOpen(o => !o);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [graphExpanded]);
@@ -490,7 +494,7 @@ export default function App() {
     : undefined;
 
   return (
-    <div className={`app${graphExpanded ? ' graph-expanded' : ''}`}>
+    <div className={`app${graphExpanded ? ' graph-expanded' : ''}${graphExpanded && sidebarOpen ? ' sidebar-open' : ''}`}>
       <div className="app-header">
         <h1>Chord Walk</h1>
         <button
@@ -561,6 +565,21 @@ export default function App() {
           <DidYouKnow />
         </div>
         <div className="graph-area">
+          {graphExpanded && (
+            <button
+              className="graph-sidebar-btn"
+              onClick={() => setSidebarOpen(o => !o)}
+              title={sidebarOpen ? 'Hide panel (P)' : 'Show panel (P)'}
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <rect x="1" y="1" width="4" height="14" rx="1" opacity={sidebarOpen ? 1 : 0.4} />
+                <rect x="7" y="1" width="8" height="2" rx="1" />
+                <rect x="7" y="5" width="8" height="2" rx="1" />
+                <rect x="7" y="9" width="8" height="2" rx="1" />
+                <rect x="7" y="13" width="8" height="2" rx="1" />
+              </svg>
+            </button>
+          )}
           <button
             className="graph-expand-btn"
             onClick={() => setGraphExpanded(e => !e)}
