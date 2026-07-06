@@ -661,6 +661,37 @@ export function intervalCycleChords(from: string, steps: IntervalStep[]): string
 }
 
 /**
+ * Build a full walk-path object for a cycle preset starting from `from`, using
+ * interval arithmetic. Outbound is steps[0..n-2]; when `returnTrip` is set the
+ * closing step (steps[n-1]) is appended to land back on `from`.
+ * Shared by WalkMode (manual/preset clicks) and App (endless auto-advance).
+ */
+export function buildIntervalCyclePath(
+  from: string,
+  cycleEdgeTypes: EdgeType[],
+  cycleSteps: IntervalStep[],
+  returnTrip: boolean,
+): { chordNames: string[]; edgeTypes: EdgeType[]; explanations: string[]; totalWeight: number } {
+  const all = intervalCycleChords(from, cycleSteps); // [from, ...intermediates, from]
+  const outChords = all.slice(0, -1); // [from, ..., destination]
+  const outEdges = cycleEdgeTypes.slice(0, -1);
+  const closingEdge = cycleEdgeTypes[cycleEdgeTypes.length - 1];
+
+  let chordNames = outChords;
+  let edgeTypes: EdgeType[] = [...outEdges];
+  if (returnTrip) {
+    chordNames = [...outChords, from];
+    edgeTypes = [...outEdges, closingEdge];
+  }
+  return {
+    chordNames,
+    edgeTypes,
+    explanations: edgeTypes.map(et => EDGE_TYPE_LABELS[et] ?? et),
+    totalWeight: edgeTypes.length,
+  };
+}
+
+/**
  * Return the destination chord for a cycle preset starting from `from`.
  * Applies steps[0..n-2] (the closing step is not included).
  */

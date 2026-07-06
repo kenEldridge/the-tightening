@@ -70,7 +70,9 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 
 ### Walk mode features (v2.2.0)
 - **Return trip**: toggle appends reverse path B→A after outbound A→B, sharing the middle chord. The return leg has its OWN "must include" constraints (`WalkState.returnOptions`), independent of the outbound `options`. The "Must include" UI has Out/Back tabs (`activeTab` local state in WalkMode); Back defaults to nothing.
-- **Endless mode**: after path completion, waits 1.5s then auto-picks random next destination. Last chord becomes next `fromChord`. Tracks `pathsCompleted` count.
+- **Endless mode**: after path completion (× `repeatCount`), waits 1.5s then auto-advances. In cycle-preset mode it rebuilds from a fresh preset via `buildIntervalCyclePath`; otherwise it random-picks a next destination via Dijkstra. With return trip on it departs from the home base (`fromChord`) again; otherwise last chord becomes next `fromChord`.
+- **Random edge pattern** (`options.randomPattern`): in endless mode, each advance picks a random `CYCLE_PRESETS` entry (skipping ones whose destination equals the start) instead of repeating the same pattern.
+- **Defaults** (`defaultWalkState()` in App.tsx): start on `C`, first cycle preset selected, `returnTrip`/`endless`/`randomPattern` all on — so it wanders through varied patterns anchored at C. `buildIntervalCyclePath` is shared by WalkMode (manual/preset) and the App endless effect.
 - Both toggles complement: return trip + endless = always depart from same home base. Endless alone = drift around the circle.
 - `WalkState.options` is `Partial<Record<EdgeType, boolean>>` plus `returnTrip` + `endless` (v2.4.0; was a fixed `relative`/`iiVI`/`leadingTone` shape). `WalkState.returnOptions` (v2.6.0) holds the return leg's independent edge-type constraints.
 - Endless logic lives in App.tsx as a useEffect watching `walkState.completed` + `walkState.options.endless`

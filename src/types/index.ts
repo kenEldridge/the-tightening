@@ -87,6 +87,8 @@ export interface WalkState {
   options: Partial<Record<EdgeType, boolean>> & {
     returnTrip: boolean;
     endless: boolean;
+    /** In endless mode, pick a fresh random cycle preset each advance. */
+    randomPattern?: boolean;
   };
   /** Must-include constraints for the return leg (B→A). */
   returnOptions: Partial<Record<EdgeType, boolean>>;

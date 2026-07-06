@@ -10,8 +10,9 @@ import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
-import { getTheoryChordNodes, getAllChordNames, findChordPath } from './core/chordPathfinder';
-import type { EdgeType } from './core/chordPathfinder';
+import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath, intervalCycleDestination } from './core/chordPathfinder';
+import type { EdgeType, IntervalStep } from './core/chordPathfinder';
+import { CYCLE_PRESETS } from './core/cyclePresets';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
@@ -19,24 +20,34 @@ import ReplayMode from './components/ReplayMode';
 import DidYouKnow from './components/DidYouKnow';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
-export default function App() {
-  const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
-  const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
-  const [matchedChords, setMatchedChords] = useState<string[]>([]);
-  const [extendedMatches, setExtendedMatches] = useState<ExtendedMatch[]>([]);
-  const [mode, setMode] = useState<AppMode>('jam');
-  const [walkState, setWalkState] = useState<WalkState>({
-    fromChord: '',
-    toChord: '',
-    options: { returnTrip: false, endless: false },
+// Default walk: start on C with the most common song cycle preset selected,
+// endless + return trip + random-pattern all on so it wanders through patterns.
+const DEFAULT_PRESET = CYCLE_PRESETS[0];
+const DEFAULT_PRESET_EDGES = DEFAULT_PRESET.loop.split(' ') as EdgeType[];
+function defaultWalkState(): WalkState {
+  return {
+    fromChord: 'C',
+    toChord: '', // WalkMode's auto-select fills this and builds the path on mount
+    options: { returnTrip: true, endless: true, randomPattern: true },
     returnOptions: {},
+    cycleEdgeTypes: DEFAULT_PRESET_EDGES,
+    cycleSteps: DEFAULT_PRESET.steps,
     path: null,
     currentStep: 0,
     completed: false,
     pathsCompleted: 0,
     repeatCount: 1,
     currentPathCompletions: 0,
-  });
+  };
+}
+
+export default function App() {
+  const [graphState, setGraphState] = useState<GraphState>(emptyGraphState);
+  const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
+  const [matchedChords, setMatchedChords] = useState<string[]>([]);
+  const [extendedMatches, setExtendedMatches] = useState<ExtendedMatch[]>([]);
+  const [mode, setMode] = useState<AppMode>('jam');
+  const [walkState, setWalkState] = useState<WalkState>(defaultWalkState);
   const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
@@ -137,18 +148,7 @@ export default function App() {
 
   const handleNew = useCallback(() => {
     setGraphState(emptyGraphState());
-    setWalkState({
-      fromChord: '',
-      toChord: '',
-      options: { returnTrip: false, endless: false },
-      returnOptions: {},
-      path: null,
-      currentStep: 0,
-      completed: false,
-      pathsCompleted: 0,
-      repeatCount: 1,
-      currentPathCompletions: 0,
-    });
+    setWalkState(defaultWalkState());
     setFrozenWalkPath(null);
     setReplayGraphState(null);
     setReplayWalkPath(null);
@@ -421,6 +421,38 @@ export default function App() {
 
     const timer = setTimeout(() => {
       const opts = walkState.options;
+
+      // Cycle mode: advance to a fresh preset (random if enabled, else the same
+      // one), departing from the home base (returnTrip anchors us there).
+      if (walkState.cycleEdgeTypes && walkState.cycleSteps) {
+        const from = opts.returnTrip ? walkState.fromChord : lastChord;
+        let edges = walkState.cycleEdgeTypes;
+        let steps: IntervalStep[] = walkState.cycleSteps;
+        if (opts.randomPattern && CYCLE_PRESETS.length > 0) {
+          // Pick a random preset whose destination isn't the start chord itself
+          // (those degenerate to "C → … → C → C"). Try a handful, then accept any.
+          for (let tries = 0; tries < 12; tries++) {
+            const preset = CYCLE_PRESETS[Math.floor(Math.random() * CYCLE_PRESETS.length)];
+            edges = preset.loop.split(' ') as EdgeType[];
+            steps = preset.steps;
+            if (intervalCycleDestination(from, steps) !== from) break;
+          }
+        }
+        const built = buildIntervalCyclePath(from, edges, steps, !!opts.returnTrip);
+        setWalkState(prev => ({
+          ...prev,
+          fromChord: from,
+          toChord: intervalCycleDestination(from, steps),
+          cycleEdgeTypes: edges,
+          cycleSteps: steps,
+          path: built,
+          currentStep: 0,
+          completed: false,
+          currentPathCompletions: 0,
+        }));
+        return;
+      }
+
       const candidates = allNames.filter(c => c !== lastChord);
       for (let attempt = 0; attempt < candidates.length; attempt++) {
         const idx = Math.floor(Math.random() * candidates.length);

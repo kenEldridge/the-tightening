@@ -8,8 +8,8 @@ import {
   getCycleEndpoints,
   findExactCyclePath,
   transposeChord,
-  intervalCycleChords,
   intervalCycleDestination,
+  buildIntervalCyclePath,
   EDGE_TYPES,
 } from '../core/chordPathfinder';
 import { respellChordName } from '../core/chordDefinitions';
@@ -73,26 +73,8 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
         const cycleStepsNow = next.cycleSteps;
         const cycleEdgesNow = next.cycleEdgeTypes;
         if (cycleStepsNow && cycleStepsNow.length >= 2 && cycleEdgesNow) {
-          // Interval arithmetic cycle mode: chord sequence computed by arithmetic,
-          // edge labels come from the preset's loop string (always valid EdgeType values).
-          const allChords = intervalCycleChords(from, cycleStepsNow);
-          // allChords = [from, ...intermediates, from]; slice off closing repetition for outbound
-          const outChords = allChords.slice(0, -1); // [from, ..., to]
-          const outEdgeTypes = cycleEdgesNow.slice(0, -1) as EdgeType[];
-          const closingEdge = cycleEdgesNow[cycleEdgesNow.length - 1] as EdgeType;
-
-          let chordNames = outChords;
-          let edgeTypes: string[] = [...outEdgeTypes];
-          if (opts.returnTrip) {
-            chordNames = [...outChords, from];
-            edgeTypes = [...outEdgeTypes, closingEdge];
-          }
-          next.path = {
-            chordNames,
-            edgeTypes,
-            explanations: edgeTypes.map(et => EDGE_TYPE_INFO[et as EdgeType]?.label ?? et),
-            totalWeight: edgeTypes.length,
-          };
+          // Interval arithmetic cycle mode (shared with App's endless auto-advance).
+          next.path = buildIntervalCyclePath(from, cycleEdgesNow as EdgeType[], cycleStepsNow, !!opts.returnTrip);
         } else if (cycleEdgesNow && cycleEdgesNow.length >= 2) {
           // Legacy graph BFS cycle mode (no steps — shouldn't happen with migrated presets).
           const outEdges = cycleEdgesNow.slice(0, -1);
@@ -219,10 +201,14 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     updateAndFindPath({
       cycleEdgeTypes: edges,
       cycleSteps: preset.steps,
-      options: { returnTrip: true, endless: options.endless },
+      options: { returnTrip: true, endless: options.endless, randomPattern: options.randomPattern },
       returnOptions: {},
     });
-  }, [options.endless, updateAndFindPath]);
+  }, [options.endless, options.randomPattern, updateAndFindPath]);
+
+  const handleRandomPattern = useCallback(() => {
+    onWalkStateChange({ ...walkState, options: { ...options, randomPattern: !options.randomPattern } });
+  }, [onWalkStateChange, walkState, options]);
 
   const handleClearConstraints = useCallback(() => {
     if (activeTab === 'back') {
@@ -368,6 +354,10 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
         <label className="walk-toggle">
           <input type="checkbox" checked={options.endless} onChange={handleEndless} />
           <span>Endless mode</span>
+        </label>
+        <label className="walk-toggle" title="In endless mode, jump to a fresh random edge pattern each time instead of repeating the same one.">
+          <input type="checkbox" checked={!!options.randomPattern} onChange={handleRandomPattern} />
+          <span>Random edge pattern</span>
         </label>
         {options.endless && (
           <label className="walk-toggle walk-repeat-count">
