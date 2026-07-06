@@ -96,8 +96,8 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Harmony',
-    text: 'The plagal cadence (IV→I) is the "A-men" tag at the end of a hymn.',
-    relatedEdges: ['plagal'],
+    text: 'The plagal cadence (IV→I) — the "A-men" tag at the end of a hymn — is the same up-a-fifth root motion as a perfect fifth, just heard resolving home.',
+    relatedEdges: ['fifth'],
   },
   {
     category: 'Harmony',

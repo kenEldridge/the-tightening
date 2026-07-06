@@ -2,7 +2,6 @@ import type { EdgeType } from './chordPathfinder';
 
 export const EDGE_TYPE_ORDER: EdgeType[] = [
   'fifth',
-  'plagal',
   'diatonic',
   'relative',
   'iiVI',
@@ -25,12 +24,6 @@ export const EDGE_TYPE_INFO: Record<EdgeType, {
     shortLabel: 'P5',
     color: '#16a34a',
     description: 'Root moves by a perfect fifth around the circle.',
-  },
-  plagal: {
-    label: 'Plagal',
-    shortLabel: 'IV-I',
-    color: '#4d7c0f',
-    description: 'Subdominant-to-tonic color, like IV to I.',
   },
   diatonic: {
     label: 'Diatonic',

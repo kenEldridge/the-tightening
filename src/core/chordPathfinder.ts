@@ -10,7 +10,6 @@ export const FIFTHS_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
 
 export type EdgeType =
   | 'fifth'
-  | 'plagal'
   | 'diatonic'
   | 'relative'
   | 'iiVI'
@@ -108,7 +107,6 @@ export function nodeIdToChordName(nodeId: string): string {
 
 export const EDGE_TYPES: EdgeType[] = [
   'fifth',
-  'plagal',
   'diatonic',
   'relative',
   'iiVI',
@@ -174,13 +172,8 @@ export function buildPathGraph(): Map<string, PathEdge[]> {
     adj.get(`dim-${i}`)!.push({ target: `dim-${dimFifthResolvePos}`, weight: 1, type: 'fifth' });
   }
 
-  // Plagal movement (IV -> I color): same root motion as a fifth, named separately when required.
-  for (let i = 0; i < 12; i++) {
-    const rootPc = FIFTHS_ORDER[i];
-    adj.get(`key-${i}`)!.push({ target: pitchClassToNodeId('key', rootPc + 7), weight: 1.05, type: 'plagal' });
-    const minorRootPc = (rootPc + 9) % 12;
-    adj.get(`minor-${i}`)!.push({ target: pitchClassToNodeId('minor', minorRootPc + 7), weight: 1.05, type: 'plagal' });
-  }
+  // (Plagal IV→I is up-a-fifth root motion — identical to the `fifth` edge in
+  // this pitch-class model — so it isn't a separate edge type. See insights.)
 
   // Diatonic neighbor movement inside each major key.
   for (let keyPc = 0; keyPc < 12; keyPc++) {
@@ -451,7 +444,6 @@ export function findConstrainedPath(
 
 const EDGE_TYPE_LABELS: Record<EdgeType, string> = {
   fifth: 'P5 (fifth)',
-  plagal: 'IV-I (plagal)',
   diatonic: 'diatonic neighbor',
   dom7: 'V\u2192I',
   relative: 'relative maj/min',
