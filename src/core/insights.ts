@@ -20,7 +20,7 @@ export const INSIGHTS: Insight[] = [
   // --- Intervals & the physics ---
   {
     category: 'Intervals',
-    text: 'Clockwise on the circle multiplies frequency by 3/2 (a fifth up). Counter-clockwise is ×2/3 — the same pitch class as a perfect fourth (×4/3), one octave lower.',
+    text: 'Clockwise on the circle of fifths multiplies frequency by 3/2 (a fifth up). Counter-clockwise is ×2/3 — the same pitch class as a perfect fourth (×4/3), one octave lower.',
     relatedEdges: ['fifth', 'dom7'],
   },
   {
@@ -51,7 +51,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Circle',
-    text: 'Neighboring keys on the circle share all but one note — that is why moving between them sounds smooth.',
+    text: 'Neighboring keys on the circle of fifths share all but one note — that is why moving between them sounds smooth.',
     relatedEdges: ['fifth'],
   },
   {
@@ -60,7 +60,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Circle',
-    text: 'A major key and its relative minor share a key signature — here they sit on the same spoke, outer ring versus middle.',
+    text: 'A major key and its relative minor share a key signature — on the circle of fifths they sit on the same spoke, outer ring versus middle.',
     relatedEdges: ['relative'],
   },
   {
@@ -134,7 +134,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'This app',
-    text: 'Transposing a song is just rotating it around this circle; every relationship stays identical.',
+    text: 'Transposing a song is just rotating it around the circle of fifths; every relationship stays identical.',
   },
   {
     category: 'This app',
@@ -142,7 +142,7 @@ export const INSIGHTS: Insight[] = [
   },
   {
     category: 'Circle',
-    text: 'C and F♯/G♭ sit directly opposite on the circle — a tritone apart, the most distant key relationship there is. That opposite-pole geometry is part of why tritone relationships feel so unstable.',
+    text: 'C and F♯/G♭ sit directly opposite on the circle of fifths — a tritone apart, the most distant key relationship there is. That opposite-pole geometry is part of why tritone relationships feel so unstable.',
     relatedEdges: ['tritoneSub'],
   },
   {

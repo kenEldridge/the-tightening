@@ -6,6 +6,12 @@
  * to verify chord definitions, parsing, graph model, and chord detection.
  */
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 let passed = 0;
 let failed = 0;
 
@@ -835,6 +841,97 @@ function findChordPath(from, to, options) {
 }
 
 // ═══════════════════════════════════════════════════════════
+// Endless walk (replicated from src/core/endlessWalk.ts + chordPathfinder.ts)
+// ═══════════════════════════════════════════════════════════
+
+function normalizeTriadQuality(q) {
+  if (q === 'minor' || q === 'min7') return 'minor';
+  if (q === 'dim') return 'dim';
+  return 'major';
+}
+
+function transposeChord(chord, semitones, quality) {
+  const def = getChordDefinition(chord);
+  const rootPc = noteToPitchClass(def.root);
+  const newPc = (rootPc + semitones) % 12;
+  const newRoot = NOTE_NAMES[newPc];
+  const baseQ = normalizeTriadQuality(def.quality);
+  const targetQ = quality === 'same' ? baseQ : quality;
+  const suffix = targetQ === 'major' ? '' : targetQ === 'minor' ? 'm' : 'dim';
+  return newRoot + suffix;
+}
+
+function intervalCycleDestination(from, steps) {
+  let current = from;
+  for (const step of steps.slice(0, -1)) {
+    current = transposeChord(current, step.semitones, step.quality);
+  }
+  return current;
+}
+
+// CYCLE_PRESETS is real production data (auto-generated from song analysis),
+// not hand-copied here, so this stays honest as that data set evolves.
+const cyclePresetsSrc = readFileSync(path.join(__dirname, '../src/core/cyclePresets.ts'), 'utf8');
+const presetsDeclStart = cyclePresetsSrc.indexOf('export const CYCLE_PRESETS');
+const presetsArrStart = cyclePresetsSrc.indexOf('[', cyclePresetsSrc.indexOf('=', presetsDeclStart));
+const presetsArrEnd = cyclePresetsSrc.lastIndexOf(']') + 1;
+const CYCLE_PRESETS = JSON.parse(cyclePresetsSrc.slice(presetsArrStart, presetsArrEnd));
+
+function pickNextCycleAdvance(params) {
+  const {
+    fromChord, toChord, lastChord, cycleEdgeTypes, cycleSteps,
+    returnTrip, randomPattern, recentTonics,
+    presets = CYCLE_PRESETS, rng = Math.random, recenterProb = 0.35,
+  } = params;
+
+  const canRecenter = returnTrip && !!toChord && toChord !== fromChord;
+  const from = returnTrip
+    ? (canRecenter && rng() < recenterProb ? toChord : fromChord)
+    : lastChord;
+
+  const recentRoots = new Set(recentTonics.slice(-6));
+  let edges = cycleEdgeTypes;
+  let steps = cycleSteps;
+
+  if (randomPattern && presets.length > 0) {
+    let fallback = null;
+    for (let tries = 0; tries < 20; tries++) {
+      const preset = presets[Math.floor(rng() * presets.length)];
+      const dest = intervalCycleDestination(from, preset.steps);
+      if (dest === from) continue;
+      const candidate = { edges: preset.loop.split(' '), steps: preset.steps };
+      if (!fallback) fallback = candidate;
+      const destRoot = getChordDefinition(dest).root;
+      if (!recentRoots.has(destRoot)) {
+        edges = candidate.edges;
+        steps = candidate.steps;
+        fallback = null;
+        break;
+      }
+    }
+    if (fallback) { edges = fallback.edges; steps = fallback.steps; }
+  }
+
+  const dest = intervalCycleDestination(from, steps);
+  const destRoot = getChordDefinition(dest).root;
+  const nextRecentTonics = [...recentTonics, destRoot].slice(-8);
+
+  return { from, edges, steps, dest, recentTonics: nextRecentTonics };
+}
+
+// Deterministic seeded PRNG (mulberry32) so the coverage simulation below is
+// reproducible instead of flaking on real Math.random().
+function mulberry32(seed) {
+  let a = seed;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
 // Pathfinder Tests
 // ═══════════════════════════════════════════════════════════
 
@@ -1095,6 +1192,180 @@ section('Pathfinder - C to D supports all required walk constraints');
   assert(result.edgeTypes.includes('relative'), 'Path includes relative edge');
   assert(result.edgeTypes.includes('iiVI'), 'Path includes iiVI edge');
   assert(result.edgeTypes.includes('leadingTone'), 'Path includes leadingTone edge');
+}
+
+// ═══════════════════════════════════════════════════════════
+// Endless Walk Tests — regression coverage for "endless mode gets stuck
+// orbiting the same handful of chords" (found by inspecting recorded .cwalk
+// walk histories: only 11/36 nodes and 5/11 edge types ever appeared).
+// ═══════════════════════════════════════════════════════════
+
+section('Endless walk — recenters home base onto the prior destination');
+{
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: 'F',
+    lastChord: 'C',
+    cycleEdgeTypes: ['dom7', 'fifth'],
+    cycleSteps: [{ semitones: 5, quality: 'same' }, { semitones: 7, quality: 'same' }],
+    returnTrip: true,
+    randomPattern: false,
+    recentTonics: ['C'],
+    rng: () => 0, // always below recenterProb -> forces recenter
+  });
+  assertEq(result.from, 'F', 'Recentering adopts the prior leg\'s destination as the new home');
+}
+
+section('Endless walk — stays on home base when recenter roll fails');
+{
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: 'F',
+    lastChord: 'C',
+    cycleEdgeTypes: ['dom7', 'fifth'],
+    cycleSteps: [{ semitones: 5, quality: 'same' }, { semitones: 7, quality: 'same' }],
+    returnTrip: true,
+    randomPattern: false,
+    recentTonics: ['C'],
+    rng: () => 0.99, // always above recenterProb -> no recenter
+  });
+  assertEq(result.from, 'C', 'Without a successful recenter roll, home base is unchanged');
+}
+
+section('Endless walk — no recenter candidate when destination equals home');
+{
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: 'C', // e.g. a degenerate/just-initialized leg
+    lastChord: 'C',
+    cycleEdgeTypes: ['dom7', 'fifth'],
+    cycleSteps: [{ semitones: 5, quality: 'same' }, { semitones: 7, quality: 'same' }],
+    returnTrip: true,
+    randomPattern: false,
+    recentTonics: ['C'],
+    rng: () => 0,
+  });
+  assertEq(result.from, 'C', 'Cannot recenter onto the home chord itself');
+}
+
+section('Endless walk — without return trip, home base always drifts to lastChord');
+{
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: 'F',
+    lastChord: 'G',
+    cycleEdgeTypes: ['dom7', 'fifth'],
+    cycleSteps: [{ semitones: 5, quality: 'same' }, { semitones: 7, quality: 'same' }],
+    returnTrip: false,
+    randomPattern: false,
+    recentTonics: ['C'],
+    rng: () => 0.99,
+  });
+  assertEq(result.from, 'G', 'Return trip off already drifts every advance (recentering is only needed for return-trip mode)');
+}
+
+section('Endless walk — biases the preset draw away from recently-visited roots');
+{
+  // Small fixture with known destinations from C: presetF -> F, presetG -> G.
+  const presetF = { loop: 'dom7 fifth', steps: [{ semitones: 5, quality: 'same' }, { semitones: 7, quality: 'same' }] };
+  const presetG = { loop: 'fifth dom7', steps: [{ semitones: 7, quality: 'same' }, { semitones: 5, quality: 'same' }] };
+  assertEq(intervalCycleDestination('C', presetF.steps), 'F', 'Fixture sanity: presetF resolves to F from C');
+  assertEq(intervalCycleDestination('C', presetG.steps), 'G', 'Fixture sanity: presetG resolves to G from C');
+
+  // rng draws presetF (index 0) twice, then presetG (index 1). F is marked
+  // "recent" so the first two draws must be rejected and retried, landing on G.
+  const scripted = [0.1, 0.1, 0.6];
+  let call = 0;
+  const scriptedRng = () => scripted[Math.min(call++, scripted.length - 1)];
+
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: '',
+    lastChord: 'C',
+    cycleEdgeTypes: presetF.loop.split(' '),
+    cycleSteps: presetF.steps,
+    returnTrip: false,
+    randomPattern: true,
+    recentTonics: ['F'], // F was just visited
+    presets: [presetF, presetG],
+    rng: scriptedRng,
+  });
+  assertEq(result.dest, 'G', 'Draw skips the recently-visited F and settles on the fresh G');
+}
+
+section('Endless walk — falls back instead of stalling when everything is "recent"');
+{
+  const allRoots = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: '',
+    lastChord: 'C',
+    cycleEdgeTypes: CYCLE_PRESETS[0].loop.split(' '),
+    cycleSteps: CYCLE_PRESETS[0].steps,
+    returnTrip: false,
+    randomPattern: true,
+    recentTonics: allRoots, // every root "recently visited" -> nothing fresh to pick
+    presets: CYCLE_PRESETS,
+    rng: mulberry32(7),
+  });
+  assert(result.dest !== undefined && result.dest !== 'C', 'Still returns a usable (non-degenerate) destination when every root looks recent');
+  assert(Array.isArray(result.steps) && result.steps.length > 0, 'Still returns a valid step sequence rather than hanging/erroring');
+}
+
+section('Endless walk — recentTonics window is capped at 8 entries');
+{
+  const result = pickNextCycleAdvance({
+    fromChord: 'C',
+    toChord: '',
+    lastChord: 'C',
+    cycleEdgeTypes: CYCLE_PRESETS[0].loop.split(' '),
+    cycleSteps: CYCLE_PRESETS[0].steps,
+    returnTrip: false,
+    randomPattern: false,
+    recentTonics: ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C#'],
+    rng: () => 0,
+  });
+  assert(result.recentTonics.length <= 8, 'recentTonics never grows unbounded');
+}
+
+section('Endless walk — long-run simulation actually spans the space (regression for "stuck in a pattern")');
+{
+  // This is the test that would have caught the original bug: with returnTrip
+  // pinning `from` to the same chord forever, a long simulation never left a
+  // small neighborhood around the start (confirmed against 3 real recordings,
+  // each visiting only ~11 of 36 possible chords, 0 of 12 dim chords, and never
+  // reaching the far side of the circle of fifths from the starting chord).
+  const rng = mulberry32(1234);
+  let fromChord = 'C';
+  let toChord = '';
+  let cycleEdgeTypes = CYCLE_PRESETS[0].loop.split(' ');
+  let cycleSteps = CYCLE_PRESETS[0].steps;
+  let recentTonics = ['C'];
+  const visitedRoots = new Set(['C']);
+
+  const ITERATIONS = 300;
+  for (let i = 0; i < ITERATIONS; i++) {
+    const result = pickNextCycleAdvance({
+      fromChord,
+      toChord,
+      lastChord: fromChord,
+      cycleEdgeTypes,
+      cycleSteps,
+      returnTrip: true,
+      randomPattern: true,
+      recentTonics,
+      rng,
+    });
+    fromChord = result.from;
+    toChord = result.dest;
+    cycleEdgeTypes = result.edges;
+    cycleSteps = result.steps;
+    recentTonics = result.recentTonics;
+    visitedRoots.add(getChordDefinition(fromChord).root);
+    visitedRoots.add(getChordDefinition(toChord).root);
+  }
+
+  assert(visitedRoots.size >= 10, `Simulation should span most of the 12 pitch classes over ${ITERATIONS} advances, got ${visitedRoots.size}`);
 }
 
 // ═══════════════════════════════════════════════════════════

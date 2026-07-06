@@ -116,6 +116,13 @@ export interface WalkState {
   repeatCount: number;
   /** How many times the current path has been completed this cycle */
   currentPathCompletions: number;
+  /**
+   * Rolling window of recently-visited tonic root pitch classes (endless mode),
+   * most recent last. Lets auto-advance bias away from neighborhoods that were
+   * just visited, and lets the home base recenter onto ground already reached
+   * (instead of jumping to an unrelated chord).
+   */
+  recentTonics?: string[];
 }
 
 export interface WalkPathResult {

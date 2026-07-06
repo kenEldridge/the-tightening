@@ -10,9 +10,10 @@ import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
-import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath, intervalCycleDestination } from './core/chordPathfinder';
-import type { EdgeType, IntervalStep } from './core/chordPathfinder';
+import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath } from './core/chordPathfinder';
+import type { EdgeType } from './core/chordPathfinder';
 import { CYCLE_PRESETS } from './core/cyclePresets';
+import { pickNextCycleAdvance } from './core/endlessWalk';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
@@ -38,6 +39,7 @@ function defaultWalkState(): WalkState {
     pathsCompleted: 0,
     repeatCount: 1,
     currentPathCompletions: 0,
+    recentTonics: ['C'],
   };
 }
 
@@ -423,32 +425,31 @@ export default function App() {
       const opts = walkState.options;
 
       // Cycle mode: advance to a fresh preset (random if enabled, else the same
-      // one), departing from the home base (returnTrip anchors us there).
+      // one). See pickNextCycleAdvance for why the home base periodically
+      // recenters instead of staying pinned to the original `fromChord`.
       if (walkState.cycleEdgeTypes && walkState.cycleSteps) {
-        const from = opts.returnTrip ? walkState.fromChord : lastChord;
-        let edges = walkState.cycleEdgeTypes;
-        let steps: IntervalStep[] = walkState.cycleSteps;
-        if (opts.randomPattern && CYCLE_PRESETS.length > 0) {
-          // Pick a random preset whose destination isn't the start chord itself
-          // (those degenerate to "C → … → C → C"). Try a handful, then accept any.
-          for (let tries = 0; tries < 12; tries++) {
-            const preset = CYCLE_PRESETS[Math.floor(Math.random() * CYCLE_PRESETS.length)];
-            edges = preset.loop.split(' ') as EdgeType[];
-            steps = preset.steps;
-            if (intervalCycleDestination(from, steps) !== from) break;
-          }
-        }
+        const { from, edges, steps, dest, recentTonics } = pickNextCycleAdvance({
+          fromChord: walkState.fromChord,
+          toChord: walkState.toChord,
+          lastChord,
+          cycleEdgeTypes: walkState.cycleEdgeTypes,
+          cycleSteps: walkState.cycleSteps,
+          returnTrip: !!opts.returnTrip,
+          randomPattern: !!opts.randomPattern,
+          recentTonics: walkState.recentTonics ?? [],
+        });
         const built = buildIntervalCyclePath(from, edges, steps, !!opts.returnTrip);
         setWalkState(prev => ({
           ...prev,
           fromChord: from,
-          toChord: intervalCycleDestination(from, steps),
+          toChord: dest,
           cycleEdgeTypes: edges,
           cycleSteps: steps,
           path: built,
           currentStep: 0,
           completed: false,
           currentPathCompletions: 0,
+          recentTonics,
         }));
         return;
       }
