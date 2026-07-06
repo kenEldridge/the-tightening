@@ -28,7 +28,7 @@ export default function App() {
   const [walkState, setWalkState] = useState<WalkState>({
     fromChord: '',
     toChord: '',
-    options: { fifth: true, relative: true, returnTrip: false, endless: false },
+    options: { returnTrip: false, endless: false },
     returnOptions: {},
     path: null,
     currentStep: 0,
@@ -140,7 +140,7 @@ export default function App() {
     setWalkState({
       fromChord: '',
       toChord: '',
-      options: { fifth: true, relative: true, returnTrip: false, endless: false },
+      options: { returnTrip: false, endless: false },
       returnOptions: {},
       path: null,
       currentStep: 0,
