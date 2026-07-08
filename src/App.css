@@ -321,6 +321,48 @@ body {
   border-color: var(--accent);
 }
 
+/* ── Mood picker ── */
+.mood-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.mood-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.mood-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.mood-btn-active {
+  color: var(--text-primary);
+  background: rgba(88, 166, 255, 0.14);
+  border-color: var(--accent);
+}
+
+.mood-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.mood-label {
+  white-space: nowrap;
+}
+
 .walk-tabs {
   display: flex;
   gap: 4px;

@@ -1,5 +1,5 @@
 import { getChordDefinition } from './chordDefinitions';
-import { intervalCycleDestination } from './chordPathfinder';
+import { intervalCycleDestination, transposeChord } from './chordPathfinder';
 import type { EdgeType, IntervalStep } from './chordPathfinder';
 import { CYCLE_PRESETS } from './cyclePresets';
 import type { CyclePreset } from './cyclePresets';
@@ -14,6 +14,11 @@ export interface EndlessAdvanceParams {
   randomPattern: boolean;
   recentTonics: string[];
   presets?: CyclePreset[];
+  /**
+   * Pin the next home base to this quality (mood anchor). Keeps a happy walk
+   * from sliding into minor as it drifts. null/undefined leaves it untouched.
+   */
+  tonicQuality?: 'major' | 'minor' | null;
   rng?: () => number;
   recenterProb?: number;
 }
@@ -44,14 +49,17 @@ export interface EndlessAdvanceResult {
 export function pickNextCycleAdvance(params: EndlessAdvanceParams): EndlessAdvanceResult {
   const {
     fromChord, toChord, lastChord, cycleEdgeTypes, cycleSteps,
-    returnTrip, randomPattern, recentTonics,
+    returnTrip, randomPattern, recentTonics, tonicQuality,
     presets = CYCLE_PRESETS, rng = Math.random, recenterProb = 0.35,
   } = params;
 
   const canRecenter = returnTrip && !!toChord && toChord !== fromChord;
-  const from = returnTrip
+  const rawFrom = returnTrip
     ? (canRecenter && rng() < recenterProb ? toChord : fromChord)
     : lastChord;
+  // Mood anchor: pin the home base to the mood's quality so the wander doesn't
+  // drift out of the requested feel (e.g. happy staying major).
+  const from = tonicQuality ? transposeChord(rawFrom, 0, tonicQuality) : rawFrom;
 
   const recentRoots = new Set(recentTonics.slice(-6));
   let edges = cycleEdgeTypes;

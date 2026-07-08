@@ -78,6 +78,13 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - Endless logic lives in App.tsx as a useEffect watching `walkState.completed` + `walkState.options.endless`
 - Return trip concatenation lives in WalkMode.tsx's `updateAndFindPath`
 
+### Mood filter (v3.4.0)
+- `src/core/mood.ts` — `WalkMood = 'any' | 'happy' | 'melancholy' | 'dramatic'`. A feel/genre lever over the endless-mode wander.
+- Two mechanisms, both needed: (1) **palette** — `presetsForMood(mood)` restricts the random cycle-preset draw to presets whose harmonic moves match the mood; (2) **anchor** — `moodTonicQuality(mood)` pins the home base to a quality (happy→major, melancholy→minor) so quality-preserving (`'same'`) presets don't drift the walk out of the requested feel. Anchoring is the key fix: without it, once endless recenter lands on a minor tonic the whole walk stays minor regardless of pattern.
+- `classifyPresetMood(preset)` buckets each preset from its edge set + forced step qualities (tonic-independent): dark edges (borrowed/parallel/leadingTone/chromaticMediant/tritoneSub) or forced dim → dramatic; soft edges (relative/iiVI) or forced minor → melancholy; else (only fifth/dom7/diatonic, no minor/dim) → happy. Current split of the 40 presets: 12 happy / 18 melancholy / 10 dramatic.
+- Wired in: `WalkState.mood`; `App.tsx` endless effect passes `presetsForMood`/`moodTonicQuality` into `pickNextCycleAdvance` (which now takes `tonicQuality`); `WalkMode.tsx` mood picker re-anchors the tonic and jumps to the mood's top preset so the change is heard immediately.
+- **Default is `'happy'`** (was effectively `'any'`) — the out-of-box wander is now bright/major. Sim over 4000 advances: happy = 100% major; any = 56% maj / 35% min / 9% dim.
+
 ### Edge-type taxonomy (v2.4.0)
 - Expanded from 5 to 11 harmonic relationship types, all selectable as "must include" path constraints
 - New families in `buildPathGraph()`: plagal (IV→I), diatonic (in-key neighbors), borrowed (bIII/bVI/bVII/iv modal mixture), parallel (same root, swapped quality), chromaticMediant (same-quality roots a third apart), tritoneSub (substitute dominant resolving by semitone)

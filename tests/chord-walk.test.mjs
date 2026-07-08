@@ -880,14 +880,15 @@ const CYCLE_PRESETS = JSON.parse(cyclePresetsSrc.slice(presetsArrStart, presetsA
 function pickNextCycleAdvance(params) {
   const {
     fromChord, toChord, lastChord, cycleEdgeTypes, cycleSteps,
-    returnTrip, randomPattern, recentTonics,
+    returnTrip, randomPattern, recentTonics, tonicQuality,
     presets = CYCLE_PRESETS, rng = Math.random, recenterProb = 0.35,
   } = params;
 
   const canRecenter = returnTrip && !!toChord && toChord !== fromChord;
-  const from = returnTrip
+  const rawFrom = returnTrip
     ? (canRecenter && rng() < recenterProb ? toChord : fromChord)
     : lastChord;
+  const from = tonicQuality ? transposeChord(rawFrom, 0, tonicQuality) : rawFrom;
 
   const recentRoots = new Set(recentTonics.slice(-6));
   let edges = cycleEdgeTypes;
@@ -1366,6 +1367,92 @@ section('Endless walk — long-run simulation actually spans the space (regressi
   }
 
   assert(visitedRoots.size >= 10, `Simulation should span most of the 12 pitch classes over ${ITERATIONS} advances, got ${visitedRoots.size}`);
+}
+
+// ═══════════════════════════════════════════════════════════
+// Mood filter (replicated from src/core/mood.ts)
+// ═══════════════════════════════════════════════════════════
+
+const BRIGHT_EDGES = new Set(['fifth', 'dom7', 'diatonic']);
+const SOFT_EDGES = new Set(['relative', 'iiVI']);
+const DARK_EDGES = new Set(['borrowed', 'parallel', 'leadingTone', 'chromaticMediant', 'tritoneSub']);
+
+function classifyPresetMood(preset) {
+  const edges = new Set(preset.loop.split(' '));
+  const forced = new Set(preset.steps.map(s => s.quality).filter(q => q !== 'same'));
+  for (const e of edges) if (DARK_EDGES.has(e)) return 'dramatic';
+  if (forced.has('dim')) return 'dramatic';
+  for (const e of edges) if (SOFT_EDGES.has(e)) return 'melancholy';
+  if (forced.has('minor')) return 'melancholy';
+  for (const e of edges) if (!BRIGHT_EDGES.has(e)) return 'melancholy';
+  return 'happy';
+}
+
+function moodTonicQuality(mood) {
+  if (mood === 'happy') return 'major';
+  if (mood === 'melancholy') return 'minor';
+  return null;
+}
+
+function presetsForMood(mood) {
+  if (mood === 'any') return CYCLE_PRESETS;
+  const m = CYCLE_PRESETS.filter(p => classifyPresetMood(p) === mood);
+  return m.length > 0 ? m : CYCLE_PRESETS;
+}
+
+function intervalCycleChords(from, steps) {
+  const chords = [from];
+  let current = from;
+  for (const step of steps) {
+    current = transposeChord(current, step.semitones, step.quality);
+    chords.push(current);
+  }
+  return chords;
+}
+
+function chordQuality(name) {
+  return normalizeTriadQuality(getChordDefinition(name).quality);
+}
+
+section('Mood — every mood bucket is non-empty');
+for (const mood of ['happy', 'melancholy', 'dramatic']) {
+  assert(presetsForMood(mood).length >= 2, `${mood} has at least 2 presets`);
+}
+
+section('Mood — every preset classifies to exactly one mood, none unclassified');
+{
+  const total = ['happy', 'melancholy', 'dramatic'].reduce(
+    (sum, m) => sum + CYCLE_PRESETS.filter(p => classifyPresetMood(p) === m).length, 0);
+  assertEq(total, CYCLE_PRESETS.length, 'buckets partition all presets');
+}
+
+section('Mood — tonic anchor quality mapping');
+assertEq(moodTonicQuality('happy'), 'major', 'happy anchors major');
+assertEq(moodTonicQuality('melancholy'), 'minor', 'melancholy anchors minor');
+assertEq(moodTonicQuality('dramatic'), null, 'dramatic leaves tonic untouched');
+assertEq(moodTonicQuality('any'), null, 'any leaves tonic untouched');
+
+section('Mood — happy presets stay all-major from a major anchor');
+for (const preset of presetsForMood('happy')) {
+  // Outbound chords actually played (returnTrip forces the closing hop to tonic).
+  const outbound = intervalCycleChords('C', preset.steps).slice(0, -1);
+  const allMajor = outbound.every(c => chordQuality(c) === 'major');
+  assert(allMajor, `happy preset "${preset.loop}" is all major from C: got ${outbound.join(' ')}`);
+}
+
+section('Mood — happy anchor keeps the endless home base major even after landing on a minor peak');
+{
+  const rng = mulberry32(7);
+  // Force a recenter onto a minor toChord; happy anchor must convert it to major.
+  const result = pickNextCycleAdvance({
+    fromChord: 'C', toChord: 'Am', lastChord: 'Am',
+    cycleEdgeTypes: ['dom7', 'fifth'], cycleSteps: CYCLE_PRESETS[0].steps,
+    returnTrip: true, randomPattern: true, recentTonics: [],
+    presets: presetsForMood('happy'), tonicQuality: moodTonicQuality('happy'),
+    rng, recenterProb: 1, // always recenter onto the (minor) peak
+  });
+  assert(!result.from.endsWith('m') && !result.from.endsWith('dim'),
+    `happy home base should be major, got ${result.from}`);
 }
 
 // ═══════════════════════════════════════════════════════════
