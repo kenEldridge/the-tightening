@@ -14,6 +14,7 @@ import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCycl
 import type { EdgeType } from './core/chordPathfinder';
 import { CYCLE_PRESETS } from './core/cyclePresets';
 import { pickNextCycleAdvance } from './core/endlessWalk';
+import { presetsForMood, moodTonicQuality } from './core/mood';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
@@ -21,8 +22,9 @@ import ReplayMode from './components/ReplayMode';
 import DidYouKnow from './components/DidYouKnow';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
-// Default walk: start on C with the most common song cycle preset selected,
-// endless + return trip + random-pattern all on so it wanders through patterns.
+// Default walk: start on C in a Happy mood with the most common (bright) song
+// cycle preset selected; endless + return trip + random-pattern all on so it
+// wanders through happy-flavored patterns anchored on major tonics.
 const DEFAULT_PRESET = CYCLE_PRESETS[0];
 const DEFAULT_PRESET_EDGES = DEFAULT_PRESET.loop.split(' ') as EdgeType[];
 function defaultWalkState(): WalkState {
@@ -33,6 +35,7 @@ function defaultWalkState(): WalkState {
     returnOptions: {},
     cycleEdgeTypes: DEFAULT_PRESET_EDGES,
     cycleSteps: DEFAULT_PRESET.steps,
+    mood: 'happy',
     path: null,
     currentStep: 0,
     completed: false,
@@ -428,6 +431,7 @@ export default function App() {
       // one). See pickNextCycleAdvance for why the home base periodically
       // recenters instead of staying pinned to the original `fromChord`.
       if (walkState.cycleEdgeTypes && walkState.cycleSteps) {
+        const mood = walkState.mood ?? 'any';
         const { from, edges, steps, dest, recentTonics } = pickNextCycleAdvance({
           fromChord: walkState.fromChord,
           toChord: walkState.toChord,
@@ -437,6 +441,8 @@ export default function App() {
           returnTrip: !!opts.returnTrip,
           randomPattern: !!opts.randomPattern,
           recentTonics: walkState.recentTonics ?? [],
+          presets: presetsForMood(mood),
+          tonicQuality: moodTonicQuality(mood),
         });
         const built = buildIntervalCyclePath(from, edges, steps, !!opts.returnTrip);
         setWalkState(prev => ({

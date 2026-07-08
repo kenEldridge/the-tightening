@@ -55,6 +55,10 @@ Clicking a preset:
 
 The "To" dropdown greys out any destination that's unreachable under the current constraints.
 
+### Mood
+
+Pick a feel and the endless wander follows it: **Happy** (bright, all-major), **Melancholy** (minor and relative color), **Dramatic** (chromatic mediants, tritone subs, diminished), or **Any** (no filter). Mood does two things — it restricts the random cycle-preset pool to matching patterns, and it pins the home base to a matching tonic quality (major for happy, minor for melancholy) so the walk doesn't drift out of the feel. Default is Happy.
+
 ### Other features
 
 - **Return trip** — appends the reverse path after the outbound, sharing the middle chord. Out and Back each have their own independent constraints.

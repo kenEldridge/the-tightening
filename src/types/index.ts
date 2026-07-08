@@ -1,4 +1,5 @@
 import type { EdgeType, IntervalStep } from '../core/chordPathfinder';
+import type { WalkMood } from '../core/mood';
 
 // Chord qualities supported in v1
 export type ChordQuality =
@@ -123,6 +124,13 @@ export interface WalkState {
    * (instead of jumping to an unrelated chord).
    */
   recentTonics?: string[];
+  /**
+   * Mood/feel filter for endless-mode wandering. Restricts the random cycle-
+   * preset pool to patterns matching the mood, and pins the tonic (home base)
+   * to a quality that delivers it (major for happy, minor for melancholy).
+   * 'any' is the unfiltered original behavior. See src/core/mood.ts.
+   */
+  mood?: WalkMood;
 }
 
 export interface WalkPathResult {

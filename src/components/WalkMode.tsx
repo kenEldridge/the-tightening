@@ -17,6 +17,8 @@ import type { NoteSpelling } from '../core/chordDefinitions';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER, edgeTypeColor } from '../core/edgeTypeStyles';
 import { CYCLE_PRESETS } from '../core/cyclePresets';
 import type { CyclePreset } from '../core/cyclePresets';
+import { MOODS, presetsForMood, moodTonicQuality } from '../core/mood';
+import type { WalkMood } from '../core/mood';
 import PathStrip from './PathStrip';
 
 interface Props {
@@ -32,6 +34,7 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
   const returnOptions = walkState.returnOptions ?? {};
   const cycleEdgeTypes = walkState.cycleEdgeTypes;
   const cycleSteps = walkState.cycleSteps;
+  const mood = walkState.mood ?? 'any';
 
   const [activeTab, setActiveTab] = useState<'out' | 'back'>('out');
   const [hoveredPreset, setHoveredPreset] = useState<{ preset: CyclePreset; rect: DOMRect } | null>(null);
@@ -210,6 +213,29 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
     onWalkStateChange({ ...walkState, options: { ...options, randomPattern: !options.randomPattern } });
   }, [onWalkStateChange, walkState, options]);
 
+  // Pick a mood/feel. 'any' just records the choice; a concrete mood also
+  // re-anchors the tonic to the mood's quality and jumps to that mood's most
+  // iconic preset, so the change is heard immediately (not only on next advance).
+  const handleMoodChange = useCallback((nextMood: WalkMood) => {
+    if (nextMood === mood) return;
+    if (nextMood === 'any') {
+      onWalkStateChange({ ...walkState, mood: 'any' });
+      return;
+    }
+    const quality = moodTonicQuality(nextMood);
+    const base = fromChord || 'C';
+    const anchoredFrom = quality ? transposeChord(base, 0, quality) : base;
+    const preset = presetsForMood(nextMood)[0];
+    updateAndFindPath({
+      mood: nextMood,
+      fromChord: anchoredFrom,
+      cycleEdgeTypes: preset.loop.split(' ') as EdgeType[],
+      cycleSteps: preset.steps,
+      options: { returnTrip: true, endless: options.endless, randomPattern: options.randomPattern },
+      returnOptions: {},
+    });
+  }, [mood, fromChord, options.endless, options.randomPattern, walkState, onWalkStateChange, updateAndFindPath]);
+
   const handleClearConstraints = useCallback(() => {
     if (activeTab === 'back') {
       updateAndFindPath({ cycleEdgeTypes: undefined, cycleSteps: undefined, returnOptions: {} });
@@ -233,6 +259,25 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
 
   return (
     <div className="walk-mode">
+      <div className="walk-section walk-mood">
+        <label className="walk-label">Mood</label>
+        <div className="mood-picker" role="group" aria-label="Walk mood">
+          {MOODS.map(m => (
+            <button
+              key={m.id}
+              type="button"
+              className={`mood-btn ${mood === m.id ? 'mood-btn-active' : ''}`}
+              onClick={() => handleMoodChange(m.id)}
+              title={m.blurb}
+              aria-pressed={mood === m.id}
+            >
+              <span className="mood-emoji">{m.emoji}</span>
+              <span className="mood-label">{m.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="walk-section walk-key-shift">
         <label className="walk-label">Key</label>
         <div className="key-shift-control">
