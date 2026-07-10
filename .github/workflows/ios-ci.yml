@@ -15,11 +15,15 @@ on:
 
 jobs:
   ios-build:
-    runs-on: macos-15
+    # RN 0.86 / Expo SDK 57 needs Swift tools 6.2 → Xcode 26 (macos-15's default is too old)
+    runs-on: macos-26
     timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Toolchain versions
+        run: xcodebuild -version && swift --version
 
       - uses: actions/setup-node@v4
         with:
