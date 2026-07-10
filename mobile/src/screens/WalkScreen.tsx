@@ -20,8 +20,10 @@ export default function WalkScreen({ midi }: Props) {
   const walk = useWalkState(midi.matchedChords);
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
-  const circleSize = Math.min(width, 480);
+  const { width, height } = useWindowDimensions();
+  // iPad / landscape: circle left, controls right.
+  const isWide = width >= 700 && width > height * 0.9;
+  const circleSize = isWide ? Math.min(height - 120, width - 420) : Math.min(width, 480);
 
   const { walkState } = walk;
   const path = walkState.path;
@@ -41,59 +43,77 @@ export default function WalkScreen({ midi }: Props) {
     }
   };
 
+  const circle = (
+    <View style={{ width: circleSize, height: circleSize, alignSelf: 'center' }}>
+      <CircleOfFifths
+        walkPath={
+          path
+            ? { nodes: path.chordNames, edgeTypes: path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
+            : undefined
+        }
+        matchedChords={midi.playingChord ? [...midi.matchedChords, midi.playingChord] : midi.matchedChords}
+        onNodePress={(name) => {
+          setInfo(null);
+          walk.setTo(name); // tap a node = walk there
+        }}
+        onEdgeInfo={setInfo}
+      />
+    </View>
+  );
+
+  const controls = (
+    <>
+      {path ? (
+        <PathStrip
+          chordNames={path.chordNames}
+          edgeTypes={path.edgeTypes as EdgeType[]}
+          explanations={path.explanations}
+          currentStep={walkState.currentStep}
+          completed={walkState.completed}
+          onArrowPress={setInfo}
+        />
+      ) : (
+        <Text style={styles.noPath}>
+          {walkState.fromChord && walkState.toChord && walkState.fromChord === walkState.toChord
+            ? 'Pick two different chords.'
+            : 'No path found with current constraints.'}
+        </Text>
+      )}
+
+      {walkState.currentStep > 0 && !walkState.completed && (
+        <Pressable onPress={walk.resetProgress} style={{ alignSelf: 'center' }}>
+          <Text style={styles.resetText}>Reset progress</Text>
+        </Pressable>
+      )}
+
+      <WalkPanel
+        walk={walk}
+        onPickFrom={() => setPicking('from')}
+        onPickTo={() => setPicking('to')}
+        onInfo={setInfo}
+        onHearPath={hearPath}
+        isPlaying={midi.playingChord !== null}
+      />
+
+      <DidYouKnow />
+    </>
+  );
+
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
-        <View style={{ width: circleSize, height: circleSize, alignSelf: 'center' }}>
-          <CircleOfFifths
-            walkPath={
-              path
-                ? { nodes: path.chordNames, edgeTypes: path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
-                : undefined
-            }
-            matchedChords={midi.playingChord ? [...midi.matchedChords, midi.playingChord] : midi.matchedChords}
-            onNodePress={(name) => {
-              setInfo(null);
-              walk.setTo(name); // tap a node = walk there
-            }}
-            onEdgeInfo={setInfo}
-          />
+      {isWide ? (
+        <View style={styles.wideRow}>
+          <View style={styles.widerCircle}>{circle}</View>
+          <ScrollView style={styles.widePanel} contentContainerStyle={{ paddingBottom: 32 }}>
+            {controls}
+          </ScrollView>
         </View>
-
-        {path ? (
-          <PathStrip
-            chordNames={path.chordNames}
-            edgeTypes={path.edgeTypes as EdgeType[]}
-            explanations={path.explanations}
-            currentStep={walkState.currentStep}
-            completed={walkState.completed}
-            onArrowPress={setInfo}
-          />
-        ) : (
-          <Text style={styles.noPath}>
-            {walkState.fromChord && walkState.toChord && walkState.fromChord === walkState.toChord
-              ? 'Pick two different chords.'
-              : 'No path found with current constraints.'}
-          </Text>
-        )}
-
-        {walkState.currentStep > 0 && !walkState.completed && (
-          <Pressable onPress={walk.resetProgress} style={{ alignSelf: 'center' }}>
-            <Text style={styles.resetText}>Reset progress</Text>
-          </Pressable>
-        )}
-
-        <WalkPanel
-          walk={walk}
-          onPickFrom={() => setPicking('from')}
-          onPickTo={() => setPicking('to')}
-          onInfo={setInfo}
-          onHearPath={hearPath}
-          isPlaying={midi.playingChord !== null}
-        />
-
-        <DidYouKnow />
-      </ScrollView>
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+          {circle}
+          {controls}
+        </ScrollView>
+      )}
 
       {info && (
         <Pressable style={styles.infoCard} onPress={() => setInfo(null)}>
@@ -145,6 +165,9 @@ export default function WalkScreen({ midi }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  wideRow: { flex: 1, flexDirection: 'row' },
+  widerCircle: { flex: 1, justifyContent: 'center' },
+  widePanel: { width: 400, borderLeftColor: '#21262d', borderLeftWidth: 1 },
   noPath: { color: '#f85149', textAlign: 'center', padding: 12 },
   resetText: { color: '#58a6ff', fontSize: 13, paddingVertical: 4 },
   infoCard: {
