@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "The Tightening",
+    "slug": "the-tightening",
+    "version": "0.1.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "thetightening",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.keneldridge.the-tightening",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "The Tightening connects to Bluetooth MIDI instruments (like your piano) to hear what you play and to play chord walks back to them."
+      }
+    },
+    "android": {
+      "package": "com.keneldridge.thetightening",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
