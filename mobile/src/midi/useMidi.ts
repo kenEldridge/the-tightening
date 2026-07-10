@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { requestMIDIAccess, type MIDIAccess, type MIDIInput, type MIDIOutput } from '@motiz88/react-native-midi';
-import { detectChords, getTheoryChordNodes, midiNoteToName } from 'theory-core';
+import { detectChords, getChordDefinition, getTheoryChordNodes, midiNoteToName, noteToPitchClass } from 'theory-core';
 
 export interface Midi {
   access: MIDIAccess | null;
@@ -13,6 +13,21 @@ export interface Midi {
   /** Rolling log of recent note-ons, newest first. */
   log: string[];
   sendNote: (note: number) => boolean;
+  /** Play a chord sequence on the first MIDI output (triads voiced from C3). Returns false if no output. */
+  playChords: (chordNames: string[], msPerChord?: number) => boolean;
+  stopPlayback: () => void;
+  /** Chord names currently being played back, or null when idle. */
+  playingChord: string | null;
+}
+
+/** Root-position triad MIDI notes, root anchored in the C3 octave. */
+function voiceChord(chordName: string): number[] {
+  const def = getChordDefinition(chordName);
+  const rootPc = noteToPitchClass(def.root);
+  const root = 48 + rootPc; // C3-based
+  return Array.from(def.pitchClasses)
+    .map((pc) => root + ((pc - rootPc + 12) % 12))
+    .sort((a, b) => a - b);
 }
 
 const theoryNodes = () => getTheoryChordNodes() as Parameters<typeof detectChords>[1];
@@ -85,6 +100,48 @@ export function useMidi(): Midi {
     [access],
   );
 
+  // --- Path playback (mobile-first feature; desktop is listen-only) ---
+  const playbackToken = useRef(0);
+  const soundingNotes = useRef<number[]>([]);
+  const [playingChord, setPlayingChord] = useState<string | null>(null);
+
+  const stopPlayback = useCallback(() => {
+    playbackToken.current++;
+    const output = access ? [...access.outputs.values()][0] : undefined;
+    if (output) {
+      for (const n of soundingNotes.current) output.send([0x80, n, 0]);
+    }
+    soundingNotes.current = [];
+    setPlayingChord(null);
+  }, [access]);
+
+  const playChords = useCallback(
+    (chordNames: string[], msPerChord = 900) => {
+      const output = access ? [...access.outputs.values()][0] : undefined;
+      if (!output || chordNames.length === 0) return false;
+      stopPlayback();
+      const token = ++playbackToken.current;
+
+      const playAt = (i: number) => {
+        if (token !== playbackToken.current) return;
+        for (const n of soundingNotes.current) output.send([0x80, n, 0]);
+        soundingNotes.current = [];
+        if (i >= chordNames.length) {
+          setPlayingChord(null);
+          return;
+        }
+        const notes = voiceChord(chordNames[i]);
+        for (const n of notes) output.send([0x90, n, 88]);
+        soundingNotes.current = notes;
+        setPlayingChord(chordNames[i]);
+        setTimeout(() => playAt(i + 1), msPerChord);
+      };
+      playAt(0);
+      return true;
+    },
+    [access, stopPlayback],
+  );
+
   return {
     access,
     error,
@@ -94,5 +151,8 @@ export function useMidi(): Midi {
     matchedChords,
     log,
     sendNote,
+    playChords,
+    stopPlayback,
+    playingChord,
   };
 }

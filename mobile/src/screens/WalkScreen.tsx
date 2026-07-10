@@ -1,78 +1,99 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { findChordPath, getAllChordNames } from 'theory-core';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { getAllChordNames } from 'theory-core';
+import type { EdgeType } from 'theory-core';
 import CircleOfFifths from '../components/CircleOfFifths';
 import PathStrip from '../components/PathStrip';
+import WalkPanel from '../components/WalkPanel';
+import DidYouKnow from '../components/DidYouKnow';
+import { useWalkState } from '../walk/useWalkState';
 import type { Midi } from '../midi/useMidi';
 
-// Minimal Walk mode (plan B4 + a slice of B5): pick From/To, path computed via
-// theory-core Dijkstra, played progress tracked from live MIDI. Edge-type
-// constraints, return trip, endless mode and moods follow in B5 proper.
-
-type PathState = NonNullable<ReturnType<typeof findChordPath>> | null;
+// Full Walk mode (B5+B6): circle + path strip + the desktop panel's control
+// surface (moods, presets, Out/Back constraints, trips) + "hear path" playback.
 
 interface Props {
   midi: Midi;
 }
 
 export default function WalkScreen({ midi }: Props) {
-  const [fromChord, setFromChord] = useState('C');
-  const [toChord, setToChord] = useState('F#');
+  const walk = useWalkState(midi.matchedChords);
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
   const [info, setInfo] = useState<string | null>(null);
+  const { width } = useWindowDimensions();
+  const circleSize = Math.min(width, 480);
 
-  const path: PathState = useMemo(() => findChordPath(fromChord, toChord, {}), [fromChord, toChord]);
-
-  useEffect(() => setCurrentStep(0), [fromChord, toChord]);
-
-  const completed = !!path && currentStep >= path.chordNames.length;
-
-  // Advance when the awaited chord is played.
-  useEffect(() => {
-    if (!path || completed) return;
-    if (midi.matchedChords.includes(path.chordNames[currentStep])) {
-      setCurrentStep((s) => s + 1);
-    }
-  }, [midi.matchedChords, path, currentStep, completed]);
-
+  const { walkState } = walk;
+  const path = walkState.path;
   const allNames = useMemo(() => getAllChordNames(), []);
+
+  // Endless mode can swap the path mid-playback — cut stale notes off.
+  useEffect(() => {
+    midi.stopPlayback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  const hearPath = () => {
+    if (midi.playingChord !== null) {
+      midi.stopPlayback();
+    } else if (path) {
+      if (!midi.playChords(path.chordNames)) setInfo('No MIDI output found — connect the piano first (MIDI tab).');
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.controls}>
-        <Chooser label="From" value={fromChord} onPress={() => setPicking('from')} />
-        <Text style={styles.controlsArrow}>→</Text>
-        <Chooser label="To" value={toChord} onPress={() => setPicking('to')} />
-        <Pressable style={styles.reset} onPress={() => setCurrentStep(0)}>
-          <Text style={styles.resetText}>Reset</Text>
-        </Pressable>
-      </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+        <View style={{ width: circleSize, height: circleSize, alignSelf: 'center' }}>
+          <CircleOfFifths
+            walkPath={
+              path
+                ? { nodes: path.chordNames, edgeTypes: path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
+                : undefined
+            }
+            matchedChords={midi.playingChord ? [...midi.matchedChords, midi.playingChord] : midi.matchedChords}
+            onNodePress={(name) => {
+              setInfo(null);
+              walk.setTo(name); // tap a node = walk there
+            }}
+            onEdgeInfo={setInfo}
+          />
+        </View>
 
-      <View style={styles.circle}>
-        <CircleOfFifths
-          walkPath={path ? { nodes: path.chordNames, edgeTypes: path.edgeTypes, currentStep } : undefined}
-          matchedChords={midi.matchedChords}
-          onNodePress={(name) => {
-            setInfo(null);
-            setToChord(name); // tap a node = walk there
-          }}
-          onEdgeInfo={setInfo}
-        />
-      </View>
+        {path ? (
+          <PathStrip
+            chordNames={path.chordNames}
+            edgeTypes={path.edgeTypes as EdgeType[]}
+            explanations={path.explanations}
+            currentStep={walkState.currentStep}
+            completed={walkState.completed}
+            onArrowPress={setInfo}
+          />
+        ) : (
+          <Text style={styles.noPath}>
+            {walkState.fromChord && walkState.toChord && walkState.fromChord === walkState.toChord
+              ? 'Pick two different chords.'
+              : 'No path found with current constraints.'}
+          </Text>
+        )}
 
-      {path ? (
-        <PathStrip
-          chordNames={path.chordNames}
-          edgeTypes={path.edgeTypes}
-          explanations={path.explanations}
-          currentStep={currentStep}
-          completed={completed}
-          onArrowPress={setInfo}
+        {walkState.currentStep > 0 && !walkState.completed && (
+          <Pressable onPress={walk.resetProgress} style={{ alignSelf: 'center' }}>
+            <Text style={styles.resetText}>Reset progress</Text>
+          </Pressable>
+        )}
+
+        <WalkPanel
+          walk={walk}
+          onPickFrom={() => setPicking('from')}
+          onPickTo={() => setPicking('to')}
+          onInfo={setInfo}
+          onHearPath={hearPath}
+          isPlaying={midi.playingChord !== null}
         />
-      ) : (
-        <Text style={styles.noPath}>No path between those chords.</Text>
-      )}
+
+        <DidYouKnow />
+      </ScrollView>
 
       {info && (
         <Pressable style={styles.infoCard} onPress={() => setInfo(null)}>
@@ -86,26 +107,34 @@ export default function WalkScreen({ midi }: Props) {
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{picking === 'from' ? 'Start chord' : 'Destination chord'}</Text>
             <ScrollView>
-              {([['Major', allNames.major], ['Minor', allNames.minor], ['Diminished', allNames.dim]] as const).map(([label, names]) => (
-                <View key={label}>
-                  <Text style={styles.modalSection}>{label}</Text>
-                  <View style={styles.modalGrid}>
-                    {names.map((name) => (
-                      <Pressable
-                        key={name}
-                        style={styles.modalChip}
-                        onPress={() => {
-                          if (picking === 'from') setFromChord(name);
-                          else setToChord(name);
-                          setPicking(null);
-                        }}
-                      >
-                        <Text style={styles.modalChipText}>{name}</Text>
-                      </Pressable>
-                    ))}
+              {([['Major', allNames.major], ['Minor', allNames.minor], ['Diminished', allNames.dim]] as const).map(
+                ([label, names]) => (
+                  <View key={label}>
+                    <Text style={styles.modalSection}>{label}</Text>
+                    <View style={styles.modalGrid}>
+                      {names.map((name) => {
+                        // Destination picking respects reachability under the active preset/constraints.
+                        const unreachable =
+                          picking === 'to' && walk.reachableToChords !== null && !walk.reachableToChords.has(name);
+                        return (
+                          <Pressable
+                            key={name}
+                            style={[styles.modalChip, unreachable && styles.modalChipDisabled]}
+                            disabled={unreachable}
+                            onPress={() => {
+                              if (picking === 'from') walk.setFrom(name);
+                              else walk.setTo(name);
+                              setPicking(null);
+                            }}
+                          >
+                            <Text style={[styles.modalChipText, unreachable && styles.modalChipTextDisabled]}>{name}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
                   </View>
-                </View>
-              ))}
+                ),
+              )}
             </ScrollView>
           </View>
         </Pressable>
@@ -114,39 +143,13 @@ export default function WalkScreen({ midi }: Props) {
   );
 }
 
-function Chooser({ label, value, onPress }: { label: string; value: string; onPress: () => void }) {
-  return (
-    <Pressable style={styles.chooser} onPress={onPress}>
-      <Text style={styles.chooserLabel}>{label}</Text>
-      <Text style={styles.chooserValue}>{value}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  controls: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 8 },
-  controlsArrow: { color: '#8b949e', fontSize: 16 },
-  chooser: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 7,
-    backgroundColor: '#161b22',
-    borderColor: '#30363d',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-  },
-  chooserLabel: { color: '#8b949e', fontSize: 11 },
-  chooserValue: { color: '#c9d1d9', fontSize: 16, fontWeight: '700' },
-  reset: { marginLeft: 'auto', paddingVertical: 7, paddingHorizontal: 12 },
-  resetText: { color: '#58a6ff', fontSize: 13 },
-  circle: { flex: 1, aspectRatio: 1, alignSelf: 'center', maxWidth: '100%' },
   noPath: { color: '#f85149', textAlign: 'center', padding: 12 },
+  resetText: { color: '#58a6ff', fontSize: 13, paddingVertical: 4 },
   infoCard: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 24,
     left: 16,
     right: 16,
     backgroundColor: '#161b22',
@@ -172,5 +175,7 @@ const styles = StyleSheet.create({
     minWidth: 52,
     alignItems: 'center',
   },
+  modalChipDisabled: { opacity: 0.25 },
   modalChipText: { color: '#c9d1d9', fontSize: 14, fontWeight: '600' },
+  modalChipTextDisabled: { color: '#6e7681' },
 });
