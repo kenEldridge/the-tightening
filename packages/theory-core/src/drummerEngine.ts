@@ -34,13 +34,35 @@ export const SCHEDULE_AHEAD_SEC = 0.1;
 // learning → following gate
 export const FOLLOW_CONFIDENCE = 0.6;
 
-// following → leading gate: confidence and BPM must hold near an anchor
-// for this many consecutive bars. Deliberately easy to clear — the drummer
-// should commit to a tempo quickly and then hold it until reset, not keep
-// chasing the player's rubato.
+// following → leading gate. The drummer should feel the player out for a
+// bar or two and then COMMIT — following is an on-ramp, never a permanent
+// state. Phase-lock R collapses under real playing (eighth-note/offbeat
+// onsets land on the opposite beat phase and cancel the circular mean), so
+// the confidence bar is low, BPM is compared against the drummer's own
+// smoothed grid (not a separate resettable anchor), an unstable bar decays
+// the streak instead of zeroing it, and MAX_FOLLOW_BARS hard-caps the
+// follow phase: after that many bars it locks unconditionally. If it locks
+// onto the wrong groove, the reset gesture starts over.
 export const LOCK_IN_BARS = 2;
-export const LOCK_CONFIDENCE = 0.7;
-export const LOCK_BPM_TOLERANCE = 5;
+export const MAX_FOLLOW_BARS = 4;
+export const LOCK_CONFIDENCE = 0.45;
+export const LOCK_BPM_TOLERANCE = 8;
+
+/**
+ * Per-bar lock-in evaluation (pure, exported for tests). Returns the updated
+ * stable-bar streak and whether the drummer should freeze the grid now.
+ */
+export function evaluateLockIn(
+  est: { bpm: number; confidence: number } | null,
+  gridBpm: number,
+  stableBars: number,
+  barsFollowed: number,
+): { stableBars: number; lock: boolean } {
+  const stable =
+    est !== null && est.confidence >= LOCK_CONFIDENCE && Math.abs(est.bpm - gridBpm) <= LOCK_BPM_TOLERANCE;
+  const nextStable = stable ? stableBars + 1 : Math.max(0, stableBars - 1);
+  return { stableBars: nextStable, lock: nextStable >= LOCK_IN_BARS || barsFollowed >= MAX_FOLLOW_BARS };
+}
 
 // Reset gesture: hold the lowest AND highest observed keys this long.
 export const RESET_HOLD_MS = 900;
@@ -95,7 +117,6 @@ export function createDrummerEngine(onState?: (s: DrummerState) => void): Drumme
   let lastBarChecked = 0;
 
   // follow → lead stability tracking
-  let anchorBpm: number | null = null;
   let stableBars = 0;
 
   // Keyboard range (session-wide, survives reset) + reset gesture state
@@ -140,7 +161,6 @@ export function createDrummerEngine(onState?: (s: DrummerState) => void): Drumme
     lastBarChecked = 0;
     // First hit lands on the next detected beat, treated as a bar start.
     nextStepTime = nextBeatTime(nowAudio + 0.05, est.phaseSec, periodSec);
-    anchorBpm = est.bpm;
     stableBars = 0;
     voices?.setMasterGain(MASTER_LEVEL);
   }
@@ -148,7 +168,6 @@ export function createDrummerEngine(onState?: (s: DrummerState) => void): Drumme
   function resetToIdle(): void {
     detector.reset();
     phase = 'idle';
-    anchorBpm = null;
     stableBars = 0;
     lastEst = null;
     intensity = 0;
@@ -212,22 +231,14 @@ export function createDrummerEngine(onState?: (s: DrummerState) => void): Drumme
         const correction = Math.max(-MAX_PHASE_STEP_SEC, Math.min(MAX_PHASE_STEP_SEC, PHASE_CORRECTION * err));
         nextStepTime -= correction;
       }
-      // Evaluate lock-in stability once per completed bar.
+      // Evaluate lock-in once per completed bar; MAX_FOLLOW_BARS guarantees
+      // following always terminates.
       const barsCompleted = Math.floor(stepsScheduled / STEPS_PER_BAR);
       if (barsCompleted > lastBarChecked) {
         lastBarChecked = barsCompleted;
-        if (
-          est &&
-          est.confidence >= LOCK_CONFIDENCE &&
-          anchorBpm !== null &&
-          Math.abs(est.bpm - anchorBpm) <= LOCK_BPM_TOLERANCE
-        ) {
-          stableBars += 1;
-          if (stableBars >= LOCK_IN_BARS) phase = 'leading'; // freeze the grid
-        } else {
-          anchorBpm = est?.bpm ?? null;
-          stableBars = 0;
-        }
+        const result = evaluateLockIn(est, 60 / periodSec, stableBars, barsCompleted);
+        stableBars = result.stableBars;
+        if (result.lock) phase = 'leading'; // freeze the grid
       }
     }
     // leading: grid frozen; intensity (already updated above) keeps tracking.

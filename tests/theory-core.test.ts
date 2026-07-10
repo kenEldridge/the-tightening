@@ -32,6 +32,10 @@ import {
   presetsForMood,
   EDGE_TYPE_INFO,
   EDGE_TYPE_ORDER,
+  evaluateLockIn,
+  LOCK_CONFIDENCE,
+  LOCK_BPM_TOLERANCE,
+  MAX_FOLLOW_BARS,
 } from 'theory-core';
 
 let passed = 0;
@@ -110,6 +114,38 @@ section('midi + detection');
 assertEq(midiNoteToName(60), 'C4', 'MIDI 60 → C4');
 const detected = detectChords(new Set([60, 64, 67]), getTheoryChordNodes() as Parameters<typeof detectChords>[1]);
 assert(detected.includes('C'), 'held C-E-G detects C major');
+
+section('drummer lock-in gate');
+{
+  const good = { bpm: 100, confidence: 0.6 };
+  // Two stable bars → lock.
+  let r = evaluateLockIn(good, 100, 0, 1);
+  assertEq([r.stableBars, r.lock], [1, false], 'bar 1 stable, not yet locked');
+  r = evaluateLockIn(good, 100, r.stableBars, 2);
+  assertEq([r.stableBars, r.lock], [2, true], 'bar 2 stable → lock');
+  // One jittery bar decays the streak instead of zeroing it.
+  r = evaluateLockIn(good, 100, 0, 1);
+  r = evaluateLockIn({ bpm: 130, confidence: 0.6 }, 100, r.stableBars, 2); // off-grid BPM
+  assertEq(r.stableBars, 0, 'unstable bar decays streak by one');
+  r = evaluateLockIn(good, 100, r.stableBars, 3);
+  r = evaluateLockIn(good, 100, r.stableBars, 4);
+  assert(r.lock, 'recovers and locks after two stable bars');
+  // Hopeless confidence still locks at the hard cap.
+  let capped = { stableBars: 0, lock: false };
+  for (let bar = 1; bar <= MAX_FOLLOW_BARS && !capped.lock; bar++) {
+    capped = evaluateLockIn({ bpm: 100, confidence: 0.1 }, 100, capped.stableBars, bar);
+  }
+  assert(capped.lock, `low confidence locks anyway at MAX_FOLLOW_BARS (${MAX_FOLLOW_BARS})`);
+  assertEq(evaluateLockIn(null, 100, 0, 1).lock, false, 'null estimate before cap does not lock');
+  assert(
+    !evaluateLockIn({ bpm: 100, confidence: LOCK_CONFIDENCE - 0.01 }, 100, 0, 1).stableBars,
+    'confidence just below gate is not stable',
+  );
+  assert(
+    evaluateLockIn({ bpm: 100 + LOCK_BPM_TOLERANCE, confidence: 0.6 }, 100, 0, 1).stableBars === 1,
+    'BPM at tolerance edge counts as stable',
+  );
+}
 
 section('cycle presets + mood');
 assert(CYCLE_PRESETS.length > 0, 'CYCLE_PRESETS non-empty');
