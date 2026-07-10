@@ -8,7 +8,8 @@ already proven, never a first attempt.
 
 ## One-time machine setup
 
-- Xcode (current release) with iOS SDK
+- Xcode 26 or newer (React Native 0.86 requires Swift tools 6.2 — older Xcode
+  fails with "package 'apple' is using Swift tools version 6.2.0")
 - Node 20 — `nvm install 20 && nvm use 20` (an `.nvmrc` is in this directory)
 - CocoaPods — `sudo gem install cocoapods` (or `brew install cocoapods`)
 
