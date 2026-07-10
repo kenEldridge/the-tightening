@@ -27,8 +27,9 @@ export default function JamScreen({ midi }: Props) {
   const [editingName, setEditingName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const { width } = useWindowDimensions();
-  const circleSize = Math.min(width, 480);
+  const { width, height } = useWindowDimensions();
+  const isWide = width >= 700 && width > height * 0.9;
+  const circleSize = isWide ? Math.min(height - 120, width - 420) : Math.min(width, 480);
   const loaded = useRef(false);
 
   // Restore progressions once, rebuilding the graph in saved order.
@@ -102,19 +103,20 @@ export default function JamScreen({ midi }: Props) {
 
   const heldNames = useMemo(() => midi.heldNotes.map(midiNoteToName).join('  '), [midi.heldNotes]);
 
-  return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-        <View style={{ width: circleSize, height: circleSize, alignSelf: 'center' }}>
-          <CircleOfFifths
-            graphState={graphState}
-            jamMatchedChords={midi.matchedChords}
-            matchedChords={[]}
-            onEdgeInfo={setInfo}
-            onNodePress={(n) => setChords((c) => (c.trim() ? `${c}, ${n}` : n))}
-          />
-        </View>
+  const circle = (
+    <View style={{ width: circleSize, height: circleSize, alignSelf: 'center' }}>
+      <CircleOfFifths
+        graphState={graphState}
+        jamMatchedChords={midi.matchedChords}
+        matchedChords={[]}
+        onEdgeInfo={setInfo}
+        onNodePress={(n) => setChords((c) => (c.trim() ? `${c}, ${n}` : n))}
+      />
+    </View>
+  );
 
+  const panel = (
+    <>
         {/* Held notes / matched chords strip */}
         <View style={styles.heldRow}>
           <Text style={styles.heldNotes}>{heldNames || 'Play the piano…'}</Text>
@@ -167,7 +169,28 @@ export default function JamScreen({ midi }: Props) {
             </Pressable>
           </View>
         ))}
-      </ScrollView>
+    </>
+  );
+
+  return (
+    <View style={styles.container}>
+      {isWide ? (
+        <View style={styles.wideRow}>
+          <View style={styles.widerCircle}>{circle}</View>
+          <ScrollView
+            style={styles.widePanel}
+            contentContainerStyle={{ paddingBottom: 32 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {panel}
+          </ScrollView>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
+          {circle}
+          {panel}
+        </ScrollView>
+      )}
 
       {info && (
         <Pressable style={styles.infoCard} onPress={() => setInfo(null)}>
@@ -181,6 +204,9 @@ export default function JamScreen({ midi }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  wideRow: { flex: 1, flexDirection: 'row' },
+  widerCircle: { flex: 1, justifyContent: 'center' },
+  widePanel: { width: 400, borderLeftColor: '#21262d', borderLeftWidth: 1 },
   heldRow: { alignItems: 'center', paddingVertical: 6, gap: 2 },
   heldNotes: { color: '#6fd18b', fontSize: 16 },
   heldChords: { color: '#58a6ff', fontSize: 14, fontWeight: '600' },
