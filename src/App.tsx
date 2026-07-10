@@ -19,6 +19,8 @@ import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
 import ReplayMode from './components/ReplayMode';
+import DrummerControl from './components/DrummerControl';
+import { useDrummer } from './hooks/useDrummer';
 import DidYouKnow from './components/DidYouKnow';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
 
@@ -64,6 +66,7 @@ export default function App() {
   const replayWalkHistoryRef = useRef<{ startMs: number; nodes: string[]; edgeTypes: EdgeType[] }[] | null>(null);
   const activeReplayEntryRef = useRef<{ startMs: number; nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [pendingReplay, setPendingReplay] = useState<{ audioUrl: string; midiBuffer: ArrayBuffer | null; cwalkData: string; autoPlay: boolean } | null>(null);
+  const drummer = useDrummer();
 
   useEffect(() => {
     window.electronAPI?.setMenuBarVisible(!graphExpanded);
@@ -259,6 +262,7 @@ export default function App() {
 
       if (isNoteOn) {
         handleNoteOn(data1);
+        drummer.noteOn(data1, data2, e.timeStamp);
         if (isRecordingRef.current) {
           midiEventsRef.current.push({
             type: 'noteOn', note: data1, velocity: data2,
@@ -267,6 +271,7 @@ export default function App() {
         }
       } else if (isNoteOff) {
         handleNoteOff(data1);
+        drummer.noteOff(data1);
         if (isRecordingRef.current) {
           midiEventsRef.current.push({
             type: 'noteOff', note: data1, velocity: 0,
@@ -313,7 +318,7 @@ export default function App() {
         midiAccess.onstatechange = null;
       }
     };
-  }, [handleNoteOn, handleNoteOff]);
+  }, [handleNoteOn, handleNoteOff, drummer.noteOn, drummer.noteOff]);
 
   // File menu events (New / Open / Save)
   useEffect(() => {
@@ -558,6 +563,12 @@ export default function App() {
         >
           {circleLayout === 'fifths' ? 'Chromatic' : 'Fifths'}
         </button>
+        <DrummerControl
+          enabled={drummer.state.enabled}
+          phase={drummer.state.phase}
+          bpm={drummer.state.bpm}
+          onToggle={drummer.toggle}
+        />
         <MidiStatus connected={midiStatus.connected} message={midiStatus.message} />
       </div>
       <div className="app-body">

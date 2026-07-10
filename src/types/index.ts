@@ -81,6 +81,19 @@ export interface MidiEvent {
   offsetMs: number; // ms since recording start
 }
 
+// Autonomous drummer types
+export type DrummerPhase = 'idle' | 'learning' | 'following' | 'leading';
+
+export type { PulseEstimate } from '../core/pulseDetector';
+
+export interface DrummerState {
+  enabled: boolean;
+  phase: DrummerPhase;
+  bpm: number | null;   // live grid BPM while playing, latest estimate otherwise
+  confidence: number;   // phase-lock R value, 0–1
+  intensity: number;    // 0–1, keeps tracking the player even while leading
+}
+
 export interface WalkState {
   fromChord: string;
   toChord: string;
