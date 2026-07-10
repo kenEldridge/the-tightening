@@ -1,8 +1,17 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Svg, { Circle, G, Line, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import {
-  FIFTHS_ORDER,
-  nodeIdToChordName,
+  ringNodePositions,
+  walkViewBox,
+  cameraTransition,
+  viewBoxesEqual,
+  viewBoxToString,
+  FULL_VIEWBOX,
+  CIRCLE_CX,
+  CIRCLE_CY,
+  R_MAJOR,
+  R_MINOR,
+  R_DIM,
   chordNameToNodeId,
   getDirectEdgeTypes,
   findChordPath,
@@ -16,7 +25,7 @@ import {
   respellChordName,
   pitchClassName,
 } from 'theory-core';
-import type { EdgeType, GraphState, NoteSpelling } from 'theory-core';
+import type { CircleNode, EdgeType, GraphState, NoteSpelling, ViewBox } from 'theory-core';
 
 // Port of the desktop CircleOfFifths (Walk-mode surface only for now; Jam and
 // Replay rendering stay desktop-side until B7). Geometry/state logic matches
@@ -46,6 +55,8 @@ interface Props {
   graphState?: GraphState;
   jamMatchedChords?: string[];
   noteSpelling?: NoteSpelling;
+  /** Dynamic camera (issue #18): zoom the view to the walk path's nodes. */
+  dynamicView?: boolean;
   onNodePress?: (chordName: string) => void;
   onEdgeInfo?: (info: string) => void;
 }
@@ -67,38 +78,35 @@ interface JamSlotInfo {
   progressionColors: string[];
 }
 
-const CX = 300;
-const CY = 300;
-const R_MAJOR = 258;
-const R_MINOR = 175;
-const R_DIM = 98;
-const NODE_R_MAJOR = 30;
-const NODE_R_MINOR = 26;
-const NODE_R_DIM = 22;
+// Geometry lives in theory-core (circleGeometry.ts), shared with desktop.
+const CX = CIRCLE_CX;
+const CY = CIRCLE_CY;
 const ARROW = 8;
+type RingNode = CircleNode;
 
-interface RingNode {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  r: number;
-  ring: 'major' | 'minor' | 'dim';
-}
+const CAMERA_MS = 900;
 
-function buildRingNodes(): RingNode[] {
-  const nodes: RingNode[] = [];
-  for (let i = 0; i < 12; i++) {
-    const angle = (i / 12) * 2 * Math.PI - Math.PI / 2;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    nodes.push(
-      { id: `key-${i}`, name: nodeIdToChordName(`key-${i}`), x: CX + R_MAJOR * cos, y: CY + R_MAJOR * sin, r: NODE_R_MAJOR, ring: 'major' },
-      { id: `minor-${i}`, name: nodeIdToChordName(`minor-${i}`), x: CX + R_MINOR * cos, y: CY + R_MINOR * sin, r: NODE_R_MINOR, ring: 'minor' },
-      { id: `dim-${i}`, name: nodeIdToChordName(`dim-${i}`), x: CX + R_DIM * cos, y: CY + R_DIM * sin, r: NODE_R_DIM, ring: 'dim' },
-    );
-  }
-  return nodes;
+/** Animated viewBox — same camera behavior as the desktop component. */
+function useCameraViewBox(target: ViewBox): ViewBox {
+  const [vb, setVb] = useState<ViewBox>(target);
+  const vbRef = useRef(vb);
+  useEffect(() => {
+    const from = vbRef.current;
+    if (viewBoxesEqual(from, target)) return;
+    const transition = cameraTransition(from, target);
+    const start = Date.now();
+    let raf: number;
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - start) / CAMERA_MS);
+      const v = transition(t);
+      vbRef.current = v;
+      setVb(v);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return vb;
 }
 
 /** Arrowhead polygon at (tipX, tipY) pointing along (ux, uy). */
@@ -110,9 +118,15 @@ function arrowPoints(tipX: number, tipY: number, ux: number, uy: number): string
   return `${tipX},${tipY} ${bx + px * (ARROW / 2)},${by + py * (ARROW / 2)} ${bx - px * (ARROW / 2)},${by - py * (ARROW / 2)}`;
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', onNodePress, onEdgeInfo }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', dynamicView = false, onNodePress, onEdgeInfo }: Props) {
   const isJamMode = !!graphState;
-  const ringNodes = useMemo(() => buildRingNodes(), []);
+  const ringNodes = useMemo(() => ringNodePositions('fifths'), []);
+
+  const targetViewBox = useMemo(() => {
+    if (dynamicView && walkPath && walkPath.nodes.length > 1) return walkViewBox(walkPath.nodes);
+    return FULL_VIEWBOX;
+  }, [dynamicView, walkPath]);
+  const viewBox = useCameraViewBox(targetViewBox);
   const nodeByName = useMemo(() => {
     const m = new Map<string, RingNode>();
     for (const n of ringNodes) m.set(n.name, n);
@@ -246,7 +260,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
   }, [walkPath, nodeByName]);
 
   return (
-    <Svg viewBox="0 0 600 600" width="100%" height="100%">
+    <Svg viewBox={viewBoxToString(viewBox)} width="100%" height="100%">
       {/* Ring guide circles */}
       <Circle cx={CX} cy={CY} r={R_MAJOR} fill="none" stroke="#21262d" strokeWidth={1} />
       <Circle cx={CX} cy={CY} r={R_MINOR} fill="none" stroke="#21262d" strokeWidth={1} />

@@ -436,6 +436,12 @@ export default function WalkMode({ walkState, onWalkStateChange, noteSpelling = 
           {currentStep > 0 && !completed && (
             <button className="walk-reset-btn" onClick={handleReset}>Reset progress</button>
           )}
+          {options.endless && repeatCount > 1 && (
+            <div className="walk-score">
+              Advances in {Math.max(1, repeatCount - walkState.currentPathCompletions)} pass
+              {repeatCount - walkState.currentPathCompletions !== 1 ? 'es' : ''}
+            </div>
+          )}
           {pathsCompleted > 0 && (
             <div className="walk-score">Paths completed: {pathsCompleted}</div>
           )}

@@ -8,6 +8,11 @@
  */
 
 import {
+  ringNodePositions,
+  walkViewBox,
+  cameraTransition,
+  viewBoxesEqual,
+  FULL_VIEWBOX,
   FIFTHS_ORDER,
   EDGE_TYPES,
   chordNameToNodeId,
@@ -124,6 +129,32 @@ for (const mood of ['happy', 'melancholy', 'dramatic'] as const) {
   assertEq(presetsForMood(mood).length, buckets[mood], `presetsForMood(${mood}) matches classification`);
 }
 assertEq(presetsForMood('any').length, CYCLE_PRESETS.length, 'any mood keeps all presets');
+
+section('circle geometry + camera (issue #18)');
+const ring = ringNodePositions('fifths');
+assertEq(ring.length, 36, '36 positioned nodes');
+const cNode = ring.find((n) => n.name === 'C')!;
+assert(Math.abs(cNode.x - 300) < 0.001 && Math.abs(cNode.y - 42) < 0.001, 'C sits at top of major ring');
+const chromatic = ringNodePositions('chromatic');
+const cMaj = chromatic.find((n) => n.name === 'C')!;
+const cMinor = chromatic.find((n) => n.name === 'Cm')!;
+assert(Math.abs(Math.atan2(cMaj.y - 300, cMaj.x - 300) - Math.atan2(cMinor.y - 300, cMinor.x - 300)) < 0.001, 'chromatic layout: C and Cm share a spoke');
+
+const vbCG = walkViewBox(['C', 'G']);
+assert(vbCG.w === vbCG.h, 'walk viewBox is square');
+assert(vbCG.w < 600, 'C+G framing zooms in');
+for (const name of ['C', 'G']) {
+  const n = ring.find((r) => r.name === name)!;
+  assert(n.x - n.r >= vbCG.x && n.x + n.r <= vbCG.x + vbCG.w, `${name} inside framing horizontally`);
+  assert(n.y - n.r >= vbCG.y && n.y + n.r <= vbCG.y + vbCG.h, `${name} inside framing vertically`);
+}
+assert(vbCG.x >= 0 && vbCG.y >= 0 && vbCG.x + vbCG.w <= 600 && vbCG.y + vbCG.h <= 600, 'framing clamped inside full view');
+assert(viewBoxesEqual(walkViewBox(['NotAChord']), FULL_VIEWBOX), 'unknown chords fall back to full view');
+
+const trans = cameraTransition(walkViewBox(['C', 'G']), walkViewBox(['F#', 'C#']));
+assert(viewBoxesEqual(trans(0), walkViewBox(['C', 'G'])), 'transition starts at from');
+assert(viewBoxesEqual(trans(1), walkViewBox(['F#', 'C#'])), 'transition ends at to');
+assert(viewBoxesEqual(trans(0.5), FULL_VIEWBOX, 2), 'zoomed→zoomed transition passes through full view');
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

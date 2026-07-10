@@ -1,5 +1,19 @@
-import React, { useCallback, useMemo } from 'react';
-import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from 'theory-core';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from 'theory-core';
+import {
+  ringNodePositions,
+  walkViewBox,
+  cameraTransition,
+  viewBoxesEqual,
+  viewBoxToString,
+  FULL_VIEWBOX,
+  CIRCLE_CX,
+  CIRCLE_CY,
+  R_MAJOR,
+  R_MINOR,
+  R_DIM,
+} from 'theory-core';
+import type { CircleNode, ViewBox } from 'theory-core';
 import type { EdgeType } from 'theory-core';
 import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from 'theory-core';
 import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from 'theory-core';
@@ -34,79 +48,42 @@ interface Props {
   hintEdges?: HintEdge[];          // extended chord hints: dashed amber edges
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
+  /** Dynamic camera (issue #18): zoom the view to the walk path's nodes. */
+  dynamicView?: boolean;
 }
 
-// Layout constants
-const CX = 300;
-const CY = 300;
-// Ring radii are spread so the same-spoke edges (relative: major↔minor,
-// leading-tone: minor↔dim) clear both node circles plus edge padding and stay
-// visible/hoverable. Gap must exceed (nodeR_a + nodeR_b + 2*pad) ≈ 64/56.
-const R_MAJOR = 258;
-const R_MINOR = 175;
-const R_DIM = 98;
-const NODE_R_MAJOR = 30;
-const NODE_R_MINOR = 26;
-const NODE_R_DIM = 22;
+const CAMERA_MS = 900;
 
-interface RingNode {
-  id: string;        // node ID (key-0, minor-0, etc.)
-  name: string;      // chord name
-  x: number;
-  y: number;
-  r: number;
-  ring: 'major' | 'minor' | 'dim';
+/**
+ * Animated viewBox: eases toward `target`, flying out through the full circle
+ * when hopping between two zoomed-in framings (endless-mode advance).
+ */
+function useCameraViewBox(target: ViewBox): ViewBox {
+  const [vb, setVb] = useState<ViewBox>(target);
+  const vbRef = useRef(vb);
+  useEffect(() => {
+    const from = vbRef.current;
+    if (viewBoxesEqual(from, target)) return;
+    const transition = cameraTransition(from, target);
+    const start = Date.now();
+    let raf: number;
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - start) / CAMERA_MS);
+      const v = transition(t);
+      vbRef.current = v;
+      setVb(v);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return vb;
 }
 
-function buildRingNodes(layout: 'fifths' | 'chromatic'): RingNode[] {
-  const nodes: RingNode[] = [];
-  for (let i = 0; i < 12; i++) {
-    // Fifths layout: angle determined by circle-of-fifths position index.
-    // Chromatic layout: angle determined by each ring's root pitch class so that
-    // all three qualities sharing a root (e.g. C, Cm, Cdim) align on the same spoke.
-    const majorPc = FIFTHS_ORDER[i];
-    const minorRootPc = (majorPc + 9) % 12;  // relative minor root
-    const dimRootPc = (majorPc + 11) % 12;   // diminished root
-
-    const majorAngle = layout === 'chromatic'
-      ? (majorPc / 12) * 2 * Math.PI - Math.PI / 2
-      : (i / 12) * 2 * Math.PI - Math.PI / 2;
-    const minorAngle = layout === 'chromatic'
-      ? (minorRootPc / 12) * 2 * Math.PI - Math.PI / 2
-      : (i / 12) * 2 * Math.PI - Math.PI / 2;
-    const dimAngle = layout === 'chromatic'
-      ? (dimRootPc / 12) * 2 * Math.PI - Math.PI / 2
-      : (i / 12) * 2 * Math.PI - Math.PI / 2;
-
-    nodes.push({
-      id: `key-${i}`,
-      name: nodeIdToChordName(`key-${i}`),
-      x: CX + R_MAJOR * Math.cos(majorAngle),
-      y: CY + R_MAJOR * Math.sin(majorAngle),
-      r: NODE_R_MAJOR,
-      ring: 'major',
-    });
-
-    nodes.push({
-      id: `minor-${i}`,
-      name: nodeIdToChordName(`minor-${i}`),
-      x: CX + R_MINOR * Math.cos(minorAngle),
-      y: CY + R_MINOR * Math.sin(minorAngle),
-      r: NODE_R_MINOR,
-      ring: 'minor',
-    });
-
-    nodes.push({
-      id: `dim-${i}`,
-      name: nodeIdToChordName(`dim-${i}`),
-      x: CX + R_DIM * Math.cos(dimAngle),
-      y: CY + R_DIM * Math.sin(dimAngle),
-      r: NODE_R_DIM,
-      ring: 'dim',
-    });
-  }
-  return nodes;
-}
+// Geometry now lives in theory-core (circleGeometry.ts), shared with mobile.
+const CX = CIRCLE_CX;
+const CY = CIRCLE_CY;
+type RingNode = CircleNode;
 
 function classifyJamEdge(source: string, target: string): EdgeType[] {
   const directTypes = getDirectEdgeTypes(source, target);
@@ -131,11 +108,18 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, noteSpelling = 'sharps', layout = 'fifths' }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
   const isJamMode = !!graphState;
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
-  const ringNodes = useMemo(() => buildRingNodes(layout), [layout]);
+  const ringNodes = useMemo(() => ringNodePositions(layout), [layout]);
+
+  // Dynamic camera target: frame the walk path when enabled, else full view.
+  const targetViewBox = useMemo(() => {
+    if (dynamicView && walkPath && walkPath.nodes.length > 1) return walkViewBox(walkPath.nodes, layout);
+    return FULL_VIEWBOX;
+  }, [dynamicView, walkPath, layout]);
+  const viewBox = useCameraViewBox(targetViewBox);
   const nodeByName = useMemo(() => {
     const m = new Map<string, RingNode>();
     for (const n of ringNodes) m.set(n.name, n);
@@ -325,7 +309,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg viewBox="0 0 600 600" style={{ width: '100%', height: '100%' }}>
+      <svg viewBox={viewBoxToString(viewBox)} style={{ width: '100%', height: '100%' }}>
         <defs>
           <marker
             id="cof-arrow"

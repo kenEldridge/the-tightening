@@ -8,6 +8,9 @@ import WalkPanel from '../components/WalkPanel';
 import DidYouKnow from '../components/DidYouKnow';
 import { useWalkState } from '../walk/useWalkState';
 import type { Midi } from '../midi/useMidi';
+import { loadJSON, saveJSON } from '../storage';
+
+const ZOOM_KEY = 'circleZoom.v1';
 
 // Full Walk mode (B5+B6): circle + path strip + the desktop panel's control
 // surface (moods, presets, Out/Back constraints, trips) + "hear path" playback.
@@ -20,6 +23,16 @@ export default function WalkScreen({ midi }: Props) {
   const walk = useWalkState(midi.matchedChords);
   const [picking, setPicking] = useState<'from' | 'to' | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [dynamicZoom, setDynamicZoom] = useState(true);
+  useEffect(() => {
+    loadJSON<boolean>(ZOOM_KEY).then((v) => v !== null && setDynamicZoom(v));
+  }, []);
+  const toggleDynamicZoom = () => {
+    setDynamicZoom((v) => {
+      saveJSON(ZOOM_KEY, !v);
+      return !v;
+    });
+  };
   const { width, height } = useWindowDimensions();
   // iPad / landscape: circle left, controls right.
   const isWide = width >= 700 && width > height * 0.9;
@@ -52,6 +65,7 @@ export default function WalkScreen({ midi }: Props) {
             : undefined
         }
         matchedChords={midi.playingChord ? [...midi.matchedChords, midi.playingChord] : midi.matchedChords}
+        dynamicView={dynamicZoom}
         onNodePress={(name) => {
           setInfo(null);
           walk.setTo(name); // tap a node = walk there
@@ -93,6 +107,8 @@ export default function WalkScreen({ midi }: Props) {
         onInfo={setInfo}
         onHearPath={hearPath}
         isPlaying={midi.playingChord !== null}
+        dynamicZoom={dynamicZoom}
+        onToggleDynamicZoom={toggleDynamicZoom}
       />
 
       <DidYouKnow />
