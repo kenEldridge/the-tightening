@@ -1,9 +1,16 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { addProgression, editProgression, emptyGraphState, midiNoteToName, parseChordInput, removeProgression } from 'theory-core';
 import type { GraphState } from 'theory-core';
 import CircleOfFifths from '../components/CircleOfFifths';
 import type { Midi } from '../midi/useMidi';
+import { loadJSON, saveJSON } from '../storage';
+
+// Progressions persist as plain {name, chords} pairs (B8); the graph (Maps/
+// Sets, colors) is rebuilt through addProgression so colors stay stable by
+// insertion order, matching a fresh session.
+const JAM_KEY = 'jamProgressions.v1';
+type SavedProgression = { name: string; chords: string[] };
 
 // Jam mode (B7): build progressions, see them classified on the circle, and
 // get live MIDI highlighting (matched chords + next-candidate suggestions).
@@ -22,6 +29,35 @@ export default function JamScreen({ midi }: Props) {
   const [info, setInfo] = useState<string | null>(null);
   const { width } = useWindowDimensions();
   const circleSize = Math.min(width, 480);
+  const loaded = useRef(false);
+
+  // Restore progressions once, rebuilding the graph in saved order.
+  useEffect(() => {
+    let cancelled = false;
+    loadJSON<SavedProgression[]>(JAM_KEY).then((saved) => {
+      if (cancelled) return;
+      if (saved && saved.length > 0) {
+        let state = emptyGraphState();
+        for (const p of saved) {
+          const result = addProgression(state, p.name, p.chords);
+          if (!result.error) state = result.state;
+        }
+        setGraphState(state);
+      }
+      loaded.current = true;
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!loaded.current) return;
+    saveJSON(
+      JAM_KEY,
+      graphState.progressions.map((p) => ({ name: p.name, chords: p.chords })),
+    );
+  }, [graphState.progressions]);
 
   const submit = useCallback(() => {
     setError(null);
