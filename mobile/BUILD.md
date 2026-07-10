@@ -38,7 +38,7 @@ shell: he installs it once, then loads all day-to-day JS changes from his
 Windows PC over Wi-Fi — you won't be needed again until release, unless native
 dependencies change (they're deliberately all batched into this build).
 Distribute via **TestFlight internal testing**: upload the archive to App Store
-Connect, add Ken (eldridge.kenneth@gmail.com) as an internal tester.
+Connect, add Ken (Apple ID: kjay227@gmail.com) as an internal tester.
 
 **2. Release build (at the end).** Same steps, distribute to TestFlight /
 App Store as agreed.
