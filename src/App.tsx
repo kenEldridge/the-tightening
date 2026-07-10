@@ -58,6 +58,7 @@ export default function App() {
   const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
+  const [dynamicCircle, setDynamicCircle] = useState(true);
   const [graphExpanded, setGraphExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [replayGraphState, setReplayGraphState] = useState<GraphState | null>(null);
@@ -563,6 +564,13 @@ export default function App() {
         >
           {circleLayout === 'fifths' ? 'Chromatic' : 'Fifths'}
         </button>
+        <button
+          className="layout-toggle-btn"
+          onClick={() => setDynamicCircle(d => !d)}
+          title={dynamicCircle ? 'Camera follows the walk path (click for full circle)' : 'Full circle view (click to zoom to the walk)'}
+        >
+          {dynamicCircle ? 'Zoom: On' : 'Zoom: Off'}
+        </button>
         <DrummerControl
           enabled={drummer.state.enabled}
           phase={drummer.state.phase}
@@ -647,6 +655,7 @@ export default function App() {
             replayWalkPath ? (
               <CircleOfFifths
                 walkPath={{ nodes: replayWalkPath.nodes, edgeTypes: replayWalkPath.edgeTypes, currentStep: replayStep }}
+                dynamicView={dynamicCircle}
                 matchedChords={matchedChords}
                 hintEdges={hintEdges}
                 noteSpelling={noteSpelling}
@@ -665,6 +674,7 @@ export default function App() {
           ) : walkPath ? (
             <CircleOfFifths
               walkPath={walkPath}
+              dynamicView={dynamicCircle}
               matchedChords={matchedChords}
               hintEdges={hintEdges}
               noteSpelling={noteSpelling}
@@ -673,6 +683,7 @@ export default function App() {
           ) : frozenWalkPath ? (
             <CircleOfFifths
               walkPath={{ nodes: frozenWalkPath.nodes, edgeTypes: frozenWalkPath.edgeTypes, currentStep: 0 }}
+              dynamicView={dynamicCircle}
               matchedChords={matchedChords}
               hintEdges={hintEdges}
               noteSpelling={noteSpelling}

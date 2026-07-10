@@ -16,6 +16,8 @@ interface Props {
   onInfo: (text: string) => void;
   onHearPath: () => void;
   isPlaying: boolean;
+  dynamicZoom: boolean;
+  onToggleDynamicZoom: () => void;
 }
 
 function presetInfoText(preset: CyclePreset): string {
@@ -28,7 +30,7 @@ function presetInfoText(preset: CyclePreset): string {
   return `${pattern}\n${preset.songCount} songs use this shape, e.g.:\n${songs}`;
 }
 
-export default function WalkPanel({ walk, onPickFrom, onPickTo, onInfo, onHearPath, isPlaying }: Props) {
+export default function WalkPanel({ walk, onPickFrom, onPickTo, onInfo, onHearPath, isPlaying, dynamicZoom, onToggleDynamicZoom }: Props) {
   const { walkState, activeTab, setActiveTab, legOptions, hasLegConstraints } = walk;
   const { fromChord, toChord, options, repeatCount, pathsCompleted, path } = walkState;
   const mood = walkState.mood ?? 'any';
@@ -149,6 +151,7 @@ export default function WalkPanel({ walk, onPickFrom, onPickTo, onInfo, onHearPa
         <Check label="Return trip" checked={options.returnTrip} onPress={walk.toggleReturnTrip} />
         <Check label="Endless" checked={options.endless} onPress={walk.toggleEndless} />
         <Check label="Random pattern" checked={!!options.randomPattern} onPress={walk.toggleRandomPattern} />
+        <Check label="Dynamic zoom" checked={dynamicZoom} onPress={onToggleDynamicZoom} />
       </View>
       {options.endless && (
         <View style={[styles.row, { marginTop: 8, alignItems: 'center' }]}>
@@ -169,7 +172,15 @@ export default function WalkPanel({ walk, onPickFrom, onPickTo, onInfo, onHearPa
         <Pressable style={[styles.hearBtn, !path && styles.hearBtnDisabled]} onPress={onHearPath} disabled={!path}>
           <Text style={styles.hearBtnText}>{isPlaying ? '■ Stop' : '▶ Hear path'}</Text>
         </Pressable>
-        {pathsCompleted > 0 && <Text style={styles.score}>Paths completed: {pathsCompleted}</Text>}
+        <View style={{ alignItems: 'flex-end', gap: 2 }}>
+          {options.endless && repeatCount > 1 && (
+            <Text style={styles.hint}>
+              Advances in {Math.max(1, repeatCount - walkState.currentPathCompletions)} pass
+              {repeatCount - walkState.currentPathCompletions !== 1 ? 'es' : ''}
+            </Text>
+          )}
+          {pathsCompleted > 0 && <Text style={styles.score}>Paths completed: {pathsCompleted}</Text>}
+        </View>
       </View>
     </View>
   );
