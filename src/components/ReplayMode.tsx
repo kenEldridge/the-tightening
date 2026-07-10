@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { parseMidi } from '../core/midiParser';
+import { parseMidi } from 'theory-core';
 import type { MidiEvent, SaveData } from '../types/index';
 import type { SavedRecordingData } from './AudioRecorder';
 

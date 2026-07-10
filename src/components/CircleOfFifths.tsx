@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
-import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from '../core/chordPathfinder';
-import type { EdgeType } from '../core/chordPathfinder';
-import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from '../core/edgeTypeStyles';
-import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from '../core/chordDefinitions';
-import type { NoteSpelling } from '../core/chordDefinitions';
+import { FIFTHS_ORDER, nodeIdToChordName, chordNameToNodeId, getDirectEdgeTypes, findChordPath } from 'theory-core';
+import type { EdgeType } from 'theory-core';
+import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } from 'theory-core';
+import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from 'theory-core';
+import type { NoteSpelling } from 'theory-core';
 import type { GraphState, GraphEdge } from '../types/index';
-import { qualityToRing, getReciprocalSet } from '../core/graphModel';
-import type { HintEdge } from '../core/extendedChordDetection';
+import { qualityToRing, getReciprocalSet } from 'theory-core';
+import type { HintEdge } from 'theory-core';
 
 /** Get the individual note names of a chord's triad, e.g. "C" → "C E G" */
 function triadNotes(chordName: string, spelling: NoteSpelling): string {

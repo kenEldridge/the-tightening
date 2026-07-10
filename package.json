@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "main": "dist-electron/index.js",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "test": "node tests/chord-walk.test.mjs && tsx tests/theory-core.test.ts",
     "dev": "vite",
     "build": "tsc && vite build",
     "pack": "npm run build && electron-builder --dir",

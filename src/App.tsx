@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { GraphState, SaveData, AppMode, WalkState, MidiEvent } from './types/index';
-import { detectExtendedChords } from './core/extendedChordDetection';
-import type { ExtendedMatch } from './core/extendedChordDetection';
-import { parseChordInput } from './core/chordParser';
-import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from './core/graphModel';
-import { detectChords } from './core/chordDetection';
-import type { NoteSpelling } from './core/chordDefinitions';
+import { detectExtendedChords } from 'theory-core';
+import type { ExtendedMatch } from 'theory-core';
+import { parseChordInput } from 'theory-core';
+import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from 'theory-core';
+import { detectChords } from 'theory-core';
+import type { NoteSpelling } from 'theory-core';
 import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
-import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath } from './core/chordPathfinder';
-import type { EdgeType } from './core/chordPathfinder';
-import { CYCLE_PRESETS } from './core/cyclePresets';
-import { pickNextCycleAdvance } from './core/endlessWalk';
-import { presetsForMood, moodTonicQuality } from './core/mood';
+import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath } from 'theory-core';
+import type { EdgeType } from 'theory-core';
+import { CYCLE_PRESETS } from 'theory-core';
+import { pickNextCycleAdvance } from 'theory-core';
+import { presetsForMood, moodTonicQuality } from 'theory-core';
 import CircleOfFifths from './components/CircleOfFifths';
 import EdgeTypeLegend from './components/EdgeTypeLegend';
 import AudioRecorder from './components/AudioRecorder';
 import ReplayMode from './components/ReplayMode';
 import DidYouKnow from './components/DidYouKnow';
-import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from './core/edgeTypeStyles';
+import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from 'theory-core';
 
 // Default walk: start on C in a Happy mood with the most common (bright) song
 // cycle preset selected; endless + return trip + random-pattern all on so it

@@ -1,4 +1,4 @@
-import type { ChordDefinition, ChordQuality } from '../types/index.js';
+import type { ChordDefinition, ChordQuality } from './types.js';
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 

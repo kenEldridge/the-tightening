@@ -1,8 +1,8 @@
 import React from 'react';
-import type { EdgeType } from '../core/chordPathfinder';
-import { respellChordName } from '../core/chordDefinitions';
-import type { NoteSpelling } from '../core/chordDefinitions';
-import { edgeTypeColor, edgeTypeShortLabel } from '../core/edgeTypeStyles';
+import type { EdgeType } from 'theory-core';
+import { respellChordName } from 'theory-core';
+import type { NoteSpelling } from 'theory-core';
+import { edgeTypeColor, edgeTypeShortLabel } from 'theory-core';
 
 interface Props {
   chordNames: string[];

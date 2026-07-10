@@ -1,4 +1,4 @@
-import type { MidiEvent } from '../types/index';
+import type { MidiEvent } from './types';
 
 function readVlq(bytes: Uint8Array, offset: number): { value: number; len: number } {
   let value = 0;

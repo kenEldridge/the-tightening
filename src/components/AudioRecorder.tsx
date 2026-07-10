@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { processAudio, DEFAULT_CONFIG } from '../core/audioProcessor';
-import type { AudioMetrics } from '../core/audioProcessor';
-import { encodeMidi } from '../core/midiEncoder';
+import { processAudio, DEFAULT_CONFIG } from 'theory-core';
+import type { AudioMetrics } from 'theory-core';
+import { encodeMidi } from 'theory-core';
 import type { MidiEvent } from '../types/index';
 
 export interface SavedRecordingData {
