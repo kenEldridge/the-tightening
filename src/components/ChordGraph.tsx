@@ -1,8 +1,8 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import type { GraphState, GraphEdge } from '../types/index';
-import { getNodeRadius, getEdgeStyle, getReciprocalSet } from '../core/graphModel';
-import { ForceSimulation, type SimNode, type SimEdge } from '../core/forceSimulation';
-import { noteToPitchClass } from '../core/chordDefinitions';
+import { getNodeRadius, getEdgeStyle, getReciprocalSet } from 'theory-core';
+import { ForceSimulation, type SimNode, type SimEdge } from 'theory-core';
+import { noteToPitchClass } from 'theory-core';
 
 interface Props {
   graphState: GraphState;

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { INSIGHTS } from '../core/insights';
+import { INSIGHTS } from 'theory-core';
 
 function randomIndex(exclude: number): number {
   if (INSIGHTS.length <= 1) return 0;

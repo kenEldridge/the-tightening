@@ -14,7 +14,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - Title "Chord Walk" in header is a home link back to landing page
 - Jam/Walk toggle buttons in header for direct switching
 
-### Core modules (`src/core/`)
+### Core modules (`packages/theory-core/src/`, npm workspace package `theory-core`)
 - `chordDefinitions.ts` — `getChordDefinition()`, NOTE_NAMES uses sharps (C# not Db), `noteToPitchClass()`, SUFFIX_TO_QUALITY mapping
 - `chordParser.ts` — validates chord input strings
 - `graphModel.ts` — builds progression graph (nodes keyed by chord name string)
@@ -41,7 +41,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - `HeldNotes.tsx` — shows currently held MIDI notes and matched chords
 - `MidiStatus.tsx` — MIDI connection indicator
 - `AudioRecorder.tsx` — sidebar panel that records a chosen audio **input** device to a 16-bit PCM WAV (in-app `<audio>` playback + download). FP-10 sends MIDI only over USB, so audio comes from a separate line-in ("USB Audio Device"); the panel just captures whatever input is selected. Uses Web Audio (`getUserMedia` → `MediaStreamSource` → `ScriptProcessorNode`, pumped through a gain-0 node so it isn't monitored aloud) and a hand-rolled WAV encoder. Requires the media-permission handler in `src/main/index.ts` (`setPermissionRequestHandler`/`setPermissionCheckHandler` allow-all — safe; window only loads our own UI). Not MIDI-synced; it's a raw audio capture of the line-in.
-- `DidYouKnow.tsx` — "Did you know?" learning panel pinned to the sidebar bottom (`margin-top: auto`); cycles to a random insight on "Next tip". Data in `src/core/insights.ts` (`INSIGHTS`: `{ category, text, relatedEdges? }[]`). `relatedEdges` is unused for now — a hook for future contextual tips keyed to the current path's edge types.
+- `DidYouKnow.tsx` — "Did you know?" learning panel pinned to the sidebar bottom (`margin-top: auto`); cycles to a random insight on "Next tip". Data in `packages/theory-core/src/insights.ts` (`INSIGHTS`: `{ category, text, relatedEdges? }[]`). `relatedEdges` is unused for now — a hook for future contextual tips keyed to the current path's edge types.
 
 ### Key conventions
 - Chord names are the primary ID everywhere (node IDs, edge keys like "G->D")
@@ -58,7 +58,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 ## Build & release
 - `npm run dev` — Vite + Electron dev mode
 - `npm run build` — TypeScript + Vite production build
-- `node tests/chord-walk.test.mjs` — 176 tests (pure JS, no test framework, replicates core logic)
+- `npm test` — replica suite (`tests/chord-walk.test.mjs`, pure JS, no test framework, replicates core logic) + import-based suite (`tests/theory-core.test.ts`, run via tsx, imports the actual `theory-core` package)
 - CI: GitHub Actions (`.github/workflows/release.yml`):
   - push to `master` → `npm run build` + `node tests/chord-walk.test.mjs` only (no release)
   - push a `v*` tag → also builds the Windows installer and publishes a GitHub release
@@ -79,7 +79,7 @@ Electron + React + TypeScript app for MIDI chord exploration. Two modes:
 - Return trip concatenation lives in WalkMode.tsx's `updateAndFindPath`
 
 ### Mood filter (v3.4.0)
-- `src/core/mood.ts` — `WalkMood = 'any' | 'happy' | 'melancholy' | 'dramatic'`. A feel/genre lever over the endless-mode wander.
+- `packages/theory-core/src/mood.ts` — `WalkMood = 'any' | 'happy' | 'melancholy' | 'dramatic'`. A feel/genre lever over the endless-mode wander.
 - Two mechanisms, both needed: (1) **palette** — `presetsForMood(mood)` restricts the random cycle-preset draw to presets whose harmonic moves match the mood; (2) **anchor** — `moodTonicQuality(mood)` pins the home base to a quality (happy→major, melancholy→minor) so quality-preserving (`'same'`) presets don't drift the walk out of the requested feel. Anchoring is the key fix: without it, once endless recenter lands on a minor tonic the whole walk stays minor regardless of pattern.
 - `classifyPresetMood(preset)` buckets each preset from its edge set + forced step qualities (tonic-independent): dark edges (borrowed/parallel/leadingTone/chromaticMediant/tritoneSub) or forced dim → dramatic; soft edges (relative/iiVI) or forced minor → melancholy; else (only fifth/dom7/diatonic, no minor/dim) → happy. Current split of the 40 presets: 12 happy / 18 melancholy / 10 dramatic.
 - Wired in: `WalkState.mood`; `App.tsx` endless effect passes `presetsForMood`/`moodTonicQuality` into `pickNextCycleAdvance` (which now takes `tonicQuality`); `WalkMode.tsx` mood picker re-anchors the tonic and jumps to the mood's top preset so the change is heard immediately.

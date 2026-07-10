@@ -40,7 +40,7 @@ function section(name) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Replicated pure functions (matching src/core/*.ts)
+// Replicated pure functions (matching packages/theory-core/src/*.ts)
 // ═══════════════════════════════════════════════════════════
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -597,7 +597,7 @@ section('MIDI note name conversion');
 }
 
 // ═══════════════════════════════════════════════════════════
-// Chord Pathfinder (replicated from src/core/chordPathfinder.ts)
+// Chord Pathfinder (replicated from packages/theory-core/src/chordPathfinder.ts)
 // ═══════════════════════════════════════════════════════════
 
 const FIFTHS_ORDER = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
@@ -841,7 +841,7 @@ function findChordPath(from, to, options) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// Endless walk (replicated from src/core/endlessWalk.ts + chordPathfinder.ts)
+// Endless walk (replicated from packages/theory-core/src/endlessWalk.ts + chordPathfinder.ts)
 // ═══════════════════════════════════════════════════════════
 
 function normalizeTriadQuality(q) {
@@ -871,7 +871,7 @@ function intervalCycleDestination(from, steps) {
 
 // CYCLE_PRESETS is real production data (auto-generated from song analysis),
 // not hand-copied here, so this stays honest as that data set evolves.
-const cyclePresetsSrc = readFileSync(path.join(__dirname, '../src/core/cyclePresets.ts'), 'utf8');
+const cyclePresetsSrc = readFileSync(path.join(__dirname, '../packages/theory-core/src/cyclePresets.ts'), 'utf8');
 const presetsDeclStart = cyclePresetsSrc.indexOf('export const CYCLE_PRESETS');
 const presetsArrStart = cyclePresetsSrc.indexOf('[', cyclePresetsSrc.indexOf('=', presetsDeclStart));
 const presetsArrEnd = cyclePresetsSrc.lastIndexOf(']') + 1;
@@ -1370,7 +1370,7 @@ section('Endless walk — long-run simulation actually spans the space (regressi
 }
 
 // ═══════════════════════════════════════════════════════════
-// Mood filter (replicated from src/core/mood.ts)
+// Mood filter (replicated from packages/theory-core/src/mood.ts)
 // ═══════════════════════════════════════════════════════════
 
 const BRIGHT_EDGES = new Set(['fifth', 'dom7', 'diatonic']);

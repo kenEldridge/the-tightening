@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WalkState } from '../types/index';
-import type { EdgeType } from '../core/chordPathfinder';
+import type { EdgeType } from 'theory-core';
 import {
   getAllChordNames,
   findChordPath,
@@ -11,14 +11,14 @@ import {
   intervalCycleDestination,
   buildIntervalCyclePath,
   EDGE_TYPES,
-} from '../core/chordPathfinder';
-import { respellChordName } from '../core/chordDefinitions';
-import type { NoteSpelling } from '../core/chordDefinitions';
-import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER, edgeTypeColor } from '../core/edgeTypeStyles';
-import { CYCLE_PRESETS } from '../core/cyclePresets';
-import type { CyclePreset } from '../core/cyclePresets';
-import { MOODS, presetsForMood, moodTonicQuality } from '../core/mood';
-import type { WalkMood } from '../core/mood';
+} from 'theory-core';
+import { respellChordName } from 'theory-core';
+import type { NoteSpelling } from 'theory-core';
+import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER, edgeTypeColor } from 'theory-core';
+import { CYCLE_PRESETS } from 'theory-core';
+import type { CyclePreset } from 'theory-core';
+import { MOODS, presetsForMood, moodTonicQuality } from 'theory-core';
+import type { WalkMood } from 'theory-core';
 import PathStrip from './PathStrip';
 
 interface Props {

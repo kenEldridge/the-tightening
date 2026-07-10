@@ -1,5 +1,5 @@
 import React from 'react';
-import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from '../core/edgeTypeStyles';
+import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from 'theory-core';
 
 export default function EdgeTypeLegend() {
   return (

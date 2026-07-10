@@ -1,5 +1,5 @@
 import { getChordDefinition, noteToPitchClass, NOTE_NAMES } from './chordDefinitions';
-import type { ChordQuality } from '../types/index';
+import type { ChordQuality } from './types';
 
 // ---------- Constants ----------
 

@@ -25,7 +25,7 @@ jobs:
       - run: npm run build
 
       - name: Run tests
-        run: node tests/chord-walk.test.mjs
+        run: npm test
 
       # --- Release steps: only on a pushed version tag (e.g. v2.9.0) ---
 

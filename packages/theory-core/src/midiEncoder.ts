@@ -1,4 +1,4 @@
-import type { MidiEvent } from '../types/index';
+import type { MidiEvent } from './types';
 
 const TICKS_PER_QUARTER = 960;
 const TEMPO_MICROS = 500000; // 120 BPM

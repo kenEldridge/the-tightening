@@ -1,6 +1,6 @@
 import React from 'react';
-import { midiNoteToName } from '../core/chordDetection';
-import type { ExtendedMatch } from '../core/extendedChordDetection';
+import { midiNoteToName } from 'theory-core';
+import type { ExtendedMatch } from 'theory-core';
 
 interface Props {
   heldNotes: Set<number>;
