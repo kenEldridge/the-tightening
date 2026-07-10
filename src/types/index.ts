@@ -26,6 +26,9 @@ export interface SaveData {
 // Walk mode types
 export type AppMode = 'jam' | 'walk' | 'replay';
 
+// Autonomous drummer types (defined in theory-core)
+export type { DrummerPhase, DrummerState, PulseEstimate } from 'theory-core';
+
 export interface WalkState {
   fromChord: string;
   toChord: string;
