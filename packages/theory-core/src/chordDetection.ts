@@ -1,4 +1,4 @@
-import type { GraphNode } from './types.js';
+import type { GraphNode } from './types';
 
 /**
  * Detect which graph chords are being played based on held MIDI notes.
