@@ -14,3 +14,7 @@ export * from './midiEncoder';
 export * from './midiParser';
 export * from './mood';
 export * from './audioProcessor';
+export * from './pulseDetector';
+export * from './drummerPatterns';
+export * from './drummerVoices';
+export * from './drummerEngine';

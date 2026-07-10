@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node tests/chord-walk.test.mjs && tsx tests/theory-core.test.ts",
+    "test": "node tests/chord-walk.test.mjs && node tests/drummer.test.mjs && tsx tests/theory-core.test.ts",
     "dev": "vite",
     "build": "tsc && vite build",
     "pack": "npm run build && electron-builder --dir",
