@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { loadJSON, saveJSON } from '../storage';
 import {
   buildIntervalCyclePath,
   findChordPath,
@@ -71,9 +72,18 @@ function defaultWalkState(): WalkState {
   };
 }
 
+// Persisted slice of WalkState (B8). Path/progress are session state and get
+// rebuilt from these preferences on restore.
+const WALK_PREFS_KEY = 'walkPrefs.v1';
+type WalkPrefs = Pick<
+  WalkState,
+  'fromChord' | 'toChord' | 'options' | 'returnOptions' | 'cycleEdgeTypes' | 'cycleSteps' | 'mood' | 'repeatCount' | 'pathsCompleted'
+>;
+
 export function useWalkState(matchedChords: string[]) {
   const [walkState, setWalkState] = useState<WalkState>(defaultWalkState);
   const [activeTab, setActiveTab] = useState<'out' | 'back'>('out');
+  const prefsLoaded = useRef(false);
 
   const { fromChord, toChord, options, cycleEdgeTypes, cycleSteps } = walkState;
   const returnOptions = walkState.returnOptions ?? {};
@@ -174,6 +184,49 @@ export function useWalkState(matchedChords: string[]) {
     },
     [],
   );
+
+  // Restore persisted preferences once on mount, then rebuild the path from them.
+  useEffect(() => {
+    let cancelled = false;
+    loadJSON<WalkPrefs>(WALK_PREFS_KEY).then((prefs) => {
+      if (cancelled) return;
+      if (prefs && prefs.options) {
+        updateAndFindPath({ ...prefs });
+      }
+      prefsLoaded.current = true;
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist preferences (not path/progress) after any change post-restore.
+  useEffect(() => {
+    if (!prefsLoaded.current) return;
+    const prefs: WalkPrefs = {
+      fromChord: walkState.fromChord,
+      toChord: walkState.toChord,
+      options: walkState.options,
+      returnOptions: walkState.returnOptions,
+      cycleEdgeTypes: walkState.cycleEdgeTypes,
+      cycleSteps: walkState.cycleSteps,
+      mood: walkState.mood,
+      repeatCount: walkState.repeatCount,
+      pathsCompleted: walkState.pathsCompleted,
+    };
+    saveJSON(WALK_PREFS_KEY, prefs);
+  }, [
+    walkState.fromChord,
+    walkState.toChord,
+    walkState.options,
+    walkState.returnOptions,
+    walkState.cycleEdgeTypes,
+    walkState.cycleSteps,
+    walkState.mood,
+    walkState.repeatCount,
+    walkState.pathsCompleted,
+  ]);
 
   // Auto-select when the active preset + from chord leaves exactly one destination.
   useEffect(() => {
