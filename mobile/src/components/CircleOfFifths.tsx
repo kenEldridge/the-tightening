@@ -1,16 +1,22 @@
-import React, { useMemo } from 'react';
-import Svg, { Circle, G, Path, Polygon, Text as SvgText } from 'react-native-svg';
+import React, { useCallback, useMemo } from 'react';
+import Svg, { Circle, G, Line, Path, Polygon, Text as SvgText } from 'react-native-svg';
 import {
   FIFTHS_ORDER,
   nodeIdToChordName,
+  chordNameToNodeId,
+  getDirectEdgeTypes,
+  findChordPath,
   edgeTypeColor,
+  edgeTypeTitle,
+  mostDissonantEdgeType,
+  getReciprocalSet,
   EDGE_TYPE_INFO,
   getChordDefinition,
   noteToPitchClass,
   respellChordName,
   pitchClassName,
 } from 'theory-core';
-import type { EdgeType, NoteSpelling } from 'theory-core';
+import type { EdgeType, GraphState, NoteSpelling } from 'theory-core';
 
 // Port of the desktop CircleOfFifths (Walk-mode surface only for now; Jam and
 // Replay rendering stay desktop-side until B7). Geometry/state logic matches
@@ -36,9 +42,29 @@ export interface WalkPathOverlay {
 interface Props {
   walkPath?: WalkPathOverlay;
   matchedChords: string[];
+  /** Jam mode: when present, renders progression slots/edges instead of walk styling. */
+  graphState?: GraphState;
+  jamMatchedChords?: string[];
   noteSpelling?: NoteSpelling;
   onNodePress?: (chordName: string) => void;
   onEdgeInfo?: (info: string) => void;
+}
+
+function classifyJamEdge(source: string, target: string): EdgeType[] {
+  const directTypes = getDirectEdgeTypes(source, target);
+  if (directTypes.length > 0) return directTypes;
+  const path = findChordPath(source, target, { relative: false, iiVI: false, leadingTone: false });
+  return path?.edgeTypes ?? [];
+}
+
+function edgeTypesTitle(edgeTypes: EdgeType[]): string {
+  if (edgeTypes.length === 0) return 'Unclassified harmonic move';
+  return edgeTypes.map(edgeTypeTitle).join('\n');
+}
+
+interface JamSlotInfo {
+  chordNames: string[];
+  progressionColors: string[];
 }
 
 const CX = 300;
@@ -84,17 +110,116 @@ function arrowPoints(tipX: number, tipY: number, ux: number, uy: number): string
   return `${tipX},${tipY} ${bx + px * (ARROW / 2)},${by + py * (ARROW / 2)} ${bx - px * (ARROW / 2)},${by - py * (ARROW / 2)}`;
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, noteSpelling = 'sharps', onNodePress, onEdgeInfo }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, noteSpelling = 'sharps', onNodePress, onEdgeInfo }: Props) {
+  const isJamMode = !!graphState;
   const ringNodes = useMemo(() => buildRingNodes(), []);
   const nodeByName = useMemo(() => {
     const m = new Map<string, RingNode>();
     for (const n of ringNodes) m.set(n.name, n);
     return m;
   }, [ringNodes]);
+  const chordToRingNode = useCallback(
+    (chordName: string): RingNode | null => {
+      const nodeId = chordNameToNodeId(chordName);
+      if (!nodeId) return null;
+      return ringNodes.find((n) => n.id === nodeId) ?? null;
+    },
+    [ringNodes],
+  );
 
   const pathNodeNames = useMemo(() => new Set(walkPath?.nodes ?? []), [walkPath]);
   const matchedSet = useMemo(() => new Set(matchedChords), [matchedChords]);
   const hasPath = !!walkPath && walkPath.nodes.length > 1;
+
+  // --- Jam mode data (port of the desktop component's jam memos) ---
+  const jamSlots = useMemo(() => {
+    if (!graphState) return new Map<string, JamSlotInfo>();
+    const slots = new Map<string, JamSlotInfo>();
+    for (const [chordName, node] of graphState.nodes) {
+      const ringNode = chordToRingNode(chordName);
+      if (!ringNode) continue; // aug chords can't map
+      if (!slots.has(ringNode.id)) slots.set(ringNode.id, { chordNames: [], progressionColors: [] });
+      const slot = slots.get(ringNode.id)!;
+      slot.chordNames.push(chordName);
+      for (const progName of node.progressions) {
+        const prog = graphState.progressions.find((p) => p.name === progName);
+        if (prog && !slot.progressionColors.includes(prog.color)) slot.progressionColors.push(prog.color);
+      }
+    }
+    return slots;
+  }, [graphState, chordToRingNode]);
+
+  const jamActiveNodeIds = useMemo(() => new Set(jamSlots.keys()), [jamSlots]);
+
+  const jamMatchedNodeIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const chordName of jamMatchedChords ?? []) {
+      const ringNode = chordToRingNode(chordName);
+      if (ringNode) ids.add(ringNode.id);
+    }
+    return ids;
+  }, [jamMatchedChords, chordToRingNode]);
+
+  const jamEdges = useMemo(() => {
+    if (!graphState) return [];
+    const result = new Map<string, {
+      key: string;
+      keys: string[];
+      from: RingNode;
+      to: RingNode;
+      color: string;
+      edgeTypes: EdgeType[];
+      count: number;
+      isBidirectional: boolean;
+    }>();
+    const reciprocalSet = getReciprocalSet(graphState.edges);
+    for (const [key, edge] of graphState.edges) {
+      const fromRing = chordToRingNode(edge.source);
+      const toRing = chordToRingNode(edge.target);
+      if (!fromRing || !toRing) continue;
+      if (fromRing.id === toRing.id) continue;
+      const edgeTypes = classifyJamEdge(edge.source, edge.target);
+      const color = edgeTypeColor(mostDissonantEdgeType(edgeTypes) ?? undefined);
+      const isBidirectional = reciprocalSet.has(key);
+      const pairKey = isBidirectional ? [fromRing.id, toRing.id].sort().join('<->') : key;
+      const existing = result.get(pairKey);
+      if (existing) {
+        existing.keys.push(key);
+        existing.count += edge.count;
+        existing.isBidirectional = existing.isBidirectional || isBidirectional;
+        existing.edgeTypes = Array.from(new Set([...existing.edgeTypes, ...edgeTypes]));
+        existing.color = edgeTypeColor(mostDissonantEdgeType(existing.edgeTypes) ?? undefined);
+      } else {
+        result.set(pairKey, { key: pairKey, keys: [key], from: fromRing, to: toRing, color, edgeTypes, count: edge.count, isBidirectional });
+      }
+    }
+    return Array.from(result.values());
+  }, [graphState, chordToRingNode]);
+
+  const jamHighlightedEdgeKeys = useMemo(() => {
+    if (!graphState || jamMatchedNodeIds.size === 0) return new Set<string>();
+    const keys = new Set<string>();
+    for (const [key, edge] of graphState.edges) {
+      const sourceRing = chordToRingNode(edge.source);
+      if (sourceRing && jamMatchedNodeIds.has(sourceRing.id)) keys.add(key);
+    }
+    return keys;
+  }, [graphState, jamMatchedNodeIds, chordToRingNode]);
+
+  const jamNextCandidateIds = useMemo(() => {
+    if (!graphState) return new Set<string>();
+    const ids = new Set<string>();
+    for (const key of jamHighlightedEdgeKeys) {
+      const edge = graphState.edges.get(key);
+      if (edge) {
+        const targetRing = chordToRingNode(edge.target);
+        if (targetRing && !jamMatchedNodeIds.has(targetRing.id)) ids.add(targetRing.id);
+      }
+    }
+    return ids;
+  }, [graphState, jamHighlightedEdgeKeys, jamMatchedNodeIds, chordToRingNode]);
+
+  const jamHasHighlight = isJamMode && (jamMatchedChords?.length ?? 0) > 0;
 
   // Path edges grouped by directed node pair (same grouping/arc rules as desktop).
   const pathGroups = useMemo(() => {
@@ -198,6 +323,39 @@ export default function CircleOfFifths({ walkPath, matchedChords, noteSpelling =
         );
       })}
 
+      {/* Jam mode: progression edges (straight, clipped to node borders) */}
+      {isJamMode && jamEdges.map((edge) => {
+        const isHighlighted = edge.keys.some((key) => jamHighlightedEdgeKeys.has(key));
+        const edgeOpacity = jamHasHighlight ? (isHighlighted ? 1 : 0.2) : 0.85;
+        const strokeWidth = edge.count >= 2 ? 4 : 3;
+        const dx = edge.to.x - edge.from.x;
+        const dy = edge.to.y - edge.from.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len === 0) return null;
+        const ux = dx / len;
+        const uy = dy / len;
+        const pad = 4;
+        if (edge.from.r + edge.to.r + pad * 2 >= len) return null;
+        const x1 = edge.from.x + ux * (edge.from.r + pad);
+        const y1 = edge.from.y + uy * (edge.from.r + pad);
+        const x2 = edge.to.x - ux * (edge.to.r + pad);
+        const y2 = edge.to.y - uy * (edge.to.r + pad);
+        const info = `${edge.from.name} ${edge.isBidirectional ? '↔' : '→'} ${edge.to.name}\n${edgeTypesTitle(edge.edgeTypes)}`;
+        return (
+          <G key={`jam-${edge.key}`} opacity={edgeOpacity}>
+            <Line
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={edge.color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              onPress={onEdgeInfo ? () => onEdgeInfo(info) : undefined}
+            />
+            <Polygon points={arrowPoints(x2, y2, ux, uy)} fill={edge.color} />
+            {edge.isBidirectional && <Polygon points={arrowPoints(x1, y1, -ux, -uy)} fill={edge.color} />}
+          </G>
+        );
+      })}
+
       {/* Nodes */}
       {ringNodes.map((node) => {
         const inPath = pathNodeNames.has(node.name);
@@ -207,12 +365,40 @@ export default function CircleOfFifths({ walkPath, matchedChords, noteSpelling =
           : false;
         const isMatched = matchedSet.has(node.name);
 
+        // Jam mode state
+        const jamSlot = jamSlots.get(node.id);
+        const isJamActive = jamActiveNodeIds.has(node.id);
+        const isJamMatched = jamMatchedNodeIds.has(node.id);
+        const isJamNextCandidate = jamNextCandidateIds.has(node.id);
+
         let fill = node.ring === 'major' ? '#1a3a5c' : node.ring === 'minor' ? '#2d1f3d' : '#3d1f1f';
         let strokeColor: string;
         let strokeWidth: number;
         let opacity: number;
 
-        if (isCurrentStep) {
+        if (isJamMode) {
+          if (isJamActive) {
+            const colors = jamSlot?.progressionColors || [];
+            strokeColor = colors.length === 1 ? colors[0] : colors.length > 1 ? '#58a6ff' : '#c9d1d9';
+            strokeWidth = 3;
+            opacity = 1;
+          } else {
+            strokeColor = '#30363d';
+            strokeWidth = 1;
+            opacity = 0.3;
+          }
+          if (isJamMatched) {
+            strokeColor = '#58a6ff';
+            strokeWidth = 3.5;
+            opacity = 1;
+          } else if (isJamNextCandidate && jamHasHighlight) {
+            strokeColor = '#fff';
+            strokeWidth = 2.5;
+            opacity = 0.85;
+          } else if (jamHasHighlight && isJamActive && !isJamMatched) {
+            opacity = 0.5;
+          }
+        } else if (isCurrentStep) {
           strokeColor = '#f5a623';
           strokeWidth = 3;
           opacity = 1;
@@ -234,27 +420,36 @@ export default function CircleOfFifths({ walkPath, matchedChords, noteSpelling =
           opacity = 0.8;
         }
 
-        if (isMatched && isCurrentStep) {
-          fill = '#1a4a2a';
-          strokeColor = '#2ecc71';
-          strokeWidth = 3.5;
-          opacity = 1;
-        } else if (isMatched) {
-          strokeColor = '#58a6ff';
-          strokeWidth = 3;
-          opacity = 1;
+        if (!isJamMode) {
+          if (isMatched && isCurrentStep) {
+            fill = '#1a4a2a';
+            strokeColor = '#2ecc71';
+            strokeWidth = 3.5;
+            opacity = 1;
+          } else if (isMatched) {
+            strokeColor = '#58a6ff';
+            strokeWidth = 3;
+            opacity = 1;
+          }
         }
 
-        const displayName = respellChordName(node.name, noteSpelling);
+        // Jam mode shows the user's chord name if a progression chord occupies this slot.
+        let displayName = respellChordName(node.name, noteSpelling);
+        if (isJamMode && jamSlot) {
+          const mostSpecific = jamSlot.chordNames.reduce((a, b) => (a.length >= b.length ? a : b));
+          displayName = respellChordName(mostSpecific, noteSpelling);
+        }
         const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 9;
-        const isActive = inPath || isMatched || isCurrentStep || isDoneStep;
+        const isActive = isJamMode
+          ? isJamActive || isJamMatched || isJamNextCandidate
+          : inPath || isMatched || isCurrentStep || isDoneStep;
         const triadFontSize = isActive ? 9 : node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 5.5;
         const showTriadNotes = node.ring !== 'dim' || isActive;
 
         return (
           <G key={node.id} opacity={opacity} onPress={onNodePress ? () => onNodePress(node.name) : undefined}>
             <Circle cx={node.x} cy={node.y} r={node.r} fill={fill} stroke={strokeColor} strokeWidth={strokeWidth} />
-            {isMatched && (
+            {!isJamMode && isMatched && (
               <Circle
                 cx={node.x}
                 cy={node.y}
@@ -265,7 +460,10 @@ export default function CircleOfFifths({ walkPath, matchedChords, noteSpelling =
                 opacity={0.4}
               />
             )}
-            {isCurrentStep && !isMatched && (
+            {isJamMode && isJamMatched && (
+              <Circle cx={node.x} cy={node.y} r={node.r + 5} fill="none" stroke="#58a6ff" strokeWidth={2} opacity={0.4} />
+            )}
+            {!isJamMode && isCurrentStep && !isMatched && (
               <Circle cx={node.x} cy={node.y} r={node.r + 4} fill="none" stroke="#f5a623" strokeWidth={1.5} opacity={0.5} />
             )}
             <SvgText x={node.x} y={node.y} textAnchor="middle" fontSize={fontSize} fontWeight="600" fill="#c9d1d9">

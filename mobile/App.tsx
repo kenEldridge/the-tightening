@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
 import WalkScreen from './src/screens/WalkScreen';
+import JamScreen from './src/screens/JamScreen';
 import MidiCheckScreen from './src/screens/MidiCheckScreen';
 import { useMidi } from './src/midi/useMidi';
 
@@ -32,12 +33,7 @@ export default function App() {
       </View>
 
       {mode === 'walk' && <WalkScreen midi={midi} />}
-      {mode === 'jam' && (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Jam mode is coming in a later step (B7).</Text>
-          <Text style={styles.placeholderSub}>Walk mode and the MIDI check are live.</Text>
-        </View>
-      )}
+      {mode === 'jam' && <JamScreen midi={midi} />}
       {mode === 'midi' && <MidiCheckScreen midi={midi} />}
 
       <StatusBar style="light" />
@@ -62,7 +58,4 @@ const styles = StyleSheet.create({
   modeBtnActive: { backgroundColor: '#1f6feb22', borderColor: '#58a6ff' },
   modeText: { color: '#8b949e', fontSize: 13, fontWeight: '600' },
   modeTextActive: { color: '#58a6ff' },
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  placeholderText: { color: '#c9d1d9', fontSize: 15 },
-  placeholderSub: { color: '#6e7681', fontSize: 13 },
 });
