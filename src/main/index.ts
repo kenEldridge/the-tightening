@@ -253,6 +253,31 @@ ipcMain.handle('open-recording', async () => {
   return { audioPath, midiPath, cwalkData };
 });
 
+// ── Sound library import ──────────────────────────────────────────────────
+
+ipcMain.handle('pick-sound-library', async () => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Choose sound library folder',
+    properties: ['openDirectory'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+const AUDIO_EXT_RE = /\.(wav|flac|mp3|ogg|m4a|aac)$/i;
+
+ipcMain.handle('scan-sound-library', (_event, dirPath: string) => {
+  try {
+    return fs
+      .readdirSync(dirPath)
+      .filter((name) => AUDIO_EXT_RE.test(name))
+      .map((name) => ({ name, path: path.join(dirPath, name) }));
+  } catch {
+    return [];
+  }
+});
+
 const createWindow = () => {
   console.log('[Main] Creating main window');
 

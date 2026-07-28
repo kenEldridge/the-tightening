@@ -66,4 +66,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   openRecording: () =>
     ipcRenderer.invoke('open-recording'),
+
+  // ── Sound library ────────────────────────────────────────────────────────
+
+  pickSoundLibrary: () =>
+    ipcRenderer.invoke('pick-sound-library'),
+
+  scanSoundLibrary: (dirPath: string) =>
+    ipcRenderer.invoke('scan-sound-library', dirPath),
 });
