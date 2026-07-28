@@ -111,6 +111,10 @@ export interface ElectronAPI {
   getFilePath: (file: File) => string;
   readFileBinary: (filePath: string) => Promise<Uint8Array>;
   openRecording: () => Promise<{ audioPath: string; midiPath: string | null; cwalkData: string | null } | null>;
+
+  // Sound library
+  pickSoundLibrary: () => Promise<string | null>;
+  scanSoundLibrary: (dirPath: string) => Promise<{ name: string; path: string }[]>;
 }
 
 declare global {

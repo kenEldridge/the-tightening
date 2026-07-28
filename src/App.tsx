@@ -22,6 +22,8 @@ import ReplayMode from './components/ReplayMode';
 import DrummerControl from './components/DrummerControl';
 import { useDrummer } from './hooks/useDrummer';
 import DidYouKnow from './components/DidYouKnow';
+import SoundLibrary from './components/SoundLibrary';
+import { Sampler } from './audio/sampler';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from 'theory-core';
 
 // Default walk: start on C in a Happy mood with the most common (bright) song
@@ -100,12 +102,19 @@ export default function App() {
   const walkStateRef = useRef(walkState);
   walkStateRef.current = walkState;
 
+  // Audio synth/sampler — one instance for the app's lifetime. Fed by the same
+  // note handlers as chord detection, so both live MIDI and replay make sound.
+  const samplerRef = useRef<Sampler | null>(null);
+  if (!samplerRef.current) samplerRef.current = new Sampler();
+
   // MIDI note handlers — lifted out of useEffect so Replay can share them
-  const handleNoteOn = useCallback((note: number) => {
+  const handleNoteOn = useCallback((note: number, velocity = 100) => {
+    samplerRef.current?.noteOn(note, velocity);
     setHeldNotes(prev => { const n = new Set(prev); n.add(note); return n; });
   }, []);
 
   const handleNoteOff = useCallback((note: number) => {
+    samplerRef.current?.noteOff(note);
     setHeldNotes(prev => { const n = new Set(prev); n.delete(note); return n; });
   }, []);
 
@@ -262,7 +271,7 @@ export default function App() {
       const isSustain = msgType === 0xB0 && data1 === 64;
 
       if (isNoteOn) {
-        handleNoteOn(data1);
+        handleNoteOn(data1, data2);
         drummer.noteOn(data1, data2, e.timeStamp);
         if (isRecordingRef.current) {
           midiEventsRef.current.push({
@@ -612,6 +621,7 @@ export default function App() {
           )}
           <EdgeTypeLegend />
           <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} extendedMatches={extendedMatches} />
+          <SoundLibrary sampler={samplerRef.current} />
           {mode !== 'replay' && (
             <AudioRecorder
               onRecordingStart={onRecordingStart}

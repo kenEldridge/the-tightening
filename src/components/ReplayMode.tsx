@@ -4,7 +4,7 @@ import type { MidiEvent, SaveData } from '../types/index';
 import type { SavedRecordingData } from './AudioRecorder';
 
 interface ReplayModeProps {
-  handleNoteOn: (note: number) => void;
+  handleNoteOn: (note: number, velocity?: number) => void;
   handleNoteOff: (note: number) => void;
   onLoaded?: (data: SaveData | null) => void;
   autoLoad?: (SavedRecordingData & { autoPlay: boolean }) | null;
@@ -51,7 +51,7 @@ export default function ReplayMode({ handleNoteOn, handleNoteOff, onLoaded, auto
     while (eventIndexRef.current < events.length) {
       const ev = events[eventIndexRef.current];
       if (ev.offsetMs > nowMs + 50) break;
-      if (ev.type === 'noteOn') handleNoteOnRef.current(ev.note);
+      if (ev.type === 'noteOn') handleNoteOnRef.current(ev.note, ev.velocity);
       else if (ev.type === 'noteOff') handleNoteOffRef.current(ev.note);
       eventIndexRef.current++;
     }
