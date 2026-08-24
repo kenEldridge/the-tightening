@@ -10,7 +10,7 @@ import ProgressionInput from './components/ProgressionInput';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
-import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath } from 'theory-core';
+import { getTheoryChordNodes, getAllChordNames, findChordPath, buildIntervalCyclePath, getNextChordSuggestions } from 'theory-core';
 import type { EdgeType } from 'theory-core';
 import { CYCLE_PRESETS } from 'theory-core';
 import { pickNextCycleAdvance } from 'theory-core';
@@ -24,7 +24,18 @@ import { useDrummer } from './hooks/useDrummer';
 import DidYouKnow from './components/DidYouKnow';
 import SoundLibrary from './components/SoundLibrary';
 import { Sampler } from './audio/sampler';
+import SuggestEdgesToggle from './components/SuggestEdgesToggle';
 import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from 'theory-core';
+
+// Jam mode "next chord" live suggestions: 5th → fifth, 4th → dom7 ("V-I",
+// root moves up a fourth), 3rd → relative (the common, consonant third) +
+// chromaticMediant (the rarer, colorful one) — see chordPathfinder.ts.
+const DEFAULT_SUGGEST_EDGE_TYPES: Partial<Record<EdgeType, boolean>> = {
+  fifth: true,
+  dom7: true,
+  relative: true,
+  chromaticMediant: true,
+};
 
 // Default walk: start on C in a Happy mood with the most common (bright) song
 // cycle preset selected; endless + return trip + random-pattern all on so it
@@ -60,6 +71,7 @@ export default function App() {
   const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
+  const [suggestEdgeTypes, setSuggestEdgeTypes] = useState<Partial<Record<EdgeType, boolean>>>(DEFAULT_SUGGEST_EDGE_TYPES);
   const [dynamicCircle, setDynamicCircle] = useState(true);
   const [graphExpanded, setGraphExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -99,6 +111,17 @@ export default function App() {
 
   // Flatten all hint edges from extended matches for the circle
   const hintEdges = useMemo(() => extendedMatches.flatMap(m => m.hintEdges), [extendedMatches]);
+
+  // Jam mode: live "where next" edges from the currently played chord (best
+  // match only — matchedChords[0] is the most specific per detectChords).
+  const jamSuggestionEdges = useMemo(() => {
+    if (mode !== 'jam') return [];
+    const current = matchedChords[0];
+    if (!current) return [];
+    const allowed = new Set(EDGE_TYPE_ORDER.filter(t => suggestEdgeTypes[t]));
+    if (allowed.size === 0) return [];
+    return getNextChordSuggestions(current, allowed).map(s => ({ from: current, to: s.chord, type: s.type }));
+  }, [mode, matchedChords, suggestEdgeTypes]);
   const walkStateRef = useRef(walkState);
   walkStateRef.current = walkState;
 
@@ -596,12 +619,15 @@ export default function App() {
             <button className={`mode-btn ${mode === 'replay' ? 'mode-btn-active' : ''}`} onClick={() => setMode('replay')}>Replay</button>
           </div>
           {mode === 'jam' && (
-            <ProgressionInput
-              onAdd={handleAddProgression}
-              onRemove={handleRemoveProgression}
-              onEdit={handleEditProgression}
-              progressions={graphState.progressions}
-            />
+            <>
+              <ProgressionInput
+                onAdd={handleAddProgression}
+                onRemove={handleRemoveProgression}
+                onEdit={handleEditProgression}
+                progressions={graphState.progressions}
+              />
+              <SuggestEdgesToggle enabled={suggestEdgeTypes} onChange={setSuggestEdgeTypes} />
+            </>
           )}
           {mode === 'walk' && (
             <WalkMode
@@ -705,6 +731,7 @@ export default function App() {
               jamMatchedChords={matchedChords}
               matchedChords={matchedChords}
               hintEdges={hintEdges}
+              suggestionEdges={jamSuggestionEdges}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />

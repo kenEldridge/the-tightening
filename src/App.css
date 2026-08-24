@@ -473,6 +473,15 @@ body {
   font-weight: 600;
 }
 
+/* ── Jam mode: live suggestion-edge toggle ── */
+
+.suggest-edges-toggle {
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 /* Cycle preset browser */
 
 .walk-constraints-header {

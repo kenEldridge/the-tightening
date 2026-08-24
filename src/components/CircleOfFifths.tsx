@@ -46,6 +46,7 @@ interface Props {
   jamMatchedChords?: string[];
   replayMatchedChords?: string[];  // replay: draw live edges between detected chords
   hintEdges?: HintEdge[];          // extended chord hints: dashed amber edges
+  suggestionEdges?: { from: string; to: string; type: EdgeType }[]; // jam: live "where next" theory-graph edges from the played chord
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
   /** Dynamic camera (issue #18): zoom the view to the walk path's nodes. */
@@ -108,7 +109,7 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, suggestionEdges, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
   const isJamMode = !!graphState;
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
@@ -357,6 +358,41 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               markerEnd="url(#cof-arrow)"
             >
               <title>{edge.label}</title>
+            </line>
+          );
+        })}
+
+        {/* Jam mode: live "where next" edges from the currently played chord,
+            classified by the theory graph's edge types (colored, dashed to
+            distinguish from actual progression edges). */}
+        {suggestionEdges && suggestionEdges.map((edge, idx) => {
+          const fromNode = nodeByName.get(edge.from);
+          const toNode   = nodeByName.get(edge.to);
+          if (!fromNode || !toNode || fromNode.id === toNode.id) return null;
+          const dx = toNode.x - fromNode.x;
+          const dy = toNode.y - fromNode.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len === 0) return null;
+          const ux = dx / len, uy = dy / len;
+          const pad = 4;
+          const x1 = fromNode.x + ux * (fromNode.r + pad);
+          const y1 = fromNode.y + uy * (fromNode.r + pad);
+          const x2 = toNode.x   - ux * (toNode.r + pad);
+          const y2 = toNode.y   - uy * (toNode.r + pad);
+          if (fromNode.r + toNode.r + pad * 2 >= len) return null;
+          const color = edgeTypeColor(edge.type);
+          return (
+            <line
+              key={`suggest-${idx}`}
+              x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={color}
+              strokeWidth={2.5}
+              strokeDasharray="6 4"
+              strokeLinecap="round"
+              opacity={0.85}
+              markerEnd="url(#cof-arrow)"
+            >
+              <title>{`${edge.from} → ${edge.to}\n${edgeTypeTitle(edge.type)}`}</title>
             </line>
           );
         })}

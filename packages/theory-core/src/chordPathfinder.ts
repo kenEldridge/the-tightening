@@ -317,6 +317,31 @@ export function getDirectEdgeTypes(from: string, to: string): EdgeType[] {
   return Array.from(seen);
 }
 
+/**
+ * One-hop "where could I go next" suggestions from a chord, filtered to the
+ * allowed edge types. Unlike findChordPath, this doesn't route to a specific
+ * destination — it's the live neighbor list for Walk mode's suggestion panel.
+ */
+export function getNextChordSuggestions(from: string, allowedTypes: Set<EdgeType>): { chord: string; type: EdgeType }[] {
+  const fromId = chordNameToNodeId(from);
+  if (!fromId || allowedTypes.size === 0) return [];
+
+  const graph = getPathGraph();
+  const seen = new Set<string>();
+  const suggestions: { chord: string; type: EdgeType }[] = [];
+
+  for (const edge of graph.get(fromId) ?? []) {
+    if (!allowedTypes.has(edge.type)) continue;
+    const key = `${edge.target}|${edge.type}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    suggestions.push({ chord: nodeIdToChordName(edge.target), type: edge.type });
+  }
+
+  suggestions.sort((a, b) => EDGE_TYPES.indexOf(a.type) - EDGE_TYPES.indexOf(b.type));
+  return suggestions;
+}
+
 // ---------- Constrained Dijkstra ----------
 
 /**
