@@ -112,16 +112,29 @@ export default function App() {
   // Flatten all hint edges from extended matches for the circle
   const hintEdges = useMemo(() => extendedMatches.flatMap(m => m.hintEdges), [extendedMatches]);
 
-  // Jam mode: live "where next" edges from the currently played chord (best
-  // match only — matchedChords[0] is the most specific per detectChords).
+  // Last chord that was *confidently* recognized (a full triad match, not a
+  // partial/in-progress one). Sticky by design: it only ever advances when a
+  // new full match lands, and is otherwise left alone. Mid-arpeggio or during
+  // a note-by-note chord change, held notes routinely fail the "all pitch
+  // classes present at once" test for any chord — that's a transient gap in
+  // recognition, not a signal that the player has left the chord. Keying
+  // suggestion edges off this instead of the raw match means they hold
+  // steady through that gap and swap the instant the next chord resolves,
+  // with no timeout to tune (and no window where they'd show something stale).
+  const [lastRecognizedChord, setLastRecognizedChord] = useState<string | null>(null);
+  useEffect(() => {
+    if (matchedChords[0]) setLastRecognizedChord(matchedChords[0]);
+  }, [matchedChords]);
+
+  // Jam mode: live "where next" edges from the last confidently-recognized chord.
   const jamSuggestionEdges = useMemo(() => {
     if (mode !== 'jam') return [];
-    const current = matchedChords[0];
+    const current = lastRecognizedChord;
     if (!current) return [];
     const allowed = new Set(EDGE_TYPE_ORDER.filter(t => suggestEdgeTypes[t]));
     if (allowed.size === 0) return [];
     return getNextChordSuggestions(current, allowed).map(s => ({ from: current, to: s.chord, type: s.type }));
-  }, [mode, matchedChords, suggestEdgeTypes]);
+  }, [mode, lastRecognizedChord, suggestEdgeTypes]);
   const walkStateRef = useRef(walkState);
   walkStateRef.current = walkState;
 
@@ -195,6 +208,7 @@ export default function App() {
     setReplayWalkPath(null);
     setReplayStep(0);
     setPendingReplay(null);
+    setLastRecognizedChord(null);
   }, []);
 
   // Clear pendingReplay when the user navigates away from Replay manually
