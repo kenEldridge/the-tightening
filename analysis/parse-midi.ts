@@ -7,28 +7,38 @@
  * --limit N process at most N files
  */
 
-import { writeFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { writeFileSync, readFileSync, readdirSync, statSync } from 'fs';
+import { join, dirname, relative, sep } from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-// adm-zip is CJS
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const AdmZip = require('adm-zip') as any;
 const { Midi } = require('@tonejs/midi') as typeof import('@tonejs/midi');
-import { detectChords } from '../src/core/chordDetection.js';
-import { getTheoryChordNodes, nodeIdToChordName } from '../src/core/chordPathfinder.js';
+import { detectChords, getTheoryChordNodes, nodeIdToChordName } from 'theory-core';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ZIP_PATH = join(__dirname, '../music/50000midifiles.zip');
-const BY_ARTIST_PREFIX = '50000 MIDI FILES/By ARTIST/';
+const BY_ARTIST_DIR = join(__dirname, '..', 'music', '50000 MIDI FILES', 'By ARTIST');
 const OUTPUT_PATH = join(__dirname, 'midi-songs.csv');
 
 const args = process.argv.slice(2);
 const TEST_MODE = args.includes('--test');
 const limitIdx = args.indexOf('--limit');
 const LIMIT = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : TEST_MODE ? 100 : Infinity;
+
+// ---------------------------------------------------------------------------
+// File discovery
+// ---------------------------------------------------------------------------
+
+function findMidiFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { recursive: true }) as string[]) {
+    if (/\.midi?$/i.test(entry)) {
+      const full = join(dir, entry);
+      if (statSync(full).isFile()) results.push(full);
+    }
+  }
+  return results;
+}
 
 // ---------------------------------------------------------------------------
 // Name cleaning
@@ -44,9 +54,9 @@ function cleanSongName(filename: string): string {
     .trim();
 }
 
-function parseEntryPath(entryName: string): { artist: string; songTitle: string } | null {
-  const relative = entryName.slice(BY_ARTIST_PREFIX.length);
-  const parts = relative.split('/').filter(Boolean);
+function parseFilePath(fullPath: string): { artist: string; songTitle: string } | null {
+  const rel = relative(BY_ARTIST_DIR, fullPath);
+  const parts = rel.split(sep).filter(Boolean);
   if (parts.length < 2) return null;
   const artist = parts[0];
   const filename = parts[parts.length - 1];
@@ -102,10 +112,16 @@ function detectWindowChord(notes: MidiNote[], winStart: number, winEnd: number):
 }
 
 // ---------------------------------------------------------------------------
-// MIDI file → chord sequence
+// MIDI file → chord sequence + key signature
 // ---------------------------------------------------------------------------
 
-function processMidi(data: Buffer): string[] | null {
+interface SongResult {
+  chords: string[];
+  keyTonic: string | null;
+  keyScale: 'major' | 'minor' | null;
+}
+
+function processMidi(data: Buffer): SongResult | null {
   let midi: Midi;
   try {
     midi = new Midi(data);
@@ -144,7 +160,13 @@ function processMidi(data: Buffer): string[] | null {
   // Require at least 3 distinct chords to be musically interesting
   if (new Set(chords).size < 3) return null;
 
-  return chords;
+  // Key signature meta event, if the file embeds one (arranger-authored GM/XG
+  // files commonly do). scale is 'major' | 'minor' straight from the file.
+  const keySig = midi.header.keySignatures[0];
+  const keyTonic = keySig?.key ?? null;
+  const keyScale = (keySig?.scale as 'major' | 'minor' | undefined) ?? null;
+
+  return { chords, keyTonic, keyScale };
 }
 
 // ---------------------------------------------------------------------------
@@ -162,30 +184,23 @@ function csvCell(v: string): string {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  console.log('Opening zip (this takes a moment for the index)...');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const zip = new AdmZip(ZIP_PATH) as any;
-  const entries = (zip.getEntries() as any[]).filter(
-    (e: any) =>
-      !e.isDirectory &&
-      e.entryName.startsWith(BY_ARTIST_PREFIX) &&
-      /\.midi?$/i.test(e.entryName),
-  );
-
-  console.log(`Found ${entries.length} MIDI files under By ARTIST/`);
+  console.log('Scanning By ARTIST/ for MIDI files...');
+  const files = findMidiFiles(BY_ARTIST_DIR);
+  console.log(`Found ${files.length} MIDI files under By ARTIST/`);
   if (TEST_MODE) console.log(`Test mode: processing first ${LIMIT} files`);
 
-  const rows: string[] = ['title,chord_sequence'];
+  const rows: string[] = ['title,chord_sequence,key_tonic,key_scale'];
   let processed = 0;
   let succeeded = 0;
   let failed = 0;
+  let withKey = 0;
   const seen = new Set<string>();
 
-  for (const entry of entries) {
+  for (const filePath of files) {
     if (processed >= LIMIT) break;
     processed++;
 
-    const meta = parseEntryPath(entry.entryName);
+    const meta = parseFilePath(filePath);
     if (!meta) { failed++; continue; }
 
     const title = `${meta.artist} - ${meta.songTitle}`;
@@ -195,16 +210,22 @@ async function main() {
 
     let data: Buffer;
     try {
-      data = entry.getData() as Buffer;
+      data = readFileSync(filePath);
     } catch {
       failed++;
       continue;
     }
 
-    const chords = processMidi(data);
-    if (!chords) { failed++; continue; }
+    const result = processMidi(data);
+    if (!result) { failed++; continue; }
 
-    rows.push(`${csvCell(title)},${csvCell(chords.join(' '))}`);
+    if (result.keyScale) withKey++;
+    rows.push([
+      csvCell(title),
+      csvCell(result.chords.join(' ')),
+      csvCell(result.keyTonic ?? ''),
+      csvCell(result.keyScale ?? ''),
+    ].join(','));
     succeeded++;
 
     if (succeeded % 25 === 0 || TEST_MODE) {
@@ -213,6 +234,7 @@ async function main() {
   }
 
   console.log(`\nDone: ${succeeded} songs extracted from ${processed} files (${failed} skipped)`);
+  console.log(`  ${withKey} of ${succeeded} songs (${((withKey / succeeded) * 100).toFixed(0)}%) had an embedded key signature`);
   writeFileSync(OUTPUT_PATH, rows.join('\n'), 'utf-8');
   console.log(`Written to: ${OUTPUT_PATH}`);
 }

@@ -19,11 +19,12 @@ import {
   getDirectEdgeTypes,
   EDGE_TYPES,
   nodeIdToChordName,
-} from '../src/core/chordPathfinder.js';
-import type { EdgeType } from '../src/core/chordPathfinder.js';
+} from 'theory-core';
+import type { EdgeType } from 'theory-core';
+import { romanNumeralSequence } from './romanNumerals.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const MUSIC_DIR = join(__dirname, '..', 'music');
+const MUSIC_DIR = join(__dirname, '..', 'music', 'nate');
 
 // ---------------------------------------------------------------------------
 // Chord token recognition and splitting
@@ -154,6 +155,40 @@ interface EdgeResult {
 
 function safeMapChord(name: string): string | null {
   try { return chordNameToNodeId(name); } catch { return null; }
+}
+
+// ---------------------------------------------------------------------------
+// Key detection (major/minor), from the chord sequence itself
+// ---------------------------------------------------------------------------
+
+/**
+ * MIDI-embedded key signatures turned out to be unreliable (see analysis/parse-midi.ts —
+ * the archive's authoring tool stamps a default "C major" when no key was explicitly set,
+ * and minor mode is almost never flipped even for clearly-minor songs). So key is detected
+ * uniformly from the chord content instead: the most-frequent chord is the tonic (ties broken
+ * in favor of the chord that opens or closes the song), and its quality (major/minor) comes
+ * from the theory-core node it maps to. A diminished-chord "tonic" is implausible for a whole
+ * song, so that candidate is skipped in favor of the next most-frequent chord.
+ */
+function detectKey(chords: string[]): { tonic: string; quality: 'major' | 'minor' } | null {
+  const freq = new Map<string, number>();
+  for (const c of chords) freq.set(c, (freq.get(c) ?? 0) + 1);
+
+  const isEdgeChord = (c: string) => c === chords[0] || c === chords[chords.length - 1];
+
+  const ranked = [...freq.entries()]
+    .map(([chord, count]) => ({ chord, count, edge: isEdgeChord(chord) }))
+    .sort((a, b) => (b.count - a.count) || (Number(b.edge) - Number(a.edge)));
+
+  for (const { chord } of ranked) {
+    const nodeId = safeMapChord(chord);
+    if (!nodeId) continue;
+    const prefix = nodeId.split('-')[0];
+    if (prefix === 'key') return { tonic: nodeIdToChordName(nodeId), quality: 'major' };
+    if (prefix === 'minor') return { tonic: nodeIdToChordName(nodeId), quality: 'minor' };
+    // dim tonic — skip to the next most-frequent candidate
+  }
+  return null;
 }
 
 function classifyEdges(chords: string[]): EdgeResult[] {
@@ -388,6 +423,30 @@ function findCycles(
 // CSV helpers
 // ---------------------------------------------------------------------------
 
+/** Quote-aware CSV row parser (handles arbitrary column counts, unlike a fixed regex). */
+function parseCsvRow(line: string): string[] {
+  const cells: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { cur += ch; }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      cells.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells;
+}
+
 function csvCell(v: string | number | boolean): string {
   if (typeof v === 'string' && (v.includes(',') || v.includes('"') || v.includes('\n'))) {
     return `"${v.replace(/"/g, '""')}"`;
@@ -410,6 +469,8 @@ interface SongResult {
   edges: EdgeResult[];
   edgeTypesFound: Set<EdgeType>;
   unmappableChords: string[];
+  key: { tonic: string; quality: 'major' | 'minor' } | null;
+  romanSequence: (string | null)[];
 }
 
 async function main() {
@@ -463,7 +524,9 @@ async function main() {
     }
     for (const t of edgeTypesFound) edgeTypeSongCount[t]++;
 
-    songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords });
+    const key = detectKey(chords);
+    const romanSequence = key ? romanNumeralSequence(key.tonic, key.quality, chords) : [];
+    songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords, key, romanSequence });
   }
 
   // ---------------------------------------------------------------------------
@@ -476,11 +539,10 @@ async function main() {
     for (const rawLine of midiLines) {
       const line = rawLine.trim();
       if (!line) continue;
-      // Parse CSV: title (possibly quoted), chord_sequence (possibly quoted)
-      const match = line.match(/^("(?:[^"]|"")*"|[^,]*),("(?:[^"]|"")*"|.*)$/);
-      if (!match) continue;
-      const title = match[1].replace(/^"|"$/g, '').replace(/""/g, '"');
-      const chordStr = match[2].replace(/^"|"$/g, '').replace(/""/g, '"');
+      // Columns: title, chord_sequence, key_tonic, key_scale (last two are the
+      // unreliable MIDI-embedded key — see detectKey's comment — parsed but unused).
+      const [title, chordStr] = parseCsvRow(line);
+      if (title === undefined || chordStr === undefined) continue;
       const chords = chordStr.split(' ').filter(Boolean);
       if (chords.length < 2) continue;
 
@@ -497,7 +559,9 @@ async function main() {
       }
       for (const t of edgeTypesFound) edgeTypeSongCount[t]++;
 
-      songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords });
+      const key = detectKey(chords);
+      const romanSequence = key ? romanNumeralSequence(key.tonic, key.quality, chords) : [];
+      songs.push({ title, chords, edgeSeq, edges, edgeTypesFound, unmappableChords, key, romanSequence });
       midiCount++;
     }
     console.log(`Loaded ${midiCount} MIDI-mined songs from midi-songs.csv`);
@@ -510,7 +574,7 @@ async function main() {
   // ---------------------------------------------------------------------------
   const songHeader = csvRow([
     'title', 'chord_count', 'chord_sequence', 'edge_type_sequence',
-    'edge_types_found', 'unmappable_chords',
+    'edge_types_found', 'unmappable_chords', 'key_tonic', 'key_quality', 'roman_sequence',
   ]);
   const songCsvRows = songs.map(s => csvRow([
     s.title,
@@ -519,6 +583,9 @@ async function main() {
     s.edgeSeq.join(' '),
     EDGE_TYPES.filter(t => s.edgeTypesFound.has(t)).join('|'),
     [...new Set(s.unmappableChords)].join('|'),
+    s.key?.tonic ?? '',
+    s.key?.quality ?? '',
+    s.romanSequence.map(r => r ?? '?').join(' '),
   ]));
   const songsCsv = [songHeader, ...songCsvRows].join('\n');
   writeFileSync(join(__dirname, 'songs.csv'), songsCsv, 'utf-8');
@@ -570,6 +637,15 @@ async function main() {
   lines.push('='.repeat(72));
   lines.push('');
 
+  lines.push('── KEY BALANCE (major vs. minor, detected from chord content) ───────');
+  lines.push('');
+  const keyed = songs.filter(s => s.key);
+  const majorCount = keyed.filter(s => s.key!.quality === 'major').length;
+  const minorCount = keyed.filter(s => s.key!.quality === 'minor').length;
+  lines.push(`  ${keyed.length} of ${songs.length} songs (${((keyed.length / songs.length) * 100).toFixed(0)}%) yielded a detected key`);
+  lines.push(`  major: ${majorCount} (${((majorCount / keyed.length) * 100).toFixed(0)}%)   minor: ${minorCount} (${((minorCount / keyed.length) * 100).toFixed(0)}%)`);
+  lines.push('');
+
   lines.push('── EDGE TYPE FREQUENCY (across all songs) ───────────────────────────');
   lines.push('');
   const sorted = [...EDGE_TYPES].sort((a, b) => edgeTypeSongCount[b] - edgeTypeSongCount[a]);
@@ -599,7 +675,13 @@ async function main() {
   writeFileSync(join(__dirname, 'song-analysis.txt'), report, 'utf-8');
   console.log(report);
 
-  // TypeScript data file for the app UI — top 40 edge-type cycles
+  // Reference dump of the top 40 edge-type cycles found in THIS run, for
+  // comparison against the app's real packages/theory-core/src/cyclePresets.ts.
+  // NOTE: this script no longer writes the app's production preset file — that
+  // file's CyclePreset shape has since grown a `steps` field (for interval-cycle
+  // presets) that this generator doesn't produce, and overwriting it with the
+  // stale shape breaks theory-core's mood.ts at import time. If regenerating the
+  // app's real presets is ever needed, do it deliberately and separately.
   const presets = etCycles.slice(0, 40).map(c => ({
     loop: c.loop,
     length: c.length,
@@ -608,23 +690,7 @@ async function main() {
     exampleChords: c.exampleChords,
     topSongs: c.topSongs ?? [],
   }));
-  const presetsTs = [
-    `// Auto-generated by analysis/analyze-songs.ts — do not edit by hand.`,
-    `// Re-run: npx tsx analysis/analyze-songs.ts`,
-    `import type { EdgeType } from './chordPathfinder';`,
-    ``,
-    `export interface CyclePreset {`,
-    `  loop: string;         // edge-type sequence, e.g. "fifth dom7"`,
-    `  length: number;       // number of steps (= edges in the loop)`,
-    `  songCount: number;    // songs in the library containing this cycle`,
-    `  constraints: EdgeType[];  // Walk constraints needed to traverse it`,
-    `  exampleChords: string;   // concrete chord instance, e.g. "D A D"`,
-    `  topSongs: Array<{ title: string; chords: string }>;`,
-    `}`,
-    ``,
-    `export const CYCLE_PRESETS: CyclePreset[] = ${JSON.stringify(presets, null, 2)};`,
-  ].join('\n');
-  writeFileSync(join(__dirname, '..', 'src', 'core', 'cyclePresets.ts'), presetsTs, 'utf-8');
+  writeFileSync(join(__dirname, 'cyclePresets-candidate.json'), JSON.stringify(presets, null, 2), 'utf-8');
 
   console.log('Files written:');
   console.log('  analysis/songs.csv          — per-song chord + edge-type sequences');
@@ -632,7 +698,7 @@ async function main() {
   console.log('  analysis/chord_cycles.csv   — literal chord n-grams (5+ songs)');
   console.log('  analysis/edge_cycles.csv    — key-agnostic edge-type cycles (5+ songs)');
   console.log('  analysis/song-analysis.txt  — text summary');
-  console.log('  src/core/cyclePresets.ts    — top 40 cycles for app UI');
+  console.log('  analysis/cyclePresets-candidate.json — reference dump (NOT wired into the app)');
 }
 
 main().catch(console.error);
