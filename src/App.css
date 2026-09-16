@@ -1042,6 +1042,81 @@ body {
   border-color: var(--text-secondary);
 }
 
+.recorder-inputs-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recorder-mixer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.recorder-mix-track {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recorder-mix-track-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recorder-mix-track-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recorder-mix-slider {
+  flex: 1;
+}
+
+.recorder-mix-gain-value {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  width: 4.5em;
+  flex: 0 0 auto;
+}
+
+.recorder-mix-mute-btn {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.recorder-mix-mute-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.recorder-mix-mute-btn.recorder-mix-muted {
+  color: #fff;
+  background: #f85149;
+  border-color: #f85149;
+}
+
+.recorder-mix-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 /* ── Replay mode sidebar ── */
 
 .replay-mode {

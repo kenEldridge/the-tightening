@@ -19,9 +19,17 @@ interface AudioRecorderProps {
   onPlayRecording?: (data: SavedRecordingData) => void;
 }
 
+interface MixTrack {
+  label: string;
+  channels: Float32Array[];
+  gainDb: number;
+  muted: boolean;
+}
+
 type RecorderPhase =
   | { kind: 'idle' }
   | { kind: 'recording' }
+  | { kind: 'mixing'; tracks: MixTrack[] }
   | { kind: 'saving'; label: string }
   | { kind: 'saved'; audioUrl: string; metrics: AudioMetrics; audioPath: string; midiPath: string | null; cwalkData: string }
   | { kind: 'fallback'; audioUrl: string; reason: string };
@@ -29,22 +37,35 @@ type RecorderPhase =
 export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSaveData, onPlayRecording }: AudioRecorderProps) {
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [deviceId, setDeviceId] = useState<string>('');
+  const [deviceId2, setDeviceId2] = useState<string>('');
   const [recording, setRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [phase, setPhase] = useState<RecorderPhase>({ kind: 'idle' });
+  const [previewPlaying, setPreviewPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const ctxRef = useRef<AudioContext | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const workletRef = useRef<AudioWorkletNode | null>(null);
-  const sinkRef = useRef<GainNode | null>(null);
-  const buffersRef = useRef<Float32Array[][]>([]);
-  const frozenChunksRef = useRef<Float32Array[][]>([]);
+  const streamsRef = useRef<MediaStream[]>([]);
+  const sourcesRef = useRef<MediaStreamAudioSourceNode[]>([]);
+  const workletsRef = useRef<AudioWorkletNode[]>([]);
+  const sinksRef = useRef<GainNode[]>([]);
+  const buffersRef = useRef<Float32Array[][][]>([]); // [track][channel] = chunks
+  const frozenChunksRef = useRef<Float32Array[][][]>([]);
   const frozenMidiRef = useRef<MidiEvent[]>([]);
-  const channelsRef = useRef(2);
+  const channelsRef = useRef<number[]>([]);
+  const trackLabelsRef = useRef<string[]>([]);
   const sampleRateRef = useRef(44100);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const previewCtxRef = useRef<AudioContext | null>(null);
+  const previewSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const previewGainsRef = useRef<GainNode[]>([]);
+
+  const deviceIdRef = useRef(deviceId);
+  deviceIdRef.current = deviceId;
+  const deviceId2Ref = useRef(deviceId2);
+  deviceId2Ref.current = deviceId2;
+  const deviceId2InitRef = useRef(false);
 
   const onRecordingStartRef = useRef(onRecordingStart);
   onRecordingStartRef.current = onRecordingStart;
@@ -60,18 +81,33 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
       const all = await navigator.mediaDevices.enumerateDevices();
       const inputs = all.filter(d => d.kind === 'audioinput');
       setDevices(inputs);
-      setDeviceId(prev => {
-        if (prev && inputs.some(d => d.deviceId === prev)) return prev;
-        const score = (label = '') => {
-          const l = label.toLowerCase();
-          if (/line\s*-?\s*in/.test(l)) return 3;
-          if (/usb audio|usb codec|interface|aux/.test(l)) return 2;
-          if (/\bline\b/.test(l)) return 1;
-          return 0;
-        };
-        const best = [...inputs].sort((a, b) => score(b.label) - score(a.label))[0];
-        return (best ?? inputs[0])?.deviceId ?? '';
-      });
+
+      const score1 = (label = '') => {
+        const l = label.toLowerCase();
+        if (/line\s*-?\s*in/.test(l)) return 3;
+        if (/usb audio|usb codec|interface|aux/.test(l)) return 2;
+        if (/\bline\b/.test(l)) return 1;
+        return 0;
+      };
+      let nextDeviceId = deviceIdRef.current;
+      if (!nextDeviceId || !inputs.some(d => d.deviceId === nextDeviceId)) {
+        const best = [...inputs].sort((a, b) => score1(b.label) - score1(a.label))[0];
+        nextDeviceId = (best ?? inputs[0])?.deviceId ?? '';
+      }
+      setDeviceId(nextDeviceId);
+
+      let nextDeviceId2 = deviceId2Ref.current;
+      if (nextDeviceId2 && !inputs.some(d => d.deviceId === nextDeviceId2)) {
+        nextDeviceId2 = ''; // previously selected device disappeared
+      }
+      if (!deviceId2InitRef.current) {
+        deviceId2InitRef.current = true;
+        if (!nextDeviceId2) {
+          const micMatch = inputs.find(d => /microphone|\bmic\b/i.test(d.label) && d.deviceId !== nextDeviceId);
+          nextDeviceId2 = micMatch?.deviceId ?? '';
+        }
+      }
+      setDeviceId2(nextDeviceId2);
     } catch (e) {
       setError(`Could not list audio devices: ${(e as Error).message}`);
     }
@@ -93,12 +129,22 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     };
   }, [listDevices]);
 
+  const stopPreview = useCallback(() => {
+    previewSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* already stopped */ } s.disconnect(); });
+    previewGainsRef.current.forEach(g => g.disconnect());
+    previewSourcesRef.current = [];
+    previewGainsRef.current = [];
+    previewCtxRef.current?.close().catch(() => {});
+    previewCtxRef.current = null;
+    setPreviewPlaying(false);
+  }, []);
+
   const stopCapture = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    workletRef.current?.disconnect();
-    sourceRef.current?.disconnect();
-    sinkRef.current?.disconnect();
-    streamRef.current?.getTracks().forEach(t => t.stop());
+    workletsRef.current.forEach(w => w.disconnect());
+    sourcesRef.current.forEach(s => s.disconnect());
+    sinksRef.current.forEach(s => s.disconnect());
+    streamsRef.current.forEach(s => s.getTracks().forEach(t => t.stop()));
 
     frozenChunksRef.current = buffersRef.current;
     buffersRef.current = [];
@@ -106,19 +152,15 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
 
     ctxRef.current?.close().catch(() => {});
     ctxRef.current = null;
-    workletRef.current = null;
-    sourceRef.current = null;
-    sinkRef.current = null;
-    streamRef.current = null;
+    workletsRef.current = [];
+    sourcesRef.current = [];
+    sinksRef.current = [];
+    streamsRef.current = [];
     setRecording(false);
   }, []);
 
-  const save = useCallback(async () => {
-    const chunks = frozenChunksRef.current;
-    const midiEvents = frozenMidiRef.current;
-    const sr = sampleRateRef.current;
-
-    if (!chunks.length || !chunks[0]?.length) {
+  const finalizeAndSave = useCallback(async (flat: Float32Array[], sr: number, midiEvents: MidiEvent[]) => {
+    if (!flat.length || !flat[0]?.length) {
       setPhase({ kind: 'idle' });
       return;
     }
@@ -132,7 +174,6 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     if (!paths) {
       // Canceled — offer an in-app blob for listening
       try {
-        const flat = chunks.map(flatten);
         const { polished, metrics } = processAudio(flat, sr, DEFAULT_CONFIG);
         const buf = encodeWavFlat(polished, sr);
         const audioUrl = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
@@ -144,11 +185,8 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     }
 
     try {
-      setPhase({ kind: 'saving', label: 'Encoding...' });
-      const flat = chunks.map(flatten);
-      const totalMs = (flat[0].length / sr) * 1000;
-
       setPhase({ kind: 'saving', label: 'Processing audio...' });
+      const totalMs = (flat[0].length / sr) * 1000;
       const { polished, metrics } = processAudio(flat, sr, DEFAULT_CONFIG);
       const polishedBuffer = encodeWavFlat(polished, sr);
       const audioUrl = URL.createObjectURL(new Blob([polishedBuffer], { type: 'audio/wav' }));
@@ -172,40 +210,70 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     }
   }, []);
 
+  const save = useCallback(async () => {
+    const chunks = frozenChunksRef.current[0] ?? [];
+    const flat = chunks.map(flatten);
+    await finalizeAndSave(flat, sampleRateRef.current, frozenMidiRef.current);
+  }, [finalizeAndSave]);
+
   const handleStop = useCallback(async () => {
     stopCapture();
-    await save();
+    const tracks = frozenChunksRef.current;
+    if (tracks.length >= 2 && tracks[0]?.length && tracks[1]?.length) {
+      const mixTracks: MixTrack[] = tracks.map((trackChunks, i) => ({
+        label: trackLabelsRef.current[i] || `Track ${i + 1}`,
+        channels: trackChunks.map(flatten),
+        gainDb: 0,
+        muted: false,
+      }));
+      setPhase({ kind: 'mixing', tracks: mixTracks });
+    } else {
+      await save();
+    }
   }, [stopCapture, save]);
 
-  useEffect(() => () => { stopCapture(); }, []);
+  useEffect(() => () => { stopCapture(); stopPreview(); }, []);
 
   const start = useCallback(async () => {
     setError(null);
     setPhase({ kind: 'idle' });
+
+    const selectedIds = [deviceId, deviceId2].filter(Boolean);
+    if (selectedIds.length === 0) {
+      setError('No audio input selected');
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          deviceId: deviceId ? { exact: deviceId } : undefined,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          channelCount: 2,
-        },
-      });
-      streamRef.current = stream;
+      const results = await Promise.allSettled(selectedIds.map(id =>
+        navigator.mediaDevices.getUserMedia({
+          audio: {
+            deviceId: { exact: id },
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 2,
+          },
+        }),
+      ));
+
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed) {
+        // Stop any stream that DID open — otherwise a partial failure leaks an
+        // OS mic-in-use lock on the device that succeeded, with no reference
+        // left to close it.
+        results.forEach(r => { if (r.status === 'fulfilled') r.value.getTracks().forEach(t => t.stop()); });
+        throw failed.reason;
+      }
+
+      const streams = (results as PromiseFulfilledResult<MediaStream>[]).map(r => r.value);
+      streamsRef.current = streams;
+      trackLabelsRef.current = streams.map(s => s.getAudioTracks()[0]?.label || 'Audio input');
       listDevices();
 
       const ctx = new AudioContext();
       ctxRef.current = ctx;
       sampleRateRef.current = ctx.sampleRate;
-
-      const source = ctx.createMediaStreamSource(stream);
-      sourceRef.current = source;
-      const chCount = Math.min(2, Math.max(1, source.channelCount || 2));
-      channelsRef.current = chCount;
-      buffersRef.current = Array.from({ length: chCount }, () => [] as Float32Array[]);
-      frozenChunksRef.current = [];
-      frozenMidiRef.current = [];
 
       const workletBlob = new Blob([`
         class RecorderProcessor extends AudioWorkletProcessor {
@@ -223,28 +291,45 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
       await ctx.audioWorklet.addModule(workletUrl);
       URL.revokeObjectURL(workletUrl);
 
-      const worklet = new AudioWorkletNode(ctx, 'recorder-processor', {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        outputChannelCount: [chCount],
-        channelCount: chCount,
-        channelCountMode: 'explicit',
-      });
-      workletRef.current = worklet;
-      worklet.port.onmessage = (e: MessageEvent<Float32Array[]>) => {
-        const buf = buffersRef.current;
-        if (!buf.length) return;
-        for (let c = 0; c < chCount; c++) {
-          if (e.data[c] && buf[c]) buf[c].push(e.data[c]);
-        }
-      };
+      buffersRef.current = [];
+      channelsRef.current = [];
+      sourcesRef.current = [];
+      workletsRef.current = [];
+      sinksRef.current = [];
+      frozenChunksRef.current = [];
+      frozenMidiRef.current = [];
 
-      const sink = ctx.createGain();
-      sink.gain.value = 0;
-      sinkRef.current = sink;
-      source.connect(worklet);
-      worklet.connect(sink);
-      sink.connect(ctx.destination);
+      streams.forEach((stream, trackIndex) => {
+        const source = ctx.createMediaStreamSource(stream);
+        const chCount = Math.min(2, Math.max(1, source.channelCount || 2));
+        channelsRef.current[trackIndex] = chCount;
+        buffersRef.current[trackIndex] = Array.from({ length: chCount }, () => [] as Float32Array[]);
+
+        const worklet = new AudioWorkletNode(ctx, 'recorder-processor', {
+          numberOfInputs: 1,
+          numberOfOutputs: 1,
+          outputChannelCount: [chCount],
+          channelCount: chCount,
+          channelCountMode: 'explicit',
+        });
+        worklet.port.onmessage = (e: MessageEvent<Float32Array[]>) => {
+          const buf = buffersRef.current[trackIndex];
+          if (!buf) return;
+          for (let c = 0; c < chCount; c++) {
+            if (e.data[c] && buf[c]) buf[c].push(e.data[c]);
+          }
+        };
+
+        const sink = ctx.createGain();
+        sink.gain.value = 0;
+        source.connect(worklet);
+        worklet.connect(sink);
+        sink.connect(ctx.destination);
+
+        sourcesRef.current[trackIndex] = source;
+        workletsRef.current[trackIndex] = worklet;
+        sinksRef.current[trackIndex] = sink;
+      });
 
       const startMs = performance.now();
       onRecordingStartRef.current?.(startMs);
@@ -256,12 +341,85 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
     } catch (e) {
       setError(`Couldn't start recording: ${(e as Error).message}`);
     }
-  }, [deviceId, listDevices]);
+  }, [deviceId, deviceId2, listDevices]);
 
   const resetToIdle = useCallback(() => {
     setPhase({ kind: 'idle' });
     setElapsed(0);
   }, []);
+
+  const cancelMixing = useCallback(() => {
+    stopPreview();
+    frozenChunksRef.current = [];
+    frozenMidiRef.current = [];
+    setPhase({ kind: 'idle' });
+    setElapsed(0);
+  }, [stopPreview]);
+
+  const updateTrackGain = useCallback((index: number, gainDb: number) => {
+    setPhase(prev => {
+      if (prev.kind !== 'mixing') return prev;
+      const tracks = prev.tracks.map((t, i) => (i === index ? { ...t, gainDb } : t));
+      const gainNode = previewGainsRef.current[index];
+      if (gainNode && !tracks[index].muted) gainNode.gain.value = Math.pow(10, gainDb / 20);
+      return { ...prev, tracks };
+    });
+  }, []);
+
+  const toggleTrackMute = useCallback((index: number) => {
+    setPhase(prev => {
+      if (prev.kind !== 'mixing') return prev;
+      const tracks = prev.tracks.map((t, i) => (i === index ? { ...t, muted: !t.muted } : t));
+      const gainNode = previewGainsRef.current[index];
+      if (gainNode) gainNode.gain.value = tracks[index].muted ? 0 : Math.pow(10, tracks[index].gainDb / 20);
+      return { ...prev, tracks };
+    });
+  }, []);
+
+  const startPreview = useCallback(() => {
+    if (phase.kind !== 'mixing') return;
+    stopPreview();
+
+    const ctx = new AudioContext();
+    previewCtxRef.current = ctx;
+    const sr = sampleRateRef.current;
+    const sources: AudioBufferSourceNode[] = [];
+    const gains: GainNode[] = [];
+
+    phase.tracks.forEach(t => {
+      const numCh = t.channels.length;
+      const numFrames = t.channels[0]?.length ?? 0;
+      if (numFrames === 0) { sources.push(undefined as unknown as AudioBufferSourceNode); gains.push(ctx.createGain()); return; }
+      const buffer = ctx.createBuffer(numCh, numFrames, sr);
+      for (let c = 0; c < numCh; c++) buffer.copyToChannel(t.channels[c] as Float32Array<ArrayBuffer>, c);
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = t.muted ? 0 : Math.pow(10, t.gainDb / 20);
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      source.onended = () => setPreviewPlaying(false);
+
+      sources.push(source);
+      gains.push(gainNode);
+    });
+
+    previewSourcesRef.current = sources;
+    previewGainsRef.current = gains;
+
+    const startAt = ctx.currentTime + 0.05;
+    sources.forEach(s => s?.start(startAt));
+    setPreviewPlaying(true);
+  }, [phase, stopPreview]);
+
+  const generateCombined = useCallback(async () => {
+    if (phase.kind !== 'mixing') return;
+    const tracks = phase.tracks;
+    stopPreview();
+    const combined = mixTracksToStereo(tracks);
+    await finalizeAndSave(combined, sampleRateRef.current, frozenMidiRef.current);
+  }, [phase, stopPreview, finalizeAndSave]);
 
   const playInReplay = useCallback(async () => {
     if (phase.kind !== 'saved') return;
@@ -301,19 +459,34 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
       </div>
 
       {(phase.kind === 'idle' || phase.kind === 'recording') && (
-        <select
-          className="walk-select"
-          value={deviceId}
-          onChange={(e) => setDeviceId(e.target.value)}
-          disabled={recording}
-        >
-          {devices.length === 0 && <option value="">No audio inputs found</option>}
-          {devices.map((d, i) => (
-            <option key={d.deviceId || i} value={d.deviceId}>
-              {d.label || `Audio input ${i + 1}`}
-            </option>
-          ))}
-        </select>
+        <div className="recorder-inputs-row">
+          <select
+            className="walk-select"
+            value={deviceId}
+            onChange={(e) => setDeviceId(e.target.value)}
+            disabled={recording}
+          >
+            {devices.length === 0 && <option value="">No audio inputs found</option>}
+            {devices.map((d, i) => (
+              <option key={d.deviceId || i} value={d.deviceId}>
+                {d.label || `Audio input ${i + 1}`}
+              </option>
+            ))}
+          </select>
+          <select
+            className="walk-select"
+            value={deviceId2}
+            onChange={(e) => setDeviceId2(e.target.value)}
+            disabled={recording}
+          >
+            <option value="">+ Second input: None</option>
+            {devices.filter(d => d.deviceId !== deviceId).map((d, i) => (
+              <option key={d.deviceId || i} value={d.deviceId}>
+                {d.label || `Audio input ${i + 1}`}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
 
       {phase.kind === 'idle' && (
@@ -324,6 +497,43 @@ export default function AudioRecorder({ onRecordingStart, onRecordingStop, getSa
       )}
       {phase.kind === 'saving' && (
         <div className="recorder-status">{phase.label}</div>
+      )}
+
+      {phase.kind === 'mixing' && (
+        <div className="recorder-mixer">
+          {phase.tracks.map((t, i) => (
+            <div className="recorder-mix-track" key={i}>
+              <div className="recorder-mix-track-label">{t.label}</div>
+              <div className="recorder-mix-track-controls">
+                <input
+                  type="range"
+                  min={-24}
+                  max={12}
+                  step={0.5}
+                  value={t.gainDb}
+                  onChange={(e) => updateTrackGain(i, parseFloat(e.target.value))}
+                  className="recorder-mix-slider"
+                />
+                <span className="recorder-mix-gain-value">{fmtGain(t.gainDb)}</span>
+                <button
+                  className={`recorder-mix-mute-btn${t.muted ? ' recorder-mix-muted' : ''}`}
+                  onClick={() => toggleTrackMute(i)}
+                >
+                  {t.muted ? 'Muted' : 'Mute'}
+                </button>
+              </div>
+            </div>
+          ))}
+          <div className="recorder-mix-actions">
+            <button className="recorder-btn recorder-btn-start" onClick={previewPlaying ? stopPreview : startPreview}>
+              {previewPlaying ? '■ Stop preview' : '▶ Preview mix'}
+            </button>
+            <button className="recorder-btn recorder-btn-start" onClick={generateCombined}>
+              Generate Combined Output
+            </button>
+            <button className="recorder-new-btn" onClick={cancelMixing}>Re-record</button>
+          </div>
+        </div>
       )}
 
       {phase.kind === 'saved' && (
@@ -408,6 +618,26 @@ function flatten(chunks: Float32Array[]): Float32Array {
   let o = 0;
   for (const c of chunks) { out.set(c, o); o += c.length; }
   return out;
+}
+
+// Sums 1–2 tracks down to a stereo pair, applying each track's gain/mute.
+// Mono tracks are duplicated to L/R; extra channels beyond stereo are ignored.
+function mixTracksToStereo(tracks: MixTrack[]): Float32Array[] {
+  const stereoTracks = tracks.map(t => {
+    const gain = t.muted ? 0 : Math.pow(10, t.gainDb / 20);
+    const l = t.channels[0] ?? new Float32Array(0);
+    const r = t.channels[1] ?? l;
+    return { l, r, gain };
+  });
+
+  const numFrames = stereoTracks.reduce((max, t) => Math.max(max, t.l.length, t.r.length), 0);
+  const outL = new Float32Array(numFrames);
+  const outR = new Float32Array(numFrames);
+  for (const t of stereoTracks) {
+    for (let i = 0; i < t.l.length; i++) outL[i] += t.l[i] * t.gain;
+    for (let i = 0; i < t.r.length; i++) outR[i] += t.r[i] * t.gain;
+  }
+  return [outL, outR];
 }
 
 function encodeWavFlat(channels: Float32Array[], sampleRate: number): ArrayBuffer {
