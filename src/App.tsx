@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { GraphState, SaveData, AppMode, WalkState, MidiEvent } from './types/index';
-import { detectExtendedChords } from 'theory-core';
+import { detectExtendedChords, describeChordMatch } from 'theory-core';
 import type { ExtendedMatch } from 'theory-core';
 import { parseChordInput } from 'theory-core';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from 'theory-core';
@@ -66,6 +66,7 @@ export default function App() {
   const [heldNotes, setHeldNotes] = useState<Set<number>>(new Set());
   const [matchedChords, setMatchedChords] = useState<string[]>([]);
   const [extendedMatches, setExtendedMatches] = useState<ExtendedMatch[]>([]);
+  const [matchedBassPc, setMatchedBassPc] = useState<number | undefined>(undefined);
   const [mode, setMode] = useState<AppMode>('jam');
   const [walkState, setWalkState] = useState<WalkState>(defaultWalkState);
   const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
@@ -109,22 +110,47 @@ export default function App() {
   const noteSpellingRef = useRef(noteSpelling);
   noteSpellingRef.current = noteSpelling;
 
-  // Flatten all hint edges from extended matches for the circle
-  const hintEdges = useMemo(() => extendedMatches.flatMap(m => m.hintEdges), [extendedMatches]);
-
   // Last chord that was *confidently* recognized (a full triad match, not a
   // partial/in-progress one). Sticky by design: it only ever advances when a
   // new full match lands, and is otherwise left alone. Mid-arpeggio or during
   // a note-by-note chord change, held notes routinely fail the "all pitch
   // classes present at once" test for any chord — that's a transient gap in
   // recognition, not a signal that the player has left the chord. Keying
-  // suggestion edges off this instead of the raw match means they hold
-  // steady through that gap and swap the instant the next chord resolves,
-  // with no timeout to tune (and no window where they'd show something stale).
+  // suggestion edges (and the chord-name banner + extended-chord hint edges
+  // below) off this instead of the raw match means they hold steady through
+  // that gap and swap the instant the next chord resolves, with no timeout
+  // to tune (and no window where they'd show something stale, or nothing).
   const [lastRecognizedChord, setLastRecognizedChord] = useState<string | null>(null);
+  const [lastRecognizedMatchedChords, setLastRecognizedMatchedChords] = useState<string[]>([]);
+  const [lastRecognizedExtendedMatches, setLastRecognizedExtendedMatches] = useState<ExtendedMatch[]>([]);
+  const [lastRecognizedBassPc, setLastRecognizedBassPc] = useState<number | undefined>(undefined);
+  // Keyed on matchedBassPc (captured in the same debounced detection pass
+  // that produced matchedChords/extendedMatches above), NOT the raw heldNotes
+  // set: heldNotes changes on every single note-on/off, well before the
+  // 50ms-debounced detection catches up, so reacting to it directly would
+  // grab a bass note off a half-released chord and pair it with the
+  // still-stale matchedChords from before the release — flipping the
+  // inversion label a beat before the chord name itself updates (or during a
+  // release gap, when it shouldn't move at all).
   useEffect(() => {
     if (matchedChords[0]) setLastRecognizedChord(matchedChords[0]);
-  }, [matchedChords]);
+    if (matchedChords.length > 0) {
+      setLastRecognizedMatchedChords(matchedChords);
+      setLastRecognizedExtendedMatches(extendedMatches);
+      setLastRecognizedBassPc(matchedBassPc);
+    }
+  }, [matchedChords, extendedMatches, matchedBassPc]);
+
+  // Flatten all hint edges from the sticky extended match, so they persist
+  // on the circle the same way the jam suggestion edges do.
+  const hintEdges = useMemo(() => lastRecognizedExtendedMatches.flatMap(m => m.hintEdges), [lastRecognizedExtendedMatches]);
+
+  // On-circle chord-name banner, built from the same sticky state. bassPc
+  // drives the inversion superscript (e.g. "C'" for 1st inversion).
+  const heldChordLabel = useMemo(
+    () => describeChordMatch(lastRecognizedMatchedChords, lastRecognizedExtendedMatches, noteSpelling, lastRecognizedBassPc),
+    [lastRecognizedMatchedChords, lastRecognizedExtendedMatches, noteSpelling, lastRecognizedBassPc],
+  );
 
   // Jam mode: live "where next" edges from the last confidently-recognized chord.
   const jamSuggestionEdges = useMemo(() => {
@@ -421,6 +447,9 @@ export default function App() {
       const matches = detectChords(heldNotes, detectionNodes);
       setMatchedChords(matches);
       setExtendedMatches(detectExtendedChords(heldNotes, noteSpellingRef.current));
+      // Captured from this exact same heldNotes snapshot so it can never
+      // pair a bass note from a half-released chord with a stale match.
+      setMatchedBassPc(heldNotes.size > 0 ? ((Math.min(...heldNotes) % 12) + 12) % 12 : undefined);
     }, 50);
 
     return () => {
@@ -660,7 +689,7 @@ export default function App() {
             />
           )}
           <EdgeTypeLegend />
-          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} extendedMatches={extendedMatches} />
+          <HeldNotes heldNotes={heldNotes} matchedChords={matchedChords} extendedMatches={extendedMatches} noteSpelling={noteSpelling} />
           <SoundLibrary sampler={samplerRef.current} />
           {mode !== 'replay' && (
             <AudioRecorder
@@ -708,6 +737,7 @@ export default function App() {
                 dynamicView={dynamicCircle}
                 matchedChords={matchedChords}
                 hintEdges={hintEdges}
+                heldChordLabel={heldChordLabel}
                 noteSpelling={noteSpelling}
                 layout={circleLayout}
               />
@@ -717,6 +747,7 @@ export default function App() {
                 jamMatchedChords={replayGraphState ? matchedChords : undefined}
                 matchedChords={matchedChords}
                 hintEdges={hintEdges}
+                heldChordLabel={heldChordLabel}
                 noteSpelling={noteSpelling}
                 layout={circleLayout}
               />
@@ -727,6 +758,7 @@ export default function App() {
               dynamicView={dynamicCircle}
               matchedChords={matchedChords}
               hintEdges={hintEdges}
+              heldChordLabel={heldChordLabel}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
@@ -736,6 +768,7 @@ export default function App() {
               dynamicView={dynamicCircle}
               matchedChords={matchedChords}
               hintEdges={hintEdges}
+              heldChordLabel={heldChordLabel}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
@@ -746,6 +779,7 @@ export default function App() {
               matchedChords={matchedChords}
               hintEdges={hintEdges}
               suggestionEdges={jamSuggestionEdges}
+              heldChordLabel={heldChordLabel}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />

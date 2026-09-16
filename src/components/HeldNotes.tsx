@@ -1,33 +1,20 @@
 import React from 'react';
-import { midiNoteToName } from 'theory-core';
-import type { ExtendedMatch } from 'theory-core';
+import { midiNoteToName, describeChordMatch } from 'theory-core';
+import type { ExtendedMatch, NoteSpelling } from 'theory-core';
 
 interface Props {
   heldNotes: Set<number>;
   matchedChords: string[];
   extendedMatches?: ExtendedMatch[];
+  noteSpelling?: NoteSpelling;
 }
 
-export default function HeldNotes({ heldNotes, matchedChords, extendedMatches }: Props) {
-  const noteNames = Array.from(heldNotes).sort((a, b) => a - b).map(midiNoteToName);
+export default function HeldNotes({ heldNotes, matchedChords, extendedMatches, noteSpelling = 'sharps' }: Props) {
+  const sortedNotes = Array.from(heldNotes).sort((a, b) => a - b);
+  const noteNames = sortedNotes.map(n => midiNoteToName(n, noteSpelling));
+  const bassPc = sortedNotes.length > 0 ? ((sortedNotes[0] % 12) + 12) % 12 : undefined;
 
-  // When extended chords are detected, show those names instead of basic triad names.
-  const displayChords: string[] = [];
-  const qualityLabels: string[] = [];
-
-  if (extendedMatches && extendedMatches.length > 0) {
-    const extendedBases = new Set(extendedMatches.map(m => m.baseChordName));
-    for (const m of extendedMatches) {
-      displayChords.push(m.displayName);
-      qualityLabels.push(m.qualityLabel);
-    }
-    // Include any matched chords not covered by an extended match
-    for (const c of matchedChords) {
-      if (!extendedBases.has(c)) displayChords.push(c);
-    }
-  } else {
-    displayChords.push(...matchedChords);
-  }
+  const { chords, qualityLabels } = describeChordMatch(matchedChords, extendedMatches ?? [], noteSpelling, bassPc);
 
   return (
     <div className="held-notes">
@@ -40,7 +27,13 @@ export default function HeldNotes({ heldNotes, matchedChords, extendedMatches }:
       <div className="held-notes-section">
         <span className="held-label">Matched:</span>
         <span className="held-value matched">
-          {displayChords.length > 0 ? displayChords.join(', ') : '—'}
+          {chords.length > 0 ? chords.map((c, i) => (
+            <React.Fragment key={i}>
+              {i > 0 && ', '}
+              {c.name}
+              {c.inversion > 0 && <sup>{"'".repeat(c.inversion)}</sup>}
+            </React.Fragment>
+          )) : '—'}
         </span>
       </div>
       {qualityLabels.length > 0 && (

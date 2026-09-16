@@ -1,4 +1,6 @@
 import type { GraphNode } from './types';
+import type { NoteSpelling } from './chordDefinitions';
+import { pitchClassName } from './chordDefinitions';
 
 /**
  * Detect which graph chords are being played based on held MIDI notes.
@@ -48,9 +50,8 @@ export function detectChords(
 /**
  * Convert a MIDI note number to a note name (e.g. 60 → "C4").
  */
-export function midiNoteToName(note: number): string {
-  const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export function midiNoteToName(note: number, spelling: NoteSpelling = 'sharps'): string {
   const octave = Math.floor(note / 12) - 1;
-  const name = NOTE_NAMES[note % 12];
+  const name = pitchClassName(note % 12, spelling);
   return `${name}${octave}`;
 }

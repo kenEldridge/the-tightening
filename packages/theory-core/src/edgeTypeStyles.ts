@@ -1,4 +1,5 @@
 import type { EdgeType } from './chordPathfinder';
+import type { ChordQuality } from './types';
 
 export const EDGE_TYPE_ORDER: EdgeType[] = [
   'fifth',
@@ -95,6 +96,32 @@ export function edgeTypeShortLabel(edgeType: EdgeType): string {
 export function edgeTypeTitle(edgeType: EdgeType): string {
   const info = EDGE_TYPE_INFO[edgeType];
   return `${info.label}: ${info.description}`;
+}
+
+/**
+ * Visual badge for a chord quality that "hides" inside a base triad's node
+ * on the Circle of Fifths (dom7/maj7/min7/sus2/sus4 all collapse onto a
+ * major/minor node for pathfinding — see chordNameToNodeId). The badge is
+ * how the graph tells the user a 7th (or sus) is actually being voiced,
+ * and which one, since the fixed 3-note triad text alone can't.
+ */
+export interface QualityBadge {
+  label: string;   // short glyph drawn on the node, e.g. "7", "Δ7", "m7"
+  color: string;
+  title: string;   // hover text, e.g. "dominant 7th (adds ♭7)"
+}
+
+export const QUALITY_BADGES: Partial<Record<ChordQuality, QualityBadge>> = {
+  dom7: { label: '7', color: '#f97316', title: 'Dominant 7th — major triad + ♭7' },
+  maj7: { label: 'Δ7', color: '#a78bfa', title: 'Major 7th — major triad + natural 7' },
+  min7: { label: 'm7', color: '#2dd4bf', title: 'Minor 7th — minor triad + ♭7' },
+  sus2: { label: 's2', color: '#94a3b8', title: 'Suspended 2nd — 3rd replaced by the 2nd' },
+  sus4: { label: 's4', color: '#94a3b8', title: 'Suspended 4th — 3rd replaced by the 4th' },
+};
+
+export function qualityBadge(quality: ChordQuality | undefined): QualityBadge | null {
+  if (!quality) return null;
+  return QUALITY_BADGES[quality] ?? null;
 }
 
 export function mostDissonantEdgeType(edgeTypes: EdgeType[]): EdgeType | null {

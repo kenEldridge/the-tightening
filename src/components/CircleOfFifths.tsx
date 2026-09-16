@@ -19,11 +19,11 @@ import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } f
 import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from 'theory-core';
 import type { NoteSpelling } from 'theory-core';
 import type { GraphState, GraphEdge } from '../types/index';
-import { qualityToRing, getReciprocalSet } from 'theory-core';
-import type { HintEdge } from 'theory-core';
+import { qualityToRing, getReciprocalSet, qualityBadge, edgeTypeShortLabel } from 'theory-core';
+import type { HintEdge, QualityBadge, ChordMatchDisplay } from 'theory-core';
 
-/** Get the individual note names of a chord's triad, e.g. "C" → "C E G" */
-function triadNotes(chordName: string, spelling: NoteSpelling): string {
+/** Get the individual note names of a chord, e.g. "C" → "C E G", "C7" → "C E G A#" */
+function chordToneNames(chordName: string, spelling: NoteSpelling): string {
   const def = getChordDefinition(chordName);
   const rootPc = noteToPitchClass(def.root);
   // Sort by interval from root so notes appear in root position order
@@ -47,6 +47,7 @@ interface Props {
   replayMatchedChords?: string[];  // replay: draw live edges between detected chords
   hintEdges?: HintEdge[];          // extended chord hints: dashed amber edges
   suggestionEdges?: { from: string; to: string; type: EdgeType }[]; // jam: live "where next" theory-graph edges from the played chord
+  heldChordLabel?: ChordMatchDisplay; // sticky chord-name banner text, computed by the caller from the last confidently-recognized match
   noteSpelling?: NoteSpelling;
   layout?: 'fifths' | 'chromatic';
   /** Dynamic camera (issue #18): zoom the view to the walk path's nodes. */
@@ -109,8 +110,15 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, suggestionEdges, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, suggestionEdges, heldChordLabel, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
   const isJamMode = !!graphState;
+
+  // Promoted chord-name readout: lives on the circle itself so players don't
+  // need the sidebar's Held Notes panel open to see what they're playing.
+  // The caller feeds this from the last confidently-recognized match, so it
+  // persists through note-release gaps the same way the suggestion/hint
+  // arrows do, instead of blanking the instant keys come up.
+  const heldChordDisplay = heldChordLabel ?? { chords: [], qualityLabels: [] };
 
   // Layout-aware ring nodes — rebuilds when layout prop changes.
   const ringNodes = useMemo(() => ringNodePositions(layout), [layout]);
@@ -309,7 +317,38 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
   }, [replayMatchedChords, chordToRingNode]);
 
   return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      {heldChordDisplay.chords.length > 0 && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: 2,
+            pointerEvents: 'none',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#58a6ff', textShadow: '0 1px 4px #0d1117' }}>
+            {heldChordDisplay.chords.map((c, i) => (
+              <React.Fragment key={i}>
+                {i > 0 && '  /  '}
+                {c.name}
+                {c.inversion > 0 && <sup>{"'".repeat(c.inversion)}</sup>}
+              </React.Fragment>
+            ))}
+          </div>
+          {heldChordDisplay.qualityLabels.length > 0 && (
+            <div style={{ fontSize: 12, fontStyle: 'italic', color: '#f0a020', textShadow: '0 1px 4px #0d1117' }}>
+              {heldChordDisplay.qualityLabels.join(', ')}
+            </div>
+          )}
+        </div>
+      )}
       <svg viewBox={viewBoxToString(viewBox)} style={{ width: '100%', height: '100%' }}>
         <defs>
           <marker
@@ -346,19 +385,26 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           const x2 = toNode.x   - ux * (toNode.r + pad + 8);
           const y2 = toNode.y   - uy * (toNode.r + pad + 8);
           if (fromNode.r + toNode.r + pad * 2 >= len) return null;
+          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          const shortLabel = edgeTypeShortLabel(edge.edgeType);
           return (
-            <line
-              key={`hint-${idx}`}
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke="#f0a020"
-              strokeWidth={2.5}
-              strokeDasharray="8 5"
-              strokeLinecap="round"
-              opacity={0.8}
-              markerEnd="url(#cof-arrow)"
-            >
-              <title>{edge.label}</title>
-            </line>
+            <g key={`hint-${idx}`}>
+              <line
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke="#f0a020"
+                strokeWidth={2.5}
+                strokeDasharray="8 5"
+                strokeLinecap="round"
+                opacity={0.8}
+                markerEnd="url(#cof-arrow)"
+              >
+                <title>{edge.label}</title>
+              </line>
+              <rect x={mx - (shortLabel.length * 3 + 4)} y={my - 8} width={shortLabel.length * 6 + 8} height={16} rx={4} fill="#0d1117" stroke="#f0a020" strokeWidth={1} opacity={0.9} style={{ pointerEvents: 'none' }} />
+              <text x={mx} y={my + 1} textAnchor="middle" dominantBaseline="middle" fontSize={8.5} fontWeight={700} fill="#f0a020" style={{ pointerEvents: 'none' }}>
+                {shortLabel}
+              </text>
+            </g>
           );
         })}
 
@@ -381,19 +427,26 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           const y2 = toNode.y   - uy * (toNode.r + pad);
           if (fromNode.r + toNode.r + pad * 2 >= len) return null;
           const color = edgeTypeColor(edge.type);
+          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          const shortLabel = edgeTypeShortLabel(edge.type);
           return (
-            <line
-              key={`suggest-${idx}`}
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke={color}
-              strokeWidth={2.5}
-              strokeDasharray="6 4"
-              strokeLinecap="round"
-              opacity={0.85}
-              markerEnd="url(#cof-arrow)"
-            >
-              <title>{`${edge.from} → ${edge.to}\n${edgeTypeTitle(edge.type)}`}</title>
-            </line>
+            <g key={`suggest-${idx}`}>
+              <line
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke={color}
+                strokeWidth={2.5}
+                strokeDasharray="6 4"
+                strokeLinecap="round"
+                opacity={0.85}
+                markerEnd="url(#cof-arrow)"
+              >
+                <title>{`${edge.from} → ${edge.to}\n${edgeTypeTitle(edge.type)}`}</title>
+              </line>
+              <rect x={mx - (shortLabel.length * 3 + 4)} y={my - 8} width={shortLabel.length * 6 + 8} height={16} rx={4} fill="#0d1117" stroke={color} strokeWidth={1} opacity={0.9} style={{ pointerEvents: 'none' }} />
+              <text x={mx} y={my + 1} textAnchor="middle" dominantBaseline="middle" fontSize={8.5} fontWeight={700} fill={color} style={{ pointerEvents: 'none' }}>
+                {shortLabel}
+              </text>
+            </g>
           );
         })}
 
@@ -687,16 +740,24 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             }
           }
 
-          // Determine display name: in Jam mode, show user's chord name if a progression chord occupies this slot
+          // Determine display name + the actual sounding chord: in Jam mode, a
+          // slot's occupant may be an extended chord (e.g. "G7", "Gmaj7") that
+          // collapses onto this same triad node for pathfinding purposes, but
+          // its notes and quality badge should still reflect the real chord.
           let displayName = respellChordName(node.name, noteSpelling);
+          let soundingChordName = node.name;
           if (isJamMode && jamSlot) {
             // Pick the most specific name (longest, e.g. "G7" over "G")
             const mostSpecific = jamSlot.chordNames.reduce((a, b) => a.length >= b.length ? a : b);
             displayName = respellChordName(mostSpecific, noteSpelling);
+            soundingChordName = mostSpecific;
           }
+          const badge: QualityBadge | null = isJamMode && jamSlot
+            ? qualityBadge(getChordDefinition(soundingChordName).quality)
+            : null;
 
           const fontSize = node.ring === 'major' ? 11 : node.ring === 'minor' ? 10 : 9;
-          const notes = triadNotes(node.name, noteSpelling);
+          const notes = chordToneNames(soundingChordName, noteSpelling);
 
           const isActive = isJamMode
             ? (isJamActive || isJamMatched || isJamNextCandidate)
@@ -780,6 +841,36 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
                 >
                   {notes}
                 </text>
+              )}
+              {/* Quality badge (Jam mode): flags a 7th/sus hiding inside this
+                  triad node, e.g. dominant 7th vs major 7th vs minor 7th —
+                  color distinguishes which, since they'd otherwise all just
+                  look like the plain triad. */}
+              {badge && (
+                <g>
+                  <circle
+                    cx={node.x + node.r * 0.72}
+                    cy={node.y - node.r * 0.72}
+                    r={8}
+                    fill={badge.color}
+                    stroke="#0d1117"
+                    strokeWidth={1.5}
+                  >
+                    <title>{`${displayName}: ${badge.title}`}</title>
+                  </circle>
+                  <text
+                    x={node.x + node.r * 0.72}
+                    y={node.y - node.r * 0.72 + 0.5}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={7.5}
+                    fontWeight={700}
+                    fill="#0d1117"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    {badge.label}
+                  </text>
+                </g>
               )}
             </g>
           );
