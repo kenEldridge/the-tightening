@@ -22,106 +22,106 @@ CHORD PROGRESSION ANALYSIS — THE TIGHTENING SONG LIBRARY
 
 ── TOP CHORD CYCLES (literal, 5+ songs) — loop closes back to start ──
 
-  [2-chord, 673 songs, 2199×]  G C → G
-    Air Supply - All Out of Love / Bette Midler - The Rose / Billie Eilish - Ocean Eyes
-  [2-chord, 651 songs, 1983×]  C G → C
-    Billie Eilish - Ocean Eyes / Cat Stevens - Wild World / Christmas - O Holy Night
-  [2-chord, 554 songs, 1674×]  C F → C
+  [2-chord, 496 songs, 2170×]  C G → C
+    Billie Eilish - Ocean Eyes / Billy Joel - Piano Man / Christmas - O Holy Night
+  [2-chord, 452 songs, 1800×]  C F → C
     Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [2-chord, 507 songs, 1614×]  G D → G
-    Alessia Cara - Out Of Love / Bob Dylan - Blowin' in the Wind / Bob Marley & The Wailers - Three Little Birds (D)
-  [2-chord, 465 songs, 1464×]  F C → F
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Barry Manilow - Mandy
-  [2-chord, 464 songs, 1612×]  D G → D
+  [2-chord, 363 songs, 1791×]  D G → D
     Barry Manilow - Mandy / Billy Joel - She's Got A Way / Bob Dylan - Blowin' in the Wind
-  [2-chord, 395 songs, 1236×]  D A → D
-    ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Bob Marley & The Wailers - Three Little Birds (D)
-  [2-chord, 395 songs, 1239×]  A D → A
+  [2-chord, 357 songs, 2012×]  G C → G
+    Air Supply - All Out of Love / Bette Midler - The Rose / Cat Stevens - Wild World
+  [2-chord, 308 songs, 1447×]  A D → A
     ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Crosby, Stills, Nash, & Young - Our House
-  [2-chord, 369 songs, 1275×]  E A → E
-    Bee Gees - To Love Somebody / Big Thief - Masterpiece / Blondie - Heart Of Glass
-  [2-chord, 363 songs, 1157×]  A E → A
-    Bee Gees - To Love Somebody / Big Thief - Masterpiece / Blondie - Heart Of Glass
-  [2-chord, 267 songs, 687×]  G Em → G
-    Chrstimas - Silent Night - key of G / Cyndi Lauper - Girls Just Want To Have Fun / Neil Young - Heart of Gold
-  [2-chord, 252 songs, 747×]  F A# → F
-    ABBA - i have a dream / ABBA - move on / Ace Of Base - lucky love
-  [2-chord, 226 songs, 670×]  G A → G
-    Otis Redding - (Sittin’ On) the Dock of the Bay / Psycho Killer - Talking Heads / Sam Cooke - Bring It On Home to Me
-  [2-chord, 223 songs, 422×]  C D → C
-    Barry Manilow - Mandy / Billy Joel - She's Got A Way / Billy Joel - Vienna
-  [2-chord, 223 songs, 642×]  A# F → A#
-    ABBA - i have a dream / ABBA - move on / Ace Of Base - lucky love
-  [4-chord, 216 songs, 699×]  G C G C → G
-    Creedence Clearwater Revival - Have You Ever Seen The Rain / Grateful Dead - Ripple / John Denver - Leaving on a Jet Plane
-  [2-chord, 216 songs, 450×]  C Am → C
-    Christmas - Silent Night - key of C / Elvis Presley - If I Can Dream / Leonard Cohen - Hallelujah
-  [2-chord, 214 songs, 500×]  G Am → G
-    Gerry Rafferty - Right Down The Line / Gillian Welch - Look At Miss Ohio / Jackson Browne - Late For The Sky
-  [2-chord, 210 songs, 634×]  G F → G
-    Air Supply - All Out of Love / Bette Midler - The Rose / Bob Dylan - Like a Rolling Stone
-  [4-chord, 205 songs, 664×]  C G C G → C
-    Creedence Clearwater Revival - Have You Ever Seen The Rain / Grateful Dead - Ripple / John Denver - Leaving on a Jet Plane
-  [2-chord, 205 songs, 589×]  A G → A
-    ABBA - Waterloo / Bee Gees - To Love Somebody / Neil Young - After The Gold Rush
-  [2-chord, 202 songs, 434×]  D C → D
-    Barry Manilow - Mandy / Billy Joel - She's Got A Way / Finneas - Break My Heart Again
-  [2-chord, 202 songs, 544×]  C Dm → C
-    Bill Withers - Lean on Me / Black Sabbath - Changes / Elton John - I Guess That's Why They Call It The Blues
-  [2-chord, 201 songs, 538×]  Em G → Em
-    Cyndi Lauper - Girls Just Want To Have Fun / John Lennon - Jealous Guy / Seals & Crofts - Summer Breeze
-  [2-chord, 200 songs, 606×]  F G → F
+  [2-chord, 276 songs, 1435×]  G D → G
+    Alessia Cara - Out Of Love / Cat Stevens - Father And Son / Elvis Presley - Always On My Mind
+  [2-chord, 266 songs, 1244×]  A E → A
+    Bee Gees - To Love Somebody / Bo Burnham - That Funny Feeling / Bob Marley & The Wailers - Three Little Birds (A)
+  [2-chord, 220 songs, 1338×]  F C → F
+    Barry Manilow - Mandy / David Bowie - The Man Who Sold The World / Elton John - Daniel
+  [2-chord, 212 songs, 547×]  C D → C
+    Barry Manilow - Mandy / Billy Joel - Vienna / David Bowie - Space Oddity
+  [2-chord, 206 songs, 634×]  C Dm → C
+    Elton John - I Guess That's Why They Call It The Blues / Joni Mitchell - River / Louis Armstrong - What A Wonderful World
+  [2-chord, 197 songs, 1028×]  D A → D
+    Bob Marley & The Wailers - Three Little Birds (D) / Elvis Presley - Can't Help Falling In Love / Pink - Just Give Me A Reason
+  [2-chord, 193 songs, 1188×]  E A → E
+    Big Thief - Masterpiece / Blondie - Heart Of Glass / Bonnie Raitt - John Prine - Angel from Montgomery
+  [2-chord, 188 songs, 773×]  F G → F
     Barry Manilow - Mandy / Billy Joel - Piano Man / Bob Dylan - Like a Rolling Stone
-  [2-chord, 185 songs, 473×]  D# A# → D#
-    ABBA - move on / Ace Of Base - Always Have Always Will / Air Supply - All Out Of Love
-  [2-chord, 183 songs, 420×]  C Em → C
+  [2-chord, 180 songs, 701×]  Em G → Em
+    Cyndi Lauper - Girls Just Want To Have Fun / Nick Cave & The Bad Seeds - Into My Arms / Procol Harum - A Whiter Shade of Pale
+  [2-chord, 174 songs, 563×]  A# F → A#
+    ABBA - i have a dream / ABBA - move on / Ace Of Base - lucky love
+  [2-chord, 164 songs, 578×]  A G → A
+    ABBA - Waterloo / Bee Gees - To Love Somebody / Sam Cooke - Bring It On Home to Me
+  [2-chord, 161 songs, 578×]  A# D# → A#
+    ABBA - move on / Barry Manilow - Mandy / Beach Boys - i m waiting for an answer
+  [2-chord, 158 songs, 471×]  C Em → C
     Bruno Mars - Count On Me / David Bowie - Space Oddity / Pink - Just Give Me A Reason
-  [2-chord, 180 songs, 577×]  E B → E
-    Céline Dion - My Heart Will Go On / Phoebe Bridgers - That Funny Feeling / Sasha Sloan - Dancing With Your Ghost
-  [2-chord, 178 songs, 479×]  A# D# → A#
-    ABBA - move on / Ace Of Base - Always Have Always Will / Air Supply - All Out Of Love
-  [2-chord, 167 songs, 362×]  Am C → Am
-    Elvis Presley - If I Can Dream / Led Zeppelin - D’yer Mak’er / Leonard Cohen - Hallelujah
-  [2-chord, 166 songs, 561×]  D Em → D
-    America - A Horse with No Name / Dua Lipa - Don't Start Now / Nirvana - Come As You Are
-  [4-chord, 162 songs, 499×]  C F C F → C
+  [2-chord, 150 songs, 416×]  Am C → Am
+    Led Zeppelin - D’yer Mak’er / Miley Cyrus - Midnight Sky / ABBA - eagle
+  [2-chord, 145 songs, 537×]  D Em → D
+    Dua Lipa - Don't Start Now / Pink - Just Give Me A Reason / Rod Stewart - Reason To Believe
+  [2-chord, 145 songs, 826×]  F A# → F
+    aerosmith - what it takes / BareNaked Ladies - The Old Apartment / Beatles - all together now
+  [2-chord, 142 songs, 502×]  Am G → Am
+    Gerry Rafferty - Right Down The Line / Jackson Browne - Late For The Sky / Led Zeppelin - D’yer Mak’er
+  [4-chord, 137 songs, 729×]  C G C G → C
+    Creedence Clearwater Revival - Have You Ever Seen The Rain / Leonard Cohen - Hallelujah / Queen - You're My Best Friend
+  [2-chord, 136 songs, 524×]  G Em → G
+    Chrstimas - Silent Night - key of G / John Lennon - Jealous Guy / Neil Young - Heart of Gold
+  [2-chord, 131 songs, 407×]  A# C → A#
+    ABBA - summer night city / aerosmith - walk this way / aerosmith - what it takes
+  [3-chord, 127 songs, 457×]  C F G → C
+    Creedence Clearwater Revival - Have You Ever Seen The Rain / Joni Mitchell - River / Leonard Cohen - Hallelujah
+  [2-chord, 127 songs, 396×]  C Am → C
+    Christmas - Silent Night - key of C / Elvis Presley - If I Can Dream / Leonard Cohen - Hallelujah
+  [2-chord, 127 songs, 383×]  D# G# → D#
+    alan_parsons_project - the raven / Barry Manilow - Mandy / Beach Boys - surfer girl
+  [2-chord, 125 songs, 341×]  G Am → G
+    Gillian Welch - Look At Miss Ohio / Jeremy Zucker - Comethru / Pink Floyd - Wish You Were Here
+  [2-chord, 125 songs, 681×]  G A → G
+    Neil Young - After The Gold Rush / Otis Redding - (Sittin’ On) the Dock of the Bay / Psycho Killer - Talking Heads
+  [2-chord, 121 songs, 399×]  A B → A
+    America - Sister Golden Hair / Carpenters - Yesterday Once More / The Beatles - Here Comes The Sun
+  [2-chord, 119 songs, 437×]  A Bm → A
+    Bob Dylan - Lay, Lady, Lay / Chris Stapleton - Tennessee Whiskey / Oh Wonder - Drive
+  [2-chord, 115 songs, 478×]  E B → E
+    Phoebe Bridgers - That Funny Feeling / Sasha Sloan - Dancing With Your Ghost / The Beatles - With A Little Help From My Friends
+  [2-chord, 113 songs, 596×]  B E → B
+    Céline Dion - My Heart Will Go On / Neil Diamond - Sweet Caroline / The Beatles - Hey Bulldog
+  [4-chord, 112 songs, 634×]  G C G C → G
+    Grateful Dead - Ripple / John Denver - Leaving on a Jet Plane / John Lennon - Jealous Guy
+  [2-chord, 111 songs, 356×]  D E → D
+    David Bowie - Moonage Daydream / Linda Ronstadt - Long Long Time / The Beatles - I Am The Walrus
+  [4-chord, 106 songs, 457×]  C F C F → C
     Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [2-chord, 162 songs, 394×]  C A# → C
-    ABBA - summer night city / Ace Of Base - lucky love / ace_of_base - lucky love
-  [2-chord, 157 songs, 497×]  B E → B
-    Céline Dion - My Heart Will Go On / Neil Diamond - Sweet Caroline / Phoebe Bridgers - That Funny Feeling
-  [4-chord, 153 songs, 464×]  F C F C → F
-    Air Supply - All Out of Love / Audrey Hepburn - Moon River / Billy Joel - Piano Man
-  [2-chord, 151 songs, 457×]  Dm C → Dm
-    Bill Withers - Lean on Me / Black Sabbath - Changes / Elton John - I Guess That's Why They Call It The Blues
-  [2-chord, 150 songs, 370×]  G# D# → G#
-    ABBA - tiger / alan_parsons_project - the raven / Beach Boys - surfer girl
-  [4-chord, 147 songs, 438×]  A E A E → A
-    Blondie - Heart Of Glass / Bo Burnham - That Funny Feeling / Bonnie Raitt - John Prine - Angel from Montgomery
-  [4-chord, 146 songs, 537×]  D G D G → D
-    Bob Marley & The Wailers - Three Little Birds (D) / Luke Hemmings - Starting Line / Neil Young - After The Gold Rush
-  [4-chord, 145 songs, 457×]  E A E A → E
-    Blondie - Heart Of Glass / Bo Burnham - That Funny Feeling / Bonnie Raitt - John Prine - Angel from Montgomery
-  [2-chord, 145 songs, 380×]  D# G# → D#
-    ABBA - tiger / Barry Manilow - Mandy / Beach Boys - surfer girl
-  [2-chord, 144 songs, 330×]  Em C → Em
-    Bruno Mars - Count On Me / Cyndi Lauper - Girls Just Want To Have Fun / David Bowie - Space Oddity
-  [2-chord, 143 songs, 343×]  Am G → Am
-    Led Zeppelin - D’yer Mak’er / Psycho Killer - Talking Heads / R.E.M. - Losing My Religion
-  [4-chord, 141 songs, 513×]  G D G D → G
-    Bob Marley & The Wailers - Three Little Birds (D) / Johnny Nash - I Can See Clearly Now / Neil Young - After The Gold Rush
-  [4-chord, 140 songs, 439×]  D A D A → D
+  [4-chord, 105 songs, 617×]  D G D G → D
+    Bob Marley & The Wailers - Three Little Birds (D) / Johnny Nash - I Can See Clearly Now / Radiohead - Karma Police
+  [2-chord, 104 songs, 479×]  F Gm → F
+    Lou Reed - Perfect Day / Louis Armstrong - What A Wonderful World / Lukas Graham - 7 Years
+  [2-chord, 103 songs, 334×]  A F#m → A
+    The Beatles - Free As A Bird / The Beatles - Hey Bulldog / ABBA - fernando
+  [4-chord, 98 songs, 561×]  A D A D → A
     ABBA - Waterloo / Bob Marley & The Wailers - Three Little Birds (A) / Crosby, Stills, Nash, & Young - Our House
-  [3-chord, 137 songs, 294×]  G A D → G
-    Bob Dylan - Blowin' in the Wind / Johnny Nash - I Can See Clearly Now / The Pogues - Fairytale of New York
-  [3-chord, 136 songs, 297×]  C F G → C
-    Bob Dylan - Like a Rolling Stone / Creedence Clearwater Revival - Have You Ever Seen The Rain / Elton John - Daniel
-  [2-chord, 135 songs, 332×]  A# C → A#
-    ABBA - summer night city / aerosmith - walk this way / BabyFace - babyface everytime
-  [3-chord, 133 songs, 269×]  C D G → C
+  [2-chord, 98 songs, 467×]  G F → G
+    Air Supply - All Out of Love / Bette Midler - The Rose / Bruno Mars - Count On Me
+  [4-chord, 95 songs, 454×]  A E A E → A
+    Bo Burnham - That Funny Feeling / Christmas - Winter Wonderland / John Denver - Take Me Home Country Roads
+  [3-chord, 95 songs, 383×]  G C D → G
     Elvis Presley - Always On My Mind / John Denver - Leaving on a Jet Plane / Mariah Carey - All I Want For Christmas
-  [2-chord, 133 songs, 493×]  Em D → Em
-    America - A Horse with No Name / Nirvana - Come As You Are / Simon & Garfunkel_Traditional - Scarborough Fair
+  [2-chord, 91 songs, 407×]  C# G# → C#
+    Radiohead - Let Down / Ace Of Base - all that she wants / ace_of_base - all that she wants
+  [2-chord, 90 songs, 320×]  E F#m → E
+    King Princess - 1950 / Linda Ronstadt - Long Long Time / a-ha - Take On Me
+  [3-chord, 89 songs, 400×]  C G F → C
+    Billy Joel - Piano Man / Carly Simon - You're So Vain / Elton John - I Guess That's Why They Call It The Blues
+  [4-chord, 87 songs, 324×]  G C G D → G
+    Van Morrison - Brown Eyed Girl / Beatles - i don't want to spoil the party / Bee Bees - massachusetts
+  [2-chord, 85 songs, 309×]  D C → D
+    Billy Joel - She's Got A Way / Finneas - Break My Heart Again / Pure Prairie League - Amie
+  [2-chord, 85 songs, 219×]  C Gm → C
+    Sonny & Cher - I Got You Babe / The Strokes - The Adults Are Talking / BabyFace - babyface everytime
 
 ── TOP EDGE-TYPE CYCLES (key-agnostic, 5+ songs) ────────────────────
 

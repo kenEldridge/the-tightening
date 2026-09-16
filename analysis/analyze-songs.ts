@@ -280,6 +280,27 @@ function canonicalEdgeCycle(edges: string[]): { canonical: string[]; offset: num
   return { canonical: best.split('\x00'), offset: bestOffset };
 }
 
+/**
+ * Fallback-only rotation for a chord loop, used in findCycles() when the
+ * song's own detected tonic isn't one of the loop's chords (a modulation or
+ * borrowed passage away from the main key) or no key was detected at all.
+ * The normal path anchors to the song's real tonic instead - see findCycles
+ * - because "G C" and "C G" are genuinely different harmonic motions
+ * (subdominant vs. dominant direction) and merging them into one
+ * lexicographic bucket would erase that distinction. This is purely a
+ * last-resort tie-break so the same raw loop content is at least
+ * *consistent* run to run, not an attempt to guess the real tonic.
+ */
+function canonicalChordCycle(chords: string[]): { canonical: string[]; offset: number } {
+  let best = chords.join('\x00');
+  let bestOffset = 0;
+  for (let r = 1; r < chords.length; r++) {
+    const rotated = [...chords.slice(r), ...chords.slice(0, r)].join('\x00');
+    if (rotated < best) { best = rotated; bestOffset = r; }
+  }
+  return { canonical: best.split('\x00'), offset: bestOffset };
+}
+
 function extractEdgeTypeCycles(
   chords: string[],
   edgeSeq: string[],
@@ -316,7 +337,12 @@ function extractEdgeTypeCycles(
 }
 
 function findCycles(
-  songs: Array<{ title: string; chords: string[]; edgeSeq: string[] }>,
+  songs: Array<{
+    title: string;
+    chords: string[];
+    edgeSeq: string[];
+    key?: { tonic: string; quality: 'major' | 'minor' } | null;
+  }>,
   minSongs: number,
   minLen: number,
   maxLen: number,
@@ -332,7 +358,26 @@ function findCycles(
   for (const song of songs) {
     for (let n = minLen; n <= maxLen; n++) {
       const seen = new Set<string>();
-      for (const loop of extractChordCycles(song.chords, n)) {
+      for (const rawLoop of extractChordCycles(song.chords, n)) {
+        const chords = rawLoop.split(' ');
+        // A sustained vamp (G-C-G-C-G-C-...) gets scanned at every phase
+        // offset, so the SAME song's SAME passage produces both "G C" and
+        // "C G" as raw windows - confirmed live ("Billie Eilish - Ocean
+        // Eyes" listed under both). G->C and C->G are genuinely different
+        // harmonic motions (subdominant vs. dominant direction) and must
+        // stay separate buckets across songs - the fix is per-song
+        // consistency, not merging them. Anchor to the song's own detected
+        // tonic (already computed for the Roman-numeral analysis) so every
+        // window from this song rotates to the same starting chord. Only
+        // fall back to an arbitrary-but-consistent lexicographic rotation
+        // when the tonic isn't one of this loop's chords at all (a
+        // modulation/borrowed passage away from the main key) or the key
+        // couldn't be detected.
+        const tonicIdx = song.key ? chords.indexOf(song.key.tonic) : -1;
+        const canonical = tonicIdx !== -1
+          ? [...chords.slice(tonicIdx), ...chords.slice(0, tonicIdx)]
+          : canonicalChordCycle(chords).canonical;
+        const loop = canonical.join(' ');
         chordOccurrences.set(loop, (chordOccurrences.get(loop) ?? 0) + 1);
         if (!seen.has(loop)) {
           seen.add(loop);
