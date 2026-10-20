@@ -2,6 +2,45 @@
 
 Notable changes to Chord Walk, starting from this entry.
 
+## [3.7.0] - 2026-10-20
+
+### Added
+- **Home key** (Jam mode): pick a major key in the sidebar (remembered across
+  sessions). The key's seven chords are outlined in gold with Roman-numeral
+  tags, the tonic gets an extra ring, out-of-key chords fade back, and the
+  chord banner shows the played chord's numeral (gold in key, orange
+  outside — e.g. "Ab · IV", "Db · bVII"). With Zoom on, the camera frames
+  the key. A set home key also takes over the Jam tab's circle even when a
+  Walk path exists.
+- **Triad & inversion tracker**: a "Track triads & inversions" checkbox
+  under the home key. Each diatonic chord gets a three-arc ring (root
+  position, 1st, 2nd inversion) that turns green once that exact voicing is
+  played, plus sidebar dots, an N/21 count and Reset. Session-only.
+- **Scales panel** under the progression input: lists the scales that fit
+  a progression — live while typing, or for any saved progression —
+  preferring the first chord as tonic, with near misses when nothing fits.
+- 7sus4 chord detection, with a V→I hint arrow like a dominant 7th.
+- Diatonic moves into vii°: ii → vii°, IV → vii°, V → vii° and vii° → V.
+  Previously the only ways onto a diminished chord were from I, vi or
+  another diminished chord.
+
+### Changed
+- Diatonic is now on by default in Jam's "Suggest next" arrows.
+- Edges between nearby nodes arc outward instead of running straight, so
+  short moves (neighbouring dim chords, relative major ↔ minor) show a
+  visible line and arrowhead. Neighbouring dim chords previously got no
+  edge at all.
+- Chord tones are always shown on the inner (diminished) ring, at a
+  readable size, instead of only while the chord was active.
+
+### Fixed
+- Sus chords weren't recognised in practice: since they contain no triad,
+  the chord banner, Jam node glow and suggestion arrows ignored them. They
+  now count as the chord they suspend (Csus4 → C).
+- Ambiguous sus voicings take the bass note as the root (A-B-E with A in
+  the bass is Asus2, not Esus4), and a 3-note reading inside a 4-note chord
+  is no longer listed separately (G7sus4 no longer also shows Csus4).
+
 ## [3.6.0] - 2026-09-16
 
 ### Added
