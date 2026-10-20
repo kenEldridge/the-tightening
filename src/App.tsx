@@ -4,9 +4,11 @@ import { detectExtendedChords, describeChordMatch } from 'theory-core';
 import type { ExtendedMatch } from 'theory-core';
 import { parseChordInput } from 'theory-core';
 import { addProgression, removeProgression, editProgression, emptyGraphState, loadFromSaveData } from 'theory-core';
-import { detectChords } from 'theory-core';
+import { detectChords, exactTriadInversion, practiceVoicingKey } from 'theory-core';
 import type { NoteSpelling } from 'theory-core';
 import ProgressionInput from './components/ProgressionInput';
+import ScaleFinder from './components/ScaleFinder';
+import HomeKeySelect from './components/HomeKeySelect';
 import MidiStatus from './components/MidiStatus';
 import HeldNotes from './components/HeldNotes';
 import WalkMode from './components/WalkMode';
@@ -32,10 +34,13 @@ import { EDGE_TYPE_INFO, EDGE_TYPE_ORDER } from 'theory-core';
 // chromaticMediant (the rarer, colorful one) — see chordPathfinder.ts.
 const DEFAULT_SUGGEST_EDGE_TYPES: Partial<Record<EdgeType, boolean>> = {
   fifth: true,
+  diatonic: true,
   dom7: true,
   relative: true,
   chromaticMediant: true,
 };
+
+const HOME_KEY_STORAGE = 'jam.homeKeyPc';
 
 // Default walk: start on C in a Happy mood with the most common (bright) song
 // cycle preset selected; endless + return trip + random-pattern all on so it
@@ -71,8 +76,33 @@ export default function App() {
   const [walkState, setWalkState] = useState<WalkState>(defaultWalkState);
   const [frozenWalkPath, setFrozenWalkPath] = useState<{ nodes: string[]; edgeTypes: EdgeType[] } | null>(null);
   const [noteSpelling, setNoteSpelling] = useState<NoteSpelling>('flats');
+  // Live text of the Jam chords field — ScaleFinder previews it while typing
+  const [chordsDraft, setChordsDraft] = useState('');
   const [circleLayout, setCircleLayout] = useState<'fifths' | 'chromatic'>('fifths');
   const [suggestEdgeTypes, setSuggestEdgeTypes] = useState<Partial<Record<EdgeType, boolean>>>(DEFAULT_SUGGEST_EDGE_TYPES);
+  // Jam mode home key (major tonic pitch class), remembered across sessions.
+  const [homeKeyPc, setHomeKeyPc] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem(HOME_KEY_STORAGE);
+      return saved === null ? null : Number(saved);
+    } catch {
+      return null;
+    }
+  });
+  // Key practice tracker: session-only record of triad voicings played
+  // ("G#:1" = Ab in 1st inversion). Kept across key changes; Reset clears it.
+  const [practiceOn, setPracticeOn] = useState(false);
+  const [practicePlayed, setPracticePlayed] = useState<Set<string>>(() => new Set());
+  const practiceOnRef = useRef(practiceOn);
+  practiceOnRef.current = practiceOn && homeKeyPc !== null;
+  useEffect(() => {
+    try {
+      if (homeKeyPc === null) localStorage.removeItem(HOME_KEY_STORAGE);
+      else localStorage.setItem(HOME_KEY_STORAGE, String(homeKeyPc));
+    } catch {
+      // storage unavailable: the key just won't persist
+    }
+  }, [homeKeyPc]);
   const [dynamicCircle, setDynamicCircle] = useState(true);
   const [graphExpanded, setGraphExpanded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -120,6 +150,16 @@ export default function App() {
   // below) off this instead of the raw match means they hold steady through
   // that gap and swap the instant the next chord resolves, with no timeout
   // to tune (and no window where they'd show something stale, or nothing).
+  // A sus chord contains no triad, so matchedChords comes back empty for it.
+  // For display (banner, Jam glow, suggestions) treat it as its base node,
+  // the same collapse chordNameToNodeId applies (Csus4 → C). Walk step
+  // matching stays on strict triads via matchedChords.
+  const recognizedChords = useMemo(
+    () => matchedChords.length > 0
+      ? matchedChords
+      : extendedMatches.filter(m => /sus[24]$/.test(m.displayName)).map(m => m.baseChordName),
+    [matchedChords, extendedMatches],
+  );
   const [lastRecognizedChord, setLastRecognizedChord] = useState<string | null>(null);
   const [lastRecognizedMatchedChords, setLastRecognizedMatchedChords] = useState<string[]>([]);
   const [lastRecognizedExtendedMatches, setLastRecognizedExtendedMatches] = useState<ExtendedMatch[]>([]);
@@ -133,13 +173,13 @@ export default function App() {
   // inversion label a beat before the chord name itself updates (or during a
   // release gap, when it shouldn't move at all).
   useEffect(() => {
-    if (matchedChords[0]) setLastRecognizedChord(matchedChords[0]);
-    if (matchedChords.length > 0) {
+    if (recognizedChords[0]) setLastRecognizedChord(recognizedChords[0]);
+    if (recognizedChords.length > 0) {
       setLastRecognizedMatchedChords(matchedChords);
       setLastRecognizedExtendedMatches(extendedMatches);
       setLastRecognizedBassPc(matchedBassPc);
     }
-  }, [matchedChords, extendedMatches, matchedBassPc]);
+  }, [recognizedChords, matchedChords, extendedMatches, matchedBassPc]);
 
   // Flatten all hint edges from the sticky extended match, so they persist
   // on the circle the same way the jam suggestion edges do.
@@ -450,6 +490,15 @@ export default function App() {
       // Captured from this exact same heldNotes snapshot so it can never
       // pair a bass note from a half-released chord with a stale match.
       setMatchedBassPc(heldNotes.size > 0 ? ((Math.min(...heldNotes) % 12) + 12) % 12 : undefined);
+      // Key practice: record each exact triad voicing played this session.
+      if (practiceOnRef.current) {
+        for (const chord of matches) {
+          const inversion = exactTriadInversion(heldNotes, chord);
+          if (inversion === null) continue;
+          const key = practiceVoicingKey(chord, inversion);
+          setPracticePlayed(prev => (prev.has(key) ? prev : new Set(prev).add(key)));
+        }
+      }
     }, 50);
 
     return () => {
@@ -612,6 +661,9 @@ export default function App() {
   const walkPath = walkState.path
     ? { nodes: walkState.path.chordNames, edgeTypes: walkState.path.edgeTypes as EdgeType[], currentStep: walkState.currentStep }
     : undefined;
+  // Exception: in the Jam tab with a home key set, the Jam circle wins so the
+  // key tint, numerals, practice arcs and key zoom are visible.
+  const jamHomeKeyView = mode === 'jam' && homeKeyPc !== null;
 
   return (
     <div className={`app${graphExpanded ? ' graph-expanded' : ''}${graphExpanded && sidebarOpen ? ' sidebar-open' : ''}`}>
@@ -642,7 +694,7 @@ export default function App() {
         <button
           className="layout-toggle-btn"
           onClick={() => setDynamicCircle(d => !d)}
-          title={dynamicCircle ? 'Camera follows the walk path (click for full circle)' : 'Full circle view (click to zoom to the walk)'}
+          title={dynamicCircle ? 'Camera follows the walk path, or the home key in Jam (click for full circle)' : 'Full circle view (click to zoom to the walk or home key)'}
         >
           {dynamicCircle ? 'Zoom: On' : 'Zoom: Off'}
         </button>
@@ -663,12 +715,23 @@ export default function App() {
           </div>
           {mode === 'jam' && (
             <>
+              <HomeKeySelect
+                homeKeyPc={homeKeyPc}
+                onChange={setHomeKeyPc}
+                noteSpelling={noteSpelling}
+                practiceOn={practiceOn}
+                onPracticeOnChange={setPracticeOn}
+                practicePlayed={practicePlayed}
+                onPracticeReset={() => setPracticePlayed(new Set())}
+              />
               <ProgressionInput
                 onAdd={handleAddProgression}
                 onRemove={handleRemoveProgression}
                 onEdit={handleEditProgression}
                 progressions={graphState.progressions}
+                onChordsDraftChange={setChordsDraft}
               />
+              <ScaleFinder progressions={graphState.progressions} draft={chordsDraft} noteSpelling={noteSpelling} />
               <SuggestEdgesToggle enabled={suggestEdgeTypes} onChange={setSuggestEdgeTypes} />
             </>
           )}
@@ -744,7 +807,7 @@ export default function App() {
             ) : (
               <CircleOfFifths
                 graphState={replayGraphState ?? undefined}
-                jamMatchedChords={replayGraphState ? matchedChords : undefined}
+                jamMatchedChords={replayGraphState ? recognizedChords : undefined}
                 matchedChords={matchedChords}
                 hintEdges={hintEdges}
                 heldChordLabel={heldChordLabel}
@@ -752,7 +815,7 @@ export default function App() {
                 layout={circleLayout}
               />
             )
-          ) : walkPath ? (
+          ) : walkPath && !jamHomeKeyView ? (
             <CircleOfFifths
               walkPath={walkPath}
               dynamicView={dynamicCircle}
@@ -762,7 +825,7 @@ export default function App() {
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />
-          ) : frozenWalkPath ? (
+          ) : frozenWalkPath && !jamHomeKeyView ? (
             <CircleOfFifths
               walkPath={{ nodes: frozenWalkPath.nodes, edgeTypes: frozenWalkPath.edgeTypes, currentStep: 0 }}
               dynamicView={dynamicCircle}
@@ -775,11 +838,14 @@ export default function App() {
           ) : (
             <CircleOfFifths
               graphState={graphState}
-              jamMatchedChords={matchedChords}
-              matchedChords={matchedChords}
+              dynamicView={dynamicCircle}
+              jamMatchedChords={recognizedChords}
+              matchedChords={recognizedChords}
               hintEdges={hintEdges}
               suggestionEdges={jamSuggestionEdges}
               heldChordLabel={heldChordLabel}
+              homeKeyPc={homeKeyPc}
+              practicePlayed={practiceOn ? practicePlayed : undefined}
               noteSpelling={noteSpelling}
               layout={circleLayout}
             />

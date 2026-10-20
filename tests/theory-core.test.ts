@@ -18,12 +18,17 @@ import {
   chordNameToNodeId,
   nodeIdToChordName,
   findChordPath,
+  getDirectEdgeTypes,
   transposeChord,
   getAllChordNames,
   getTheoryChordNodes,
   getChordDefinition,
   parseChordInput,
   detectChords,
+  detectExtendedChords,
+  diatonicChords,
+  romanNumeralInMajor,
+  exactTriadInversion,
   midiNoteToName,
   CYCLE_PRESETS,
   MOODS,
@@ -36,6 +41,7 @@ import {
   LOCK_CONFIDENCE,
   LOCK_BPM_TOLERANCE,
   MAX_FOLLOW_BARS,
+  findScales,
 } from 'theory-core';
 
 let passed = 0;
@@ -191,6 +197,65 @@ const trans = cameraTransition(walkViewBox(['C', 'G']), walkViewBox(['F#', 'C#']
 assert(viewBoxesEqual(trans(0), walkViewBox(['C', 'G'])), 'transition starts at from');
 assert(viewBoxesEqual(trans(1), walkViewBox(['F#', 'C#'])), 'transition ends at to');
 assert(viewBoxesEqual(trans(0.5), FULL_VIEWBOX, 2), 'zoomed→zoomed transition passes through full view');
+
+section('scale finder');
+const topScale = (chords: string[]) => {
+  const m = findScales(chords)[0];
+  return [m.root, m.type];
+};
+assertEq(topScale(['C', 'F', 'G']), [0, 'major'], 'C F G → C major');
+assertEq(topScale(['Am', 'F', 'C', 'G']), [9, 'minor'], 'Am F C G → A minor (first chord is tonic)');
+assertEq(topScale(['Am', 'Dm', 'E']), [9, 'harmonicMinor'], 'Am Dm E → A harmonic minor');
+assertEq(topScale(['C', 'Bb', 'F']), [0, 'mixolydian'], 'C Bb F → C Mixolydian');
+assert(findScales(['C', 'F', 'G']).every(m => m.outside.length === 0), 'full fits exclude near misses');
+const borrowedScales = findScales(['C', 'Ab', 'Bb', 'C']);
+assert(borrowedScales.length > 0 && borrowedScales[0].outside.length === 1, 'no full fit → near misses with outside notes');
+assertEq(findScales(['Cadd9']), [], 'unrecognized chords are ignored');
+
+section('sus chord detection');
+const extNames = (notes: number[]) => detectExtendedChords(new Set(notes)).map(m => m.displayName);
+assertEq(extNames([60, 65, 67]), ['Csus4'], 'C F G → Csus4');
+assertEq(extNames([60, 62, 67]), ['Csus2'], 'C D G → Csus2');
+assertEq(extNames([57, 59, 64]), ['Asus2'], 'A B E with A in bass → Asus2, not Esus4');
+assertEq(extNames([52, 57, 59]), ['Esus4'], 'E A B with E in bass → Esus4');
+assertEq(extNames([55, 60, 62, 65]), ['G7sus4'], 'G C D F → G7sus4 alone');
+assertEq(detectExtendedChords(new Set([60, 65, 67]))[0].baseChordName, 'C', 'Csus4 sits on the C node');
+
+section('home key (Jam)');
+const eb = 3;
+assertEq(diatonicChords(eb).map(c => `${c.numeral}:${c.name}`), ['I:D#', 'ii:Fm', 'iii:Gm', 'IV:G#', 'V:A#', 'vi:Cm', 'vii°:Ddim'], 'Eb major diatonic triads');
+assertEq(romanNumeralInMajor(eb, 'Ab'), { numeral: 'IV', diatonic: true }, 'Ab in Eb → IV');
+assertEq(romanNumeralInMajor(eb, 'Bb7'), { numeral: 'V7', diatonic: true }, 'Bb7 in Eb → V7');
+assertEq(romanNumeralInMajor(eb, 'Fm7'), { numeral: 'ii7', diatonic: true }, 'Fm7 in Eb → ii7');
+assertEq(romanNumeralInMajor(eb, 'Dm7b5'), { numeral: 'viiø7', diatonic: true }, 'Dm7b5 in Eb → viiø7');
+assertEq(romanNumeralInMajor(eb, 'Bbsus4'), { numeral: 'Vsus4', diatonic: true }, 'Bbsus4 in Eb → Vsus4');
+assertEq(romanNumeralInMajor(eb, 'Db'), { numeral: 'bVII', diatonic: false }, 'Db in Eb → bVII, out of key');
+assertEq(romanNumeralInMajor(eb, 'G'), { numeral: 'III', diatonic: false }, 'G major in Eb → III, out of key');
+assertEq(romanNumeralInMajor(eb, 'D#'), { numeral: 'I', diatonic: true }, 'sharp spelling of the tonic still reads I');
+
+section('key practice voicings');
+assertEq(exactTriadInversion(new Set([51, 55, 58]), 'D#'), 0, 'Eb G Bb, Eb in bass → root position');
+assertEq(exactTriadInversion(new Set([55, 58, 63]), 'D#'), 1, 'G Bb Eb → 1st inversion');
+assertEq(exactTriadInversion(new Set([46, 51, 55]), 'D#'), 2, 'Bb Eb G → 2nd inversion');
+assertEq(exactTriadInversion(new Set([39, 51, 55, 58, 63]), 'D#'), 0, 'doubled notes still count');
+assertEq(exactTriadInversion(new Set([51, 55, 58, 61]), 'D#'), null, 'Eb7 is not the bare triad');
+assertEq(exactTriadInversion(new Set([50, 53, 56]), 'Ddim'), 0, 'D F Ab → Ddim root position');
+
+section('moves into vii° (Eb major: Ddim)');
+for (const from of ['Fm', 'G#', 'A#']) {
+  assert(getDirectEdgeTypes(from, 'Ddim').includes('diatonic'), `${from} → Ddim is a diatonic move`);
+}
+assert(getDirectEdgeTypes('Ddim', 'A#').includes('diatonic'), 'Ddim → Bb (vii° → V) is a diatonic move');
+assert(getDirectEdgeTypes('Cm', 'Ddim').includes('diatonic'), 'stepwise vi → vii° still present');
+assert(!getDirectEdgeTypes('Gm', 'Ddim').includes('diatonic'), 'iii → vii° not added');
+
+section('home key framing');
+const ebFrame = walkViewBox(diatonicChords(3).map(c => c.name), 'fifths', false);
+const ebNodes = ring.filter(n => diatonicChords(3).some(c => c.name === n.name));
+const ebCenterX = (Math.min(...ebNodes.map(n => n.x - n.r)) + Math.max(...ebNodes.map(n => n.x + n.r))) / 2;
+assert(Math.abs(ebFrame.x + ebFrame.w / 2 - ebCenterX) < 0.001, 'unclamped key framing stays centered on the key');
+assert(ebFrame.x < 0, 'Eb framing runs past the circle edge rather than shifting off-center');
+assert(walkViewBox(diatonicChords(3).map(c => c.name)).x >= 0, 'default framing still clamps');
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

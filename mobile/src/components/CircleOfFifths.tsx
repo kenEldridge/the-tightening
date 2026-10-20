@@ -457,8 +457,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
         const isActive = isJamMode
           ? isJamActive || isJamMatched || isJamNextCandidate
           : inPath || isMatched || isCurrentStep || isDoneStep;
-        const triadFontSize = isActive ? 9 : node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 5.5;
-        const showTriadNotes = node.ring !== 'dim' || isActive;
+        const triadFontSize = isActive ? 9 : node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 7;
 
         return (
           <G key={node.id} opacity={opacity} onPress={onNodePress ? () => onNodePress(node.name) : undefined}>
@@ -483,11 +482,9 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             <SvgText x={node.x} y={node.y} textAnchor="middle" fontSize={fontSize} fontWeight="600" fill="#c9d1d9">
               {displayName}
             </SvgText>
-            {showTriadNotes && (
-              <SvgText x={node.x} y={node.y + 11} textAnchor="middle" fontSize={triadFontSize} fill="#8b949e">
-                {triadNotes(node.name, noteSpelling)}
-              </SvgText>
-            )}
+            <SvgText x={node.x} y={node.y + 11} textAnchor="middle" fontSize={triadFontSize} fill="#8b949e">
+              {triadNotes(node.name, noteSpelling)}
+            </SvgText>
           </G>
         );
       })}

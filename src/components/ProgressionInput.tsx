@@ -6,11 +6,17 @@ interface Props {
   onRemove: (name: string) => void;
   onEdit: (oldName: string, newName: string, chords: string) => string | null;
   progressions: Progression[];
+  /** Called with the chords field's raw text on every change (for live previews) */
+  onChordsDraftChange?: (chords: string) => void;
 }
 
-export default function ProgressionInput({ onAdd, onRemove, onEdit, progressions }: Props) {
+export default function ProgressionInput({ onAdd, onRemove, onEdit, progressions, onChordsDraftChange }: Props) {
   const [name, setName] = useState('');
   const [chords, setChords] = useState('');
+
+  useEffect(() => {
+    onChordsDraftChange?.(chords);
+  }, [chords, onChordsDraftChange]);
   const [error, setError] = useState<string | null>(null);
   // When editing, stores the original name of the progression being edited
   const [editingName, setEditingName] = useState<string | null>(null);

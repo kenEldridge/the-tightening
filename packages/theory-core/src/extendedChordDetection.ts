@@ -86,6 +86,13 @@ const QUALITY_DEFS: QualityDef[] = [
     hint: { upSemitones: 5, edgeType: 'chromaticMediant', label: 'I+→IV: augmented resolution' },
   },
   {
+    offsets: [0, 5, 7, 10],
+    displaySuffix: '7sus4',
+    baseQuality: 'major',
+    qualityLabel: 'dominant 7th suspended 4th',
+    hint: { upSemitones: 5, edgeType: 'dom7', label: 'V7sus4→I: suspended dominant resolution' },
+  },
+  {
     offsets: [0, 5, 7],
     displaySuffix: 'sus4',
     baseQuality: 'major',
@@ -116,6 +123,11 @@ const QUALITY_DEFS: QualityDef[] = [
   },
 ];
 
+/** Interval offsets for an extended-chord suffix this module detects (e.g. "m7b5"). */
+export function extendedSuffixOffsets(suffix: string): number[] | undefined {
+  return QUALITY_DEFS.find(d => d.displaySuffix === suffix)?.offsets;
+}
+
 function rootName(pc: number, spelling: NoteSpelling): string {
   return spelling === 'flats' ? NOTE_NAMES_FLAT[pc] : NOTE_NAMES[pc];
 }
@@ -131,11 +143,16 @@ export function detectExtendedChords(heldNotes: Set<number>, spelling: NoteSpell
   if (heldNotes.size < 3) return [];
 
   const heldPcs = new Set(Array.from(heldNotes).map(n => ((n % 12) + 12) % 12));
+  const bassPc = ((Math.min(...heldNotes) % 12) + 12) % 12;
   const results: ExtendedMatch[] = [];
   // Deduplicate by sorted pitch-class signature (handles aug/dim7 symmetry and sus4/sus2 overlap)
   const seenSigs = new Set<string>();
 
-  for (let rootPc = 0; rootPc < 12; rootPc++) {
+  // Walk roots starting from the bass note so that, when the dedup above has
+  // to pick between readings of the same pitch set (A-B-E is both Asus2 and
+  // Esus4), the one rooted on the bass wins.
+  for (let step = 0; step < 12; step++) {
+    const rootPc = (bassPc + step) % 12;
     for (const def of QUALITY_DEFS) {
       const chordPcs = def.offsets.map(o => (rootPc + o) % 12);
       if (!chordPcs.every(pc => heldPcs.has(pc))) continue;
@@ -177,17 +194,19 @@ export function detectExtendedChords(heldNotes: Set<number>, spelling: NoteSpell
   }
 
   // Sort: more notes (more specific) first
-  results.sort((a, b) => {
-    const aDef = QUALITY_DEFS.find(d => a.displayName.endsWith(d.displaySuffix))!;
-    const bDef = QUALITY_DEFS.find(d => b.displayName.endsWith(d.displaySuffix))!;
-    return (bDef?.offsets.length ?? 0) - (aDef?.offsets.length ?? 0);
-  });
+  results.sort((a, b) => b.chordPcs.length - a.chordPcs.length);
 
   // When the same base chord has both a 4-note and a 3-note match (e.g. Dadd9 and Dsus2
   // from the same held notes), keep only the most specific one per base chord name.
+  // Likewise drop a 3-note reading whose tones all sit inside a 4-note one
+  // (G-C-D-F is G7sus4, not also Csus4).
   const byBase = new Map<string, ExtendedMatch>();
   for (const r of results) {
-    if (!byBase.has(r.baseChordName)) byBase.set(r.baseChordName, r);
+    if (byBase.has(r.baseChordName)) continue;
+    const subsumed = r.chordPcs.length === 3 && [...byBase.values()].some(
+      k => k.chordPcs.length > 3 && r.chordPcs.every(pc => k.chordPcs.includes(pc)),
+    );
+    if (!subsumed) byBase.set(r.baseChordName, r);
   }
 
   return [...byBase.values()];

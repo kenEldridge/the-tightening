@@ -111,10 +111,11 @@ export function viewBoxesEqual(a: ViewBox, b: ViewBox, epsilon = 0.5): boolean {
 
 /**
  * Square viewBox framing the named chords' nodes with comfortable margin,
- * clamped inside the full circle view. Falls back to the full view when no
- * names resolve.
+ * clamped inside the full circle view (unless `clamp` is false, which keeps
+ * the chords centered even if the frame runs past the circle edge). Falls
+ * back to the full view when no names resolve.
  */
-export function walkViewBox(chordNames: string[], layout: CircleLayout = 'fifths'): ViewBox {
+export function walkViewBox(chordNames: string[], layout: CircleLayout = 'fifths', clamp = true): ViewBox {
   const byName = new Map(ringNodePositions(layout).map((n) => [n.name, n]));
   let minX = Infinity;
   let minY = Infinity;
@@ -138,6 +139,8 @@ export function walkViewBox(chordNames: string[], layout: CircleLayout = 'fifths
   const side = Math.min(CIRCLE_SIZE, Math.max(w, h, MIN_VIEW));
   let x = minX + w / 2 - side / 2;
   let y = minY + h / 2 - side / 2;
+
+  if (!clamp) return { x, y, w: side, h: side };
 
   // Clamp inside the full view.
   x = Math.max(0, Math.min(x, CIRCLE_SIZE - side));

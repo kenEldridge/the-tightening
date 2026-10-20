@@ -1219,3 +1219,73 @@ body {
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* ── Jam mode: home key ── */
+
+.home-key-select {
+  padding: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.home-key-chords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.home-key-chord {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.home-key-numeral {
+  font-size: 0.7rem;
+  color: #e3b341;
+}
+
+.home-key-dots {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 3px;
+}
+
+.home-key-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.home-key-dot-played {
+  background: #2ecc71;
+}
+
+.home-key-practice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.home-key-progress {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-key-reset {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}

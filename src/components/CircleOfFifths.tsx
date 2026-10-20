@@ -19,7 +19,7 @@ import { EDGE_TYPE_INFO, edgeTypeColor, edgeTypeTitle, mostDissonantEdgeType } f
 import { getChordDefinition, NOTE_NAMES, noteToPitchClass, respellChordName, pitchClassName } from 'theory-core';
 import type { NoteSpelling } from 'theory-core';
 import type { GraphState, GraphEdge } from '../types/index';
-import { qualityToRing, getReciprocalSet, qualityBadge, edgeTypeShortLabel } from 'theory-core';
+import { qualityToRing, getReciprocalSet, qualityBadge, edgeTypeShortLabel, diatonicChords, romanNumeralInMajor, practiceVoicingKey } from 'theory-core';
 import type { HintEdge, QualityBadge, ChordMatchDisplay } from 'theory-core';
 
 /** Get the individual note names of a chord, e.g. "C" → "C E G", "C7" → "C E G A#" */
@@ -52,9 +52,91 @@ interface Props {
   layout?: 'fifths' | 'chromatic';
   /** Dynamic camera (issue #18): zoom the view to the walk path's nodes. */
   dynamicView?: boolean;
+  /** Jam home key (major tonic pitch class): tint its diatonic chords, tag them with Roman numerals. */
+  homeKeyPc?: number | null;
+  /** Key practice: triad voicings played this session ("G#:1"); draws a 3-arc progress ring on each diatonic node. */
+  practicePlayed?: Set<string>;
 }
 
 const CAMERA_MS = 900;
+const HOME_KEY_COLOR = '#e3b341';
+const PRACTICE_PLAYED_COLOR = '#2ecc71';
+const PRACTICE_UNPLAYED_COLOR = '#484f58';
+const INVERSION_NAMES = ['root position', '1st inversion', '2nd inversion'];
+
+/** SVG arc from angle a0 to a1 (degrees, 0 = 12 o'clock, clockwise) on a circle. */
+function arcPath(cx: number, cy: number, r: number, a0: number, a1: number): string {
+  const pt = (a: number) => {
+    const rad = ((a - 90) * Math.PI) / 180;
+    return `${cx + r * Math.cos(rad)} ${cy + r * Math.sin(rad)}`;
+  };
+  return `M ${pt(a0)} A ${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${pt(a1)}`;
+}
+
+// Edges between centers closer than this curve outward; at or below
+// EDGE_FULL_BEND they curve the most.
+const EDGE_CURVE_LEN = 140;
+const EDGE_FULL_BEND = 60;
+
+interface EdgeGeometry {
+  x1: number; y1: number;  // start, on the from-node's padded border
+  qx: number; qy: number;  // quadratic control point
+  x2: number; y2: number;  // end, on the to-node's padded border
+  d: string;               // SVG path
+  mx: number; my: number;  // curve midpoint, for labels
+}
+
+/**
+ * Edge between two nodes, clipped to their borders. Short edges arc out
+ * (away from the circle's center) and leave/enter each node off to that
+ * side, so neighbors still get a visible line and arrowhead. `bulge`
+ * forces a fixed sideways arc (left of travel) instead, as Walk uses for
+ * there-and-back pairs. Null when there's no room to draw.
+ */
+function edgeGeometry(
+  from: { x: number; y: number; r: number },
+  to: { x: number; y: number; r: number },
+  padFrom: number,
+  padTo: number,
+  bulge?: number,
+): EdgeGeometry | null {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return null;
+  const ux = dx / len, uy = dy / len;
+  const midX = (from.x + to.x) / 2, midY = (from.y + to.y) / 2;
+
+  // Perpendicular, left of travel; flipped to point away from the circle
+  // center unless the edge runs along a spoke (then either side is fine).
+  let nx = -uy, ny = ux;
+  const outward = (midX - CX) * nx + (midY - CY) * ny;
+  const midDist = Math.hypot(midX - CX, midY - CY) || 1;
+  if (bulge === undefined && outward / midDist < -0.2) { nx = -nx; ny = -ny; }
+
+  const bend = bulge !== undefined
+    ? 0
+    : Math.max(0, Math.min(1, (EDGE_CURVE_LEN - len) / (EDGE_CURVE_LEN - EDGE_FULL_BEND)));
+  // Rotate each endpoint toward the bulge side so the arc leaves the node sideways.
+  const theta = bend * (70 * Math.PI / 180);
+  const c = Math.cos(theta), s = Math.sin(theta);
+  const rFrom = from.r + padFrom, rTo = to.r + padTo;
+  const x1 = from.x + rFrom * (ux * c + nx * s);
+  const y1 = from.y + rFrom * (uy * c + ny * s);
+  const x2 = to.x + rTo * (-ux * c + nx * s);
+  const y2 = to.y + rTo * (-uy * c + ny * s);
+  if (bend === 0 && rFrom + rTo >= len) return null;
+
+  const h = bulge ?? bend * (0.25 * len + 10);
+  const qx = (x1 + x2) / 2 + nx * h;
+  const qy = (y1 + y2) / 2 + ny * h;
+  return {
+    x1, y1, qx, qy, x2, y2,
+    d: `M ${x1} ${y1} Q ${qx} ${qy} ${x2} ${y2}`,
+    mx: 0.25 * x1 + 0.5 * qx + 0.25 * x2,
+    my: 0.25 * y1 + 0.5 * qy + 0.25 * y2,
+  };
+}
 
 /**
  * Animated viewBox: eases toward `target`, flying out through the full circle
@@ -110,7 +192,7 @@ interface JamSlotInfo {
   progressionColors: string[];   // colors from their progressions
 }
 
-export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, suggestionEdges, heldChordLabel, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false }: Props) {
+export default function CircleOfFifths({ walkPath, matchedChords, graphState, jamMatchedChords, replayMatchedChords, hintEdges, suggestionEdges, heldChordLabel, noteSpelling = 'sharps', layout = 'fifths', dynamicView = false, homeKeyPc = null, practicePlayed }: Props) {
   const isJamMode = !!graphState;
 
   // Promoted chord-name readout: lives on the circle itself so players don't
@@ -120,14 +202,23 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
   // arrows do, instead of blanking the instant keys come up.
   const heldChordDisplay = heldChordLabel ?? { chords: [], qualityLabels: [] };
 
+  // Home key: diatonic node name → Roman numeral (e.g. "G#" → "IV" in Eb).
+  const homeKeyNumerals = useMemo(
+    () => new Map(homeKeyPc === null ? [] : diatonicChords(homeKeyPc).map(c => [c.name, c.numeral] as const)),
+    [homeKeyPc],
+  );
+
   // Layout-aware ring nodes — rebuilds when layout prop changes.
   const ringNodes = useMemo(() => ringNodePositions(layout), [layout]);
 
-  // Dynamic camera target: frame the walk path when enabled, else full view.
+  // Dynamic camera target: frame the walk path (or, in Jam, the home key's
+  // seven diatonic chords) when enabled, else full view.
   const targetViewBox = useMemo(() => {
-    if (dynamicView && walkPath && walkPath.nodes.length > 1) return walkViewBox(walkPath.nodes, layout);
+    if (!dynamicView) return FULL_VIEWBOX;
+    if (walkPath && walkPath.nodes.length > 1) return walkViewBox(walkPath.nodes, layout);
+    if (isJamMode && homeKeyPc !== null) return walkViewBox(diatonicChords(homeKeyPc).map(c => c.name), layout, false);
     return FULL_VIEWBOX;
-  }, [dynamicView, walkPath, layout]);
+  }, [dynamicView, walkPath, layout, isJamMode, homeKeyPc]);
   const viewBox = useCameraViewBox(targetViewBox);
   const nodeByName = useMemo(() => {
     const m = new Map<string, RingNode>();
@@ -334,13 +425,24 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           }}
         >
           <div style={{ fontSize: 22, fontWeight: 700, color: '#58a6ff', textShadow: '0 1px 4px #0d1117' }}>
-            {heldChordDisplay.chords.map((c, i) => (
-              <React.Fragment key={i}>
-                {i > 0 && '  /  '}
-                {c.name}
-                {c.inversion > 0 && <sup>{"'".repeat(c.inversion)}</sup>}
-              </React.Fragment>
-            ))}
+            {heldChordDisplay.chords.map((c, i) => {
+              const roman = homeKeyPc === null ? null : romanNumeralInMajor(homeKeyPc, c.name);
+              return (
+                <React.Fragment key={i}>
+                  {i > 0 && '  /  '}
+                  {c.name}
+                  {c.inversion > 0 && <sup>{"'".repeat(c.inversion)}</sup>}
+                  {roman && (
+                    <span
+                      style={{ fontSize: 16, fontWeight: 600, color: roman.diatonic ? HOME_KEY_COLOR : '#f0883e' }}
+                      title={roman.diatonic ? 'In the home key' : 'Outside the home key'}
+                    >
+                      {' · '}{roman.numeral}
+                    </span>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
           {heldChordDisplay.qualityLabels.length > 0 && (
             <div style={{ fontSize: 12, fontStyle: 'italic', color: '#f0a020', textShadow: '0 1px 4px #0d1117' }}>
@@ -374,23 +476,15 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           const fromNode = nodeByName.get(edge.from);
           const toNode   = nodeByName.get(edge.to);
           if (!fromNode || !toNode || fromNode.id === toNode.id) return null;
-          const dx = toNode.x - fromNode.x;
-          const dy = toNode.y - fromNode.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          if (len === 0) return null;
-          const ux = dx / len, uy = dy / len;
-          const pad = 6;
-          const x1 = fromNode.x + ux * (fromNode.r + pad);
-          const y1 = fromNode.y + uy * (fromNode.r + pad);
-          const x2 = toNode.x   - ux * (toNode.r + pad + 8);
-          const y2 = toNode.y   - uy * (toNode.r + pad + 8);
-          if (fromNode.r + toNode.r + pad * 2 >= len) return null;
-          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          const geom = edgeGeometry(fromNode, toNode, 6, 14);
+          if (!geom) return null;
+          const { mx, my } = geom;
           const shortLabel = edgeTypeShortLabel(edge.edgeType);
           return (
             <g key={`hint-${idx}`}>
-              <line
-                x1={x1} y1={y1} x2={x2} y2={y2}
+              <path
+                d={geom.d}
+                fill="none"
                 stroke="#f0a020"
                 strokeWidth={2.5}
                 strokeDasharray="8 5"
@@ -399,7 +493,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
                 markerEnd="url(#cof-arrow)"
               >
                 <title>{edge.label}</title>
-              </line>
+              </path>
               <rect x={mx - (shortLabel.length * 3 + 4)} y={my - 8} width={shortLabel.length * 6 + 8} height={16} rx={4} fill="#0d1117" stroke="#f0a020" strokeWidth={1} opacity={0.9} style={{ pointerEvents: 'none' }} />
               <text x={mx} y={my + 1} textAnchor="middle" dominantBaseline="middle" fontSize={8.5} fontWeight={700} fill="#f0a020" style={{ pointerEvents: 'none' }}>
                 {shortLabel}
@@ -415,24 +509,16 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           const fromNode = nodeByName.get(edge.from);
           const toNode   = nodeByName.get(edge.to);
           if (!fromNode || !toNode || fromNode.id === toNode.id) return null;
-          const dx = toNode.x - fromNode.x;
-          const dy = toNode.y - fromNode.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          if (len === 0) return null;
-          const ux = dx / len, uy = dy / len;
-          const pad = 4;
-          const x1 = fromNode.x + ux * (fromNode.r + pad);
-          const y1 = fromNode.y + uy * (fromNode.r + pad);
-          const x2 = toNode.x   - ux * (toNode.r + pad);
-          const y2 = toNode.y   - uy * (toNode.r + pad);
-          if (fromNode.r + toNode.r + pad * 2 >= len) return null;
+          const geom = edgeGeometry(fromNode, toNode, 4, 4);
+          if (!geom) return null;
           const color = edgeTypeColor(edge.type);
-          const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          const { mx, my } = geom;
           const shortLabel = edgeTypeShortLabel(edge.type);
           return (
             <g key={`suggest-${idx}`}>
-              <line
-                x1={x1} y1={y1} x2={x2} y2={y2}
+              <path
+                d={geom.d}
+                fill="none"
                 stroke={color}
                 strokeWidth={2.5}
                 strokeDasharray="6 4"
@@ -441,7 +527,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
                 markerEnd="url(#cof-arrow)"
               >
                 <title>{`${edge.from} → ${edge.to}\n${edgeTypeTitle(edge.type)}`}</title>
-              </line>
+              </path>
               <rect x={mx - (shortLabel.length * 3 + 4)} y={my - 8} width={shortLabel.length * 6 + 8} height={16} rx={4} fill="#0d1117" stroke={color} strokeWidth={1} opacity={0.9} style={{ pointerEvents: 'none' }} />
               <text x={mx} y={my + 1} textAnchor="middle" dominantBaseline="middle" fontSize={8.5} fontWeight={700} fill={color} style={{ pointerEvents: 'none' }}>
                 {shortLabel}
@@ -478,25 +564,15 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           });
 
           return Array.from(groups.values()).map(({ fromNode, toNode, steps }) => {
-            const dx = toNode.x - fromNode.x;
-            const dy = toNode.y - fromNode.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len === 0) return null;
-            const ux = dx / len;
-            const uy = dy / len;
-            const pad = 4;
-            const x1 = fromNode.x + ux * (fromNode.r + pad);
-            const y1 = fromNode.y + uy * (fromNode.r + pad);
-            const x2 = toNode.x - ux * (toNode.r + pad);
-            const y2 = toNode.y - uy * (toNode.r + pad);
-            if (fromNode.r + toNode.r + pad * 2 >= len) return null;
-
-            // Only arc when the reverse direction also appears in the path;
-            // otherwise a straight line avoids unnecessary crossings.
+            // When the reverse direction also appears in the path, arc both
+            // sideways (left of travel) so they separate; otherwise only
+            // short hops between near neighbors curve (see edgeGeometry).
             const reverseKey = `${toNode.id}→${fromNode.id}`;
-            const bulge = groups.has(reverseKey) ? Math.min(48, len * 0.28) : 0;
-            const qx = (x1 + x2) / 2 - uy * bulge;
-            const qy = (y1 + y2) / 2 + ux * bulge;
+            const len = Math.hypot(toNode.x - fromNode.x, toNode.y - fromNode.y);
+            const bulge = groups.has(reverseKey) ? Math.min(48, len * 0.28) : undefined;
+            const geom = edgeGeometry(fromNode, toNode, 4, 4, bulge);
+            if (!geom) return null;
+            const { x1, y1, qx, qy, x2, y2 } = geom;
 
             // Pick the most salient step's colour for the arc.
             const primary = steps.find(s => s.isActive) ?? steps.find(s => !s.isDone) ?? steps[0];
@@ -561,22 +637,13 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
 
         {/* Replay mode: live edges between currently detected chord pairs */}
         {replayEdges.map((edge, idx) => {
-          const dx = edge.to.x - edge.from.x;
-          const dy = edge.to.y - edge.from.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          if (len === 0) return null;
-          const ux = dx / len;
-          const uy = dy / len;
-          const pad = 4;
-          const x1 = edge.from.x + ux * (edge.from.r + pad);
-          const y1 = edge.from.y + uy * (edge.from.r + pad);
-          const x2 = edge.to.x - ux * (edge.to.r + pad);
-          const y2 = edge.to.y - uy * (edge.to.r + pad);
-          if (edge.from.r + edge.to.r + pad * 2 >= len) return null;
+          const geom = edgeGeometry(edge.from, edge.to, 4, 4);
+          if (!geom) return null;
           return (
-            <line
+            <path
               key={`replay-edge-${idx}`}
-              x1={x1} y1={y1} x2={x2} y2={y2}
+              d={geom.d}
+              fill="none"
               stroke={edge.color}
               strokeWidth={3}
               opacity={0.9}
@@ -585,7 +652,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               markerEnd="url(#cof-arrow)"
             >
               <title>{`${edge.from.name} ${edge.isBidirectional ? '<->' : '->'} ${edge.to.name}\n${edgeTypesTitle(edge.edgeTypes)}`}</title>
-            </line>
+            </path>
           );
         })}
 
@@ -595,34 +662,15 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
           const edgeOpacity = jamHasHighlight ? (isHighlighted ? 1 : 0.2) : 0.85;
           const strokeWidth = edge.count >= 2 ? 4 : 3;
 
-          const dx = edge.to.x - edge.from.x;
-          const dy = edge.to.y - edge.from.y;
-          const len = Math.sqrt(dx * dx + dy * dy);
-          if (len === 0) return null;
-
-          const ux = dx / len;
-          const uy = dy / len;
-
           // Padding beyond node radius so edge doesn't touch the circle
-          const pad = 4;
-          const startInset = edge.from.r + pad;
-          const endInset = edge.to.r + pad;
-
-          // If nodes overlap so much there's no room for an edge, skip
-          if (startInset + endInset >= len) return null;
-
-          const x1 = edge.from.x + ux * startInset;
-          const y1 = edge.from.y + uy * startInset;
-          const x2 = edge.to.x - ux * endInset;
-          const y2 = edge.to.y - uy * endInset;
+          const geom = edgeGeometry(edge.from, edge.to, 4, 4);
+          if (!geom) return null;
 
           return (
-            <line
+            <path
               key={`jam-edge-${edge.key}`}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
+              d={geom.d}
+              fill="none"
               stroke={edge.color}
               strokeWidth={strokeWidth}
               opacity={edgeOpacity}
@@ -631,7 +679,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               markerEnd="url(#cof-arrow)"
             >
               <title>{`${edge.from.name} ${edge.isBidirectional ? '<->' : '->'} ${edge.to.name}\n${edgeTypesTitle(edge.edgeTypes)}`}</title>
-            </line>
+            </path>
           );
         })}
 
@@ -667,6 +715,9 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             fill = '#3d1f1f';
           }
 
+          const homeNumeral = isJamMode ? homeKeyNumerals.get(node.name) : undefined;
+          const isHomeTonic = homeNumeral === 'I';
+
           if (isJamMode) {
             // --- Jam mode styling ---
             if (isJamActive) {
@@ -681,11 +732,16 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               }
               strokeWidth = 3;
               opacity = 1;
+            } else if (homeNumeral) {
+              // In the home key: keep it readable as a standing map of where to go
+              strokeColor = HOME_KEY_COLOR;
+              strokeWidth = 1.5;
+              opacity = 0.85;
             } else {
-              // Not in any progression: dimmed
+              // Not in any progression: dimmed (further when outside the home key)
               strokeColor = '#30363d';
               strokeWidth = 1;
-              opacity = 0.3;
+              opacity = homeKeyPc === null ? 0.3 : 0.2;
             }
 
             // MIDI overrides for Jam mode
@@ -698,7 +754,8 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               strokeWidth = 2.5;
               opacity = 0.85;
             } else if (jamHasHighlight && !isJamActive) {
-              // Already dimmed, keep it
+              // Already dimmed; home-key nodes step back so the played chord stands out
+              if (homeNumeral) opacity = 0.6;
             } else if (jamHasHighlight && isJamActive && !isJamMatched) {
               // Active but not matched while something is playing: slightly dim
               opacity = 0.5;
@@ -763,8 +820,7 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
             ? (isJamActive || isJamMatched || isJamNextCandidate)
             : (inPath || isWalkMatched || isCurrentStep || isDoneStep);
 
-          const triadFontSize = isActive ? 9 : (node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 5.5);
-          const showTriadNotes = node.ring !== 'dim' || isActive;
+          const triadFontSize = isActive ? 9 : (node.ring === 'major' ? 7.5 : node.ring === 'minor' ? 6.5 : 7);
 
           return (
             <g key={node.id} opacity={opacity}>
@@ -802,6 +858,55 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
                   className="walk-current-pulse"
                 />
               )}
+              {/* Home key: outer ring marks the tonic, numeral tag sits just inside (toward the center of) each diatonic node */}
+              {isHomeTonic && (
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={node.r + (practicePlayed ? 8.5 : 6)}
+                  fill="none"
+                  stroke={HOME_KEY_COLOR}
+                  strokeWidth={2}
+                >
+                  <title>Home key tonic</title>
+                </circle>
+              )}
+              {/* Key practice: three arcs around the node — top = root position,
+                  lower-right = 1st inversion, lower-left = 2nd — grey until played. */}
+              {homeNumeral && practicePlayed && [0, 1, 2].map(inv => {
+                const played = practicePlayed.has(practiceVoicingKey(node.name, inv));
+                return (
+                  <path
+                    key={`practice-${inv}`}
+                    d={arcPath(node.x, node.y, node.r + 3.5, inv * 120 - 53, inv * 120 + 53)}
+                    fill="none"
+                    stroke={played ? PRACTICE_PLAYED_COLOR : PRACTICE_UNPLAYED_COLOR}
+                    strokeWidth={3.5}
+                    strokeLinecap="round"
+                    opacity={played ? 1 : 0.6}
+                  >
+                    <title>{`${displayName} ${INVERSION_NAMES[inv]}${played ? ' — played' : ' — not yet'}`}</title>
+                  </path>
+                );
+              })}
+              {homeNumeral && (() => {
+                const angle = Math.atan2(node.y - CY, node.x - CX);
+                const dist = node.r + (isHomeTonic ? 16 : 12);
+                return (
+                  <text
+                    x={node.x - dist * Math.cos(angle)}
+                    y={node.y - dist * Math.sin(angle)}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={9}
+                    fontWeight={700}
+                    fill={HOME_KEY_COLOR}
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    {homeNumeral}
+                  </text>
+                );
+              })()}
               {/* Pulse ring for current expected step (Walk mode, when not matched) */}
               {!isJamMode && isCurrentStep && !isWalkMatched && (
                 <circle
@@ -828,20 +933,18 @@ export default function CircleOfFifths({ walkPath, matchedChords, graphState, ja
               >
                 {displayName}
               </text>
-              {/* Triad notes — hidden on dim nodes unless active */}
-              {showTriadNotes && (
-                <text
-                  x={node.x}
-                  y={node.y + 8}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={triadFontSize}
-                  fill="#8b949e"
-                  style={{ pointerEvents: 'none', fontFamily: 'monospace' }}
-                >
-                  {notes}
-                </text>
-              )}
+              {/* Triad notes */}
+              <text
+                x={node.x}
+                y={node.y + 8}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={triadFontSize}
+                fill="#8b949e"
+                style={{ pointerEvents: 'none', fontFamily: 'monospace' }}
+              >
+                {notes}
+              </text>
               {/* Quality badge (Jam mode): flags a 7th/sus hiding inside this
                   triad node, e.g. dominant 7th vs major 7th vs minor 7th —
                   color distinguishes which, since they'd otherwise all just

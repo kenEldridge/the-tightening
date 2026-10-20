@@ -190,6 +190,15 @@ export function buildPathGraph(): Map<string, PathEdge[]> {
       adj.get(degrees[j])!.push({ target: degrees[j + 1], weight: 1.1, type: 'diatonic' });
       adj.get(degrees[j + 1])!.push({ target: degrees[j], weight: 1.1, type: 'diatonic' });
     }
+
+    // The common ways into vii° beyond its stepwise neighbors: from the
+    // predominants ii and IV, and swapping with V (both dominant function,
+    // so vii° → V is common too).
+    const [, ii, , IV, V, , viiDim] = degrees;
+    for (const from of [ii, IV, V]) {
+      adj.get(from)!.push({ target: viiDim, weight: 1.1, type: 'diatonic' });
+    }
+    adj.get(viiDim)!.push({ target: V, weight: 1.1, type: 'diatonic' });
   }
 
   // Dom7 resolution (weight 1.0): V → I
